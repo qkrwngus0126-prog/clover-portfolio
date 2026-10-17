@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세잎 아카이브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="네잎클로버 사이에서 세잎클로버를 찾는 포트폴리오. 공간과 인테리어, 라이프스타일, 서비스 분석을 기록합니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Besley:wght@800&family=IBM+Plex+Sans+KR:wght@400;600&family=Libre+Franklin:wght@400;600&family=Nanum+Myeongjo:wght@800&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+/* Layout: a split stage. The reading column scrolls on the left; a field of four-leaf clovers
+   stays fixed on the right for the whole visit, with three three-leaf clovers hidden under it.
+   After the split, the archive sheet, the letter and the contact rows run full width. */
+:root {
+  --bg: #161c1a;        /* green-black ground */
+  --surface: #1f2725;   /* the reading sheet, one step lighter */
+  --soil: #101613;      /* the field under the clovers */
+  --ink: #e3e2da;       /* bone */
+  --muted: #9aa099;     /* soft ink, still 6:1 on the ground */
+  --accent: #9fc7b8;    /* pale jade: the action and the found clovers */
+  --accent-ink: #161c1a;
+  --paper: #e3e2da;     /* the printed archive sheet */
+  --paper-ink: #1b2320;
+  --paper-muted: #4f5a54;
+  --band: #1c2422;
+
+  --font-display: "Besley", "Nanum Myeongjo", Georgia, serif;
+  --font-text: "Libre Franklin", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+
+  --step-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --step-body: clamp(1.0625rem, 1.02rem + 0.2vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --step-head: clamp(2.25rem, 1.4rem + 3vw, 4rem);
+  --step-display: clamp(2.5rem, 1rem + 5.4vw, 5.5rem);
+
+  --gap: 12px;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-body);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; line-height: 1.02; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+  min-height: 52px; padding: 0 28px;
+  background: var(--accent); color: var(--accent-ink);
+  font: 600 var(--step-body)/1 var(--font-text);
+  text-decoration: none; border: 0; border-radius: 0; cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 200ms ease;
+}
+.btn:hover { background: var(--ink); }
+.btn:active { transform: scale(0.97); }
+
+/* ---------- the split stage ---------- */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  gap: var(--gap);
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+  padding-block: var(--gap) 0;
+  align-items: start;
+}
+.reading { min-width: 0; display: grid; gap: var(--gap); }
+
+.sheet {
+  background: var(--surface);
+  min-height: calc(100svh - 2 * var(--gap));
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 28px clamp(24px, 4vw, 64px) 40px;
+  text-align: center;
+}
+.sheet-nav {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  font-size: var(--step-small);
+}
+.sheet-nav a { text-decoration: none; padding: 10px 0; transition: color 160ms ease; }
+.sheet-nav a:hover { color: var(--accent); }
+.sheet-nav a:first-child { justify-self: start; }
+.sheet-nav a:last-child { justify-self: end; }
+.wordmark {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--step-lead);
+  letter-spacing: -0.02em; text-decoration: none;
+}
+.wordmark svg { width: 30px; height: 30px; }
+.sheet-body { align-self: center; display: grid; justify-items: center; gap: 28px; padding-block: 48px; }
+.sheet-body h1 { font-size: var(--step-head); max-width: 11ch; }
+.sheet-body p { max-width: 30ch; font-size: var(--step-body); }
+.sheet-foot { font-size: var(--step-small); color: var(--muted); }
+
+.intro {
+  padding: 96px clamp(24px, 4vw, 64px) 160px;
+  display: grid; gap: 1.1em;
+  max-width: calc(36ch + 2 * clamp(24px, 4vw, 64px));
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.intro p:first-child { font-weight: 600; font-size: 1.125rem; line-height: 1.45; }
+.intro p { color: var(--ink); }
+.intro a { color: var(--ink); text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.intro a:hover { color: var(--accent); }
+
+.branches { padding: 0 clamp(24px, 4vw, 64px) 160px; display: grid; gap: 40px; }
+.branches > header { display: grid; gap: 16px; max-width: 34ch; }
+.branches > header h2 { font-size: var(--step-lead); letter-spacing: -0.01em; }
+.branches > header p { color: var(--muted); }
+.branch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.branch-list a {
+  display: grid; grid-template-columns: auto 1fr; column-gap: 18px; row-gap: 10px;
+  align-items: center; padding-block: 18px; text-decoration: none;
+  color: var(--muted);
+  transition: color 200ms ease;
+}
+.branch-list a:hover, .branch-list a:focus-visible, .branch-list a.is-active { color: var(--ink); }
+.branch-list .mark { width: clamp(36px, 3.4vw, 52px); height: auto; transition: transform 240ms var(--ease-out); }
+.branch-list a:hover .mark { transform: rotate(-12deg) scale(1.06); }
+.branch-list .mark { --leaf-fill: none; --leaf-stroke: currentColor; --leaf-sw: 2.2; --stem: currentColor; }
+.branch-list li[data-found="true"] .mark { --leaf-fill: var(--accent); --leaf-stroke: var(--accent); --stem: var(--accent); --vein: var(--bg); }
+.branch-list .name { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 0.9rem + 2.3vw, 3rem); white-space: nowrap; letter-spacing: -0.02em; line-height: 1; }
+.branch-list .meta { grid-column: 2; font-size: var(--step-small); color: var(--muted); max-width: 38ch; }
+.branch-list .meta b { color: var(--ink); font-weight: 600; }
+.branch-list .tally { grid-column: 2; margin-top: -4px; font-size: var(--step-small); font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* the field */
+.field {
+  position: sticky;
+  top: calc(var(--gap) + env(safe-area-inset-top, 0px));
+  height: calc(100svh - 2 * var(--gap));
+  background: var(--soil);
+  overflow: hidden;
+  min-width: 0;
+}
+.field canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.field canvas:active { cursor: grabbing; }
+.field-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; min-height: 56px; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px;
+  padding: 10px 20px; background: var(--surface); font-size: var(--step-small);
+}
+.field-bar .count { font-weight: 600; font-variant-numeric: tabular-nums; }
+.field-bar .count b { color: var(--accent); }
+.field-bar .hint-row { display: flex; align-items: center; gap: 16px; color: var(--muted); }
+.hint-btn {
+  font: 600 var(--step-small)/1 var(--font-text); color: var(--ink);
+  background: var(--band); border: 0; border-radius: 0; padding: 12px 14px; cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 200ms ease, color 200ms ease;
+}
+.hint-btn:hover { background: var(--accent); color: var(--accent-ink); }
+.hint-btn:active { transform: scale(0.97); }
+.hint-btn[disabled] { opacity: 0.5; cursor: default; }
+.find-tag {
+  position: absolute; z-index: 3; left: 0; top: 0;
+  transform: translate(-50%, calc(-100% - 34px));
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--ink); color: var(--accent-ink);
+  font: 600 var(--step-small)/1.2 var(--font-text); text-decoration: none; white-space: nowrap;
+  transition: opacity 220ms ease, transform 260ms var(--ease-out), background-color 200ms ease;
+}
+.find-tag:hover { background: var(--accent); }
+.find-tag::after { content: "→"; }
+.find-tag.is-hidden { opacity: 0; transform: translate(-50%, calc(-100% - 22px)) scale(0.94); pointer-events: none; }
+.field noscript p { position: absolute; inset: 40% 24px auto; text-align: center; color: var(--muted); }
+
+/* ---------- archive: the collecting sheet ---------- */
+.archive {
+  background: var(--band);
+  margin-top: 160px;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+  padding-block: 140px;
+  display: grid; justify-items: center;
+}
+.record { width: min(760px, 100%); color: var(--paper-ink); }
+.scallop {
+  height: 14px; background: var(--paper);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Ccircle cx='14' cy='14' r='14'/%3E%3C/svg%3E") repeat-x 0 0 / 28px 14px;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Ccircle cx='14' cy='14' r='14'/%3E%3C/svg%3E") repeat-x 0 0 / 28px 14px;
+}
+.scallop.bottom {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Ccircle cx='14' cy='0' r='14'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14'%3E%3Ccircle cx='14' cy='0' r='14'/%3E%3C/svg%3E");
+}
+.record-body { background: var(--paper); padding: 64px clamp(24px, 6vw, 72px) 72px; display: grid; gap: 64px; }
+.record-head { text-align: center; display: grid; gap: 14px; justify-items: center; }
+.record-head h2 { font-size: var(--step-head); }
+.record-head p { color: var(--paper-muted); max-width: 34ch; }
+.group { display: grid; gap: 22px; scroll-margin-top: 40px; }
+.group-head { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.group-head svg { width: 64px; height: 64px; }
+.group-head svg { --leaf-fill: var(--paper-ink); --vein: var(--paper); --stem: var(--paper-ink); }
+.group-head h3 { font-size: var(--step-lead); letter-spacing: -0.01em; }
+.entries { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; max-width: 520px; width: 100%; justify-self: center; }
+.entries li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; row-gap: 2px; }
+.entries .t { font-weight: 600; font-size: var(--step-body); }
+.entries .d { grid-column: 1; color: var(--paper-muted); font-size: var(--step-small); }
+.entries time { grid-row: 1; grid-column: 2; font-variant-numeric: tabular-nums; font-size: var(--step-small); padding-top: 0.2em; }
+.record-foot { text-align: center; color: var(--paper-muted); font-size: var(--step-small); }
+
+/* ---------- letter ---------- */
+.letter {
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+  padding-block: 180px;
+  display: grid; justify-items: center;
+}
+.letter-col { width: min(540px, 100%); display: grid; gap: 1.1em; }
+.letter-col .portrait { width: 52px; height: 52px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; margin-bottom: 12px; }
+.letter-col .portrait svg { width: 34px; height: 34px; }
+.letter-col .portrait svg { --leaf-fill: var(--accent); --vein: var(--surface); --stem: var(--accent); }
+.letter-col p { font-size: 1rem; line-height: 1.6; }
+.letter-col p:first-of-type { font-size: 1.125rem; font-weight: 600; line-height: 1.45; }
+.letter-col mark { background: var(--accent); color: var(--accent-ink); padding: 0 0.15em; }
+.sign { margin-top: 1em; display: grid; gap: 4px; }
+.sign strong { font-family: var(--font-display); font-weight: 800; font-size: var(--step-lead); letter-spacing: -0.01em; }
+.sign span { color: var(--muted); font-size: var(--step-small); }
+
+/* ---------- contact rows ---------- */
+.contact { display: grid; }
+.contact .row {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  min-height: clamp(96px, 11vw, 160px);
+  padding-left: calc(var(--gutter-l) + 8px); padding-right: calc(var(--gutter-r) + 8px);
+  padding-block: 18px 22px;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--step-display);
+  letter-spacing: -0.03em; line-height: 1;
+  text-decoration: none;
+}
+.contact .row:nth-child(odd) { background: var(--band); }
+.contact .row:nth-child(even) { background: var(--bg); }
+.contact a.row { transition: color 200ms ease; }
+.contact a.row:hover { color: var(--accent); }
+.contact .hello { background: var(--accent) !important; color: var(--accent-ink); align-items: center; }
+.contact .hello .go {
+  width: 0.9em; height: 0.9em; display: grid; place-items: center;
+  background: var(--accent-ink); color: var(--accent); font-size: 1em;
+  transition: transform 200ms var(--ease-out);
+}
+.contact .hello .go svg { width: 46%; height: 46%; }
+.contact .hello:hover .go { transform: translateX(8px); }
+.contact .hello:active .go { transform: translateX(8px) scale(0.95); }
+
+/* ---------- footer ---------- */
+.foot {
+  margin-top: 30svh;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+  padding-block: 0 30px;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 16px;
+  font-size: var(--step-small); color: var(--muted);
+}
+.foot nav { display: flex; gap: 24px; }
+.foot nav a { color: var(--ink); text-decoration: none; }
+.foot nav a:hover { color: var(--accent); }
+.foot .yr { justify-self: end; }
+
+/* ---------- entrance ---------- */
+[data-rise] { transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); transition-delay: var(--d, 0ms); }
+.js [data-rise].pre { opacity: 0; transform: translateY(24px); }
+@media (prefers-reduced-motion: reduce) {
+  [data-rise] { transition: none; }
+  .js [data-rise].pre { opacity: 1; transform: none; }
+  .find-tag { transition: opacity 120ms ease; }
+}
+
+/* ---------- phone ---------- */
+@media (max-width: 860px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .field { grid-row: 1; height: 56svh; z-index: 0; }
+  .reading { grid-row: 2; position: relative; z-index: 1; margin-top: -14svh; background: var(--bg); }
+  .sheet { min-height: 0; padding: 22px 22px 32px; }
+  .sheet-body { padding-block: 40px 24px; }
+  .sheet-body .btn { width: 100%; }
+  .wordmark { font-size: 1.25rem; }
+  .intro { padding: 72px 6px 96px; max-width: 78%; min-width: 280px; }
+  .branches { padding: 0 6px 96px; }
+  .branch-list .name { font-size: 2.25rem; }
+  .field-bar { padding: 8px 14px; top: 0; bottom: auto; }
+  .field-bar .hint-row .hint-text { display: none; }
+  .archive { margin-top: 64px; padding-block: 80px; padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  .record-body { padding: 44px 24px 52px; gap: 52px; }
+  .letter { padding-block: 120px; }
+  .contact .row { font-size: 9vw; min-height: 84px; padding-left: calc(var(--gutter-l)); padding-right: calc(var(--gutter-r)); flex-wrap: wrap; align-items: flex-end; row-gap: 6px; }
+    .contact .hello .go { width: 56px; height: 56px; font-size: 1rem; }
+  .foot { margin-top: 20svh; grid-template-columns: 1fr; gap: 8px; padding-bottom: 24px; }
+  .foot nav { flex-wrap: wrap; }
+  .foot .yr { justify-self: start; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="leaf" d="M0 0 C-6 -8 -24 -16 -22 -31.2 C-20 -42 -4 -43.2 0 -32.8 C4 -43.2 20 -42 22 -31.2 C24 -16 6 -8 0 0Z"/>
+    <symbol id="trefoil" viewBox="0 0 100 100">
+      <path class="stem" d="M50 52 Q62 70 56 96" fill="none" stroke-width="3.2" stroke-linecap="round" style="stroke: var(--stem, currentColor)"/>
+      <g transform="translate(50 52)">
+        <g><use href="#leaf" class="leaf" style="fill: var(--leaf-fill, currentColor); stroke: var(--leaf-stroke, none); stroke-width: var(--leaf-sw, 0)"/><path class="vein" d="M-10 -22 L0 -15 L10 -22" fill="none" style="stroke: var(--vein, transparent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(120)"><use href="#leaf" class="leaf" style="fill: var(--leaf-fill, currentColor); stroke: var(--leaf-stroke, none); stroke-width: var(--leaf-sw, 0)"/><path class="vein" d="M-10 -22 L0 -15 L10 -22" fill="none" style="stroke: var(--vein, transparent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(240)"><use href="#leaf" class="leaf" style="fill: var(--leaf-fill, currentColor); stroke: var(--leaf-stroke, none); stroke-width: var(--leaf-sw, 0)"/><path class="vein" d="M-10 -22 L0 -15 L10 -22" fill="none" style="stroke: var(--vein, transparent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="stage" id="top">
+  <div class="reading">
+    <header class="sheet">
+      <nav class="sheet-nav" aria-label="주요 메뉴">
+        <a href="#archive">아카이브</a>
+        <a class="wordmark" href="#top" aria-label="세잎 아카이브, 처음으로">
+          <svg aria-hidden="true" style="color:var(--accent)"><use href="#trefoil" fill="currentColor"/></svg>
+          세잎
+        </a>
+        <a href="#contact">연락</a>
+      </nav>
+      <div class="sheet-body">
+        <h1>네잎 사이에서 세잎을 찾습니다</h1>
+        <p>모두가 행운을 찾느라 지나치는 행복. 흔해서 놓치기 쉬운 공간과 생활과 서비스를 모읍니다.</p>
+        <a class="btn" href="#archive">기록 열두 편 보기</a>
+      </div>
+      <p class="sheet-foot">들판 어딘가에 세잎클로버 세 개가 숨어 있어요.</p>
+    </header>
+
+    <section class="intro" aria-label="소개">
+      <p data-rise>네잎클로버의 꽃말은 행운이고, 세잎클로버의 꽃말은 행복입니다.</p>
+      <p data-rise style="--d:80ms">사람들은 네잎을 찾으려고 세잎을 헤집습니다. 발밑에 가장 많이 자라는 것이 행복인데도, 흔하다는 이유로 그냥 지나칩니다.</p>
+      <p data-rise style="--d:160ms">이 페이지는 반대로 걷습니다. 들판은 온통 네잎클로버이고, 그 사이 어딘가에 세잎클로버가 딱 세 개 있습니다. 커서로, 손가락으로 헤집어 보세요.</p>
+      <p data-rise style="--d:240ms">세 개의 세잎은 제가 오래 들여다보는 세 가지입니다. 공간과 인테리어, 라이프스타일, 그리고 서비스 분석. <a href="#branches">세 갈래 보기</a></p>
+    </section>
+
+    <section class="branches" id="branches" aria-labelledby="branches-title">
+      <header data-rise>
+        <h2 id="branches-title">한 줄기, 세 장의 잎</h2>
+        <p>세 관심사는 한 질문에서 자랍니다. 사람은 어디서, 어떻게, 무엇으로 편안해지는가.</p>
+      </header>
+      <ul class="branch-list">
+        <li data-interest="space" data-found="false" data-rise style="--d:60ms">
+          <a href="#g-space" class="is-active">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>
+            <span class="name">공간과 인테리어</span>
+            <span class="meta"><b>사람이 머무는 곳.</b> 빛과 동선, 가구의 자리를 보며 머무르고 싶은 공간이 어떻게 생기는지 기록합니다.</span>
+            <span class="tally">기록 4편</span>
+          </a>
+        </li>
+        <li data-interest="life" data-found="false" data-rise style="--d:120ms">
+          <a href="#g-life">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>
+            <span class="name">라이프스타일</span>
+            <span class="meta"><b>사람이 사는 방식.</b> 매일 반복되는 작은 선택과, 하루를 덜 바쁘게 만드는 습관과 물건을 모읍니다.</span>
+            <span class="tally">기록 4편</span>
+          </a>
+        </li>
+        <li data-interest="service" data-found="false" data-rise style="--d:180ms">
+          <a href="#g-service">
+            <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>
+            <span class="name">서비스 분석</span>
+            <span class="meta"><b>사람이 쓰는 것.</b> 자주 쓰는 앱과 서비스를 뜯어보고, 사람이 망설이는 화면에서 그 이유를 찾습니다.</span>
+            <span class="tally">기록 4편</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="field" id="field">
+    <canvas role="img" aria-label="빽빽한 네잎클로버 들판. 그 아래 세잎클로버 세 개가 숨어 있습니다. 아래의 하나 보여 주기 버튼으로도 찾을 수 있습니다."></canvas>
+    <noscript><p>이 들판은 스크립트가 켜져 있을 때 헤집을 수 있어요. 세 관심사는 왼쪽에서 바로 볼 수 있습니다.</p></noscript>
+    <div class="field-bar">
+      <span class="count" aria-live="polite">찾은 세잎 <b id="found-n">0</b> / 3</span>
+      <span class="hint-row">
+        <span class="hint-text" id="hint-text">커서로 클로버를 헤집어 보세요</span>
+        <button class="hint-btn" id="hint-btn" type="button">하나 보여 주기</button>
+      </span>
+    </div>
+  </div>
+</div>
+
+<section class="archive" id="archive" aria-labelledby="archive-title">
+  <div class="record" data-rise>
+    <div class="scallop" aria-hidden="true"></div>
+    <div class="record-body">
+      <header class="record-head">
+        <h2 id="archive-title">세잎 채집 기록</h2>
+        <p>들판에서 찾은 세 장의 잎마다 네 편씩, 지금까지 모은 관찰 열두 편입니다.</p>
+      </header>
+
+      <section class="group" id="g-space" aria-labelledby="g-space-t">
+        <div class="group-head">
+          <svg aria-hidden="true"><use href="#trefoil"/></svg>
+          <h3 id="g-space-t">공간과 인테리어</h3>
+        </div>
+        <ul class="entries">
+          <li><span class="t">북향 거실의 오후 세 시</span><time datetime="2026-03">2026.03</time><span class="d">빛이 늦게 드는 방에서 조명의 색과 높이를 고르는 법</span></li>
+          <li><span class="t">작은 원룸의 동선 다시 짜기</span><time datetime="2026-05">2026.05</time><span class="d">가구 세 개만 옮겨서 생긴 여유를 도면으로 비교</span></li>
+          <li><span class="t">동네 카페 열두 곳의 의자</span><time datetime="2026-07">2026.07</time><span class="d">오래 앉고 싶게 만드는 좌판 높이와 등받이 각도</span></li>
+          <li><span class="t">현관이라는 첫 문장</span><time datetime="2026-09">2026.09</time><span class="d">신발장 위 한 뼘이 집의 첫인상을 정하는 방식</span></li>
+        </ul>
+      </section>
+
+      <section class="group" id="g-life" aria-labelledby="g-life-t">
+        <div class="group-head">
+          <svg aria-hidden="true"><use href="#trefoil"/></svg>
+          <h3 id="g-life-t">라이프스타일</h3>
+        </div>
+        <ul class="entries">
+          <li><span class="t">아침 루틴 30일 기록</span><time datetime="2026-02">2026.02</time><span class="d">커피보다 먼저 창문을 여는 습관이 남긴 것</span></li>
+          <li><span class="t">줄이는 대신 고르는 연습</span><time datetime="2026-04">2026.04</time><span class="d">한 달에 하나씩만 들인 물건과 그 이유</span></li>
+          <li><span class="t">걸어서 가는 장보기 지도</span><time datetime="2026-06">2026.06</time><span class="d">주말 시장 세 곳을 잇는 산책 동선</span></li>
+          <li><span class="t">식물 하나를 오래 키우는 법</span><time datetime="2026-08">2026.08</time><span class="d">물 주기보다 중요한 것은 빛과 자리라는 관찰</span></li>
+        </ul>
+      </section>
+
+      <section class="group" id="g-service" aria-labelledby="g-service-t">
+        <div class="group-head">
+          <svg aria-hidden="true"><use href="#trefoil"/></svg>
+          <h3 id="g-service-t">서비스 분석</h3>
+        </div>
+        <ul class="entries">
+          <li><span class="t">가계부 앱 세 개의 첫 화면</span><time datetime="2026-03">2026.03</time><span class="d">설치부터 첫 기록까지 몇 번을 눌러야 하는지 비교</span></li>
+          <li><span class="t">배달 앱의 장바구니</span><time datetime="2026-05">2026.05</time><span class="d">망설임을 줄이는 정보의 순서에 대하여</span></li>
+          <li><span class="t">공간 예약 서비스의 가입 흐름</span><time datetime="2026-07">2026.07</time><span class="d">사람들이 두 번째 화면에서 떠나는 이유</span></li>
+          <li><span class="t">구독 해지 버튼은 어디에</span><time datetime="2026-10">2026.10</time><span class="d">다섯 서비스의 해지 경로를 끝까지 따라가 보기</span></li>
+        </ul>
+      </section>
+
+      <p class="record-foot">기록은 계속 늘어납니다. 마지막 채집 2026년 10월.</p>
+    </div>
+    <div class="scallop bottom" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="letter" id="about" aria-label="소개 편지">
+  <div class="letter-col">
+    <div class="portrait" data-rise aria-hidden="true"><svg><use href="#trefoil"/></svg></div>
+    <p data-rise style="--d:60ms">안녕하세요. 이 들판을 만든 사람입니다.</p>
+    <p data-rise style="--d:120ms">어릴 때 친구들과 네잎클로버를 찾겠다고 풀밭을 한참 헤집은 적이 있어요. 끝내 하나도 못 찾았는데, 손바닥에는 세잎클로버만 한 움큼 남아 있었습니다.</p>
+    <p data-rise style="--d:180ms">지금 생각해 보면 그날 제가 쥐고 있던 게 <mark>행복</mark>이었어요. 너무 흔해서 아무도 세어 보지 않을 뿐이었죠.</p>
+    <p data-rise style="--d:240ms">그래서 저는 흔한 것을 오래 봅니다. 매일 지나치는 방의 빛, 습관처럼 하는 선택, 별생각 없이 누르는 버튼. 거기에 사람을 편하게 하는 이유가 숨어 있다고 믿어요.</p>
+    <p data-rise style="--d:300ms">여기 모인 기록은 그렇게 찾은 세잎클로버들입니다. 천천히 둘러보세요.</p>
+    <div class="sign" data-rise style="--d:360ms">
+      <strong>세잎 수집가</strong>
+      <span>공간, 생활, 서비스를 기록합니다</span>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact" aria-label="연락처">
+  <a class="row" href="mailto:you@example.com?subject=%EC%84%B8%EC%9E%8E%20%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%EB%A5%BC%20%EB%B3%B4%EA%B3%A0%20%EC%97%B0%EB%9D%BD%EB%93%9C%EB%A0%A4%EC%9A%94"><span>you@example.com</span></a>
+  <a class="row" href="#contact"><span>@your.handle</span></a>
+  <div class="row"><span>서울 어딘가에서</span></div>
+  <div class="row"><span>답장은 이틀 안에</span></div>
+  <a class="row hello" href="mailto:you@example.com"><span>안녕하세요</span><span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M4 12h15M13 5l7 7-7 7"/></svg></span></a>
+</section>
+
+<footer class="foot">
+  <span>세잎 아카이브, 흔한 행복의 기록</span>
+  <nav aria-label="바닥 메뉴"><a href="#archive">아카이브</a><a href="#about">소개</a><a href="#contact">연락</a></nav>
+  <span class="yr">2026 · 모든 그림은 코드로 그렸습니다</span>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- entrance: only for things that start below the first screen ---------- */
+  const rise = [...document.querySelectorAll('[data-rise]')];
+  if (!reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.remove('pre'); io.unobserve(e.target); }
+    }), { threshold: 0.12 });
+    rise.forEach(el => {
+      if (el.getBoundingClientRect().top > innerHeight * 0.95) { el.classList.add('pre'); io.observe(el); }
+    });
+  }
+
+  /* ---------- the field ---------- */
+  const field = document.getElementById('field');
+  const canvas = field.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const foundN = document.getElementById('found-n');
+  const hintText = document.getElementById('hint-text');
+  const hintBtn = document.getElementById('hint-btn');
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  if (coarse) hintText.textContent = '손가락으로 클로버를 헤집어 보세요';
+
+  const INTERESTS = [
+    { id: 'space', name: '공간과 인테리어', obj: '공간과 인테리어를', href: '#g-space' },
+    { id: 'life', name: '라이프스타일', obj: '라이프스타일을', href: '#g-life' },
+    { id: 'service', name: '서비스 분석', obj: '서비스 분석을', href: '#g-service' },
+  ];
+  // white clover greens: front, slightly yellow, and a cooler one
+  const GREENS = ['#4f7f45', '#5c8a48', '#44713f'];
+  const TIERS = [0.58, 0.8, 1.0];      // back, middle, front layer brightness
+  const ROTS = 6;                       // rotations baked into each sprite so light and shadow stay put // taste-skill-ignore: a leaf's cast shadow on the soil, part of the drawing
+  const SPRITE = 96;
+  const HIDDEN_Z = 0.3;
+  const TIER_RES = [0.68, 0.64, 0.72];  // sprites are rendered at the largest size each layer is drawn
+
+  let W = 0, H = 0, dpr = 1, items = [], split = 0, hidden = [], soil = null;
+  let cloverSprites = [], grassSprites = [], threeSprites = [], litSprites = [];
+  let raf = 0;
+  const pointer = { x: -999, y: -999, active: false, vx: 0, vy: 0 };
+
+  function rgb(hex) { const n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  function shade(col, k) {
+    const [r, g, b] = Array.isArray(col) ? col : rgb(col);
+    const f = v => Math.max(0, Math.min(255, Math.round(v * k)));
+    return `rgb(${f(r)},${f(g)},${f(b)})`;
+  }
+  function jitterColor(hex) {
+    const [r, g, b] = rgb(hex), j = () => (Math.random() - 0.5) * 14;
+    return [r + j(), g + j(), b + j() * 0.6];
+  }
+  function sheet(res) {
+    const s = document.createElement('canvas');
+    s.width = s.height = Math.round(SPRITE * res * dpr);
+    const c = s.getContext('2d');
+    c.scale(res * dpr, res * dpr); c.translate(SPRITE / 2, SPRITE / 2);
+    return [s, c];
+  }
+
+  // one obovate leaflet with a shallow notch at the tip, base at the origin, pointing up
+  function leaflet(c, L, w, col) {
+    const p = new Path2D();
+    p.moveTo(0, 0);
+    p.bezierCurveTo(-0.2 * L * w, -0.1 * L, -0.58 * L * w, -0.4 * L, -0.5 * L * w, -0.73 * L);
+    p.bezierCurveTo(-0.44 * L * w, -0.99 * L, -0.13 * L * w, -1.04 * L, 0, -0.88 * L);
+    p.bezierCurveTo(0.13 * L * w, -1.04 * L, 0.44 * L * w, -0.99 * L, 0.5 * L * w, -0.73 * L);
+    p.bezierCurveTo(0.58 * L * w, -0.4 * L, 0.2 * L * w, -0.1 * L, 0, 0);
+    const g = c.createLinearGradient(0, 0, 0, -L);
+    g.addColorStop(0, shade(col, 0.5));
+    g.addColorStop(0.4, shade(col, 0.92));
+    g.addColorStop(1, shade(col, 1.12));
+    c.fillStyle = g; c.fill(p);
+    c.save(); c.clip(p);
+    // the pale crescent white clover carries on every leaflet
+    c.strokeStyle = `rgba(224,238,206,${0.12 + Math.random() * 0.12})`; c.lineWidth = L * (0.07 + Math.random() * 0.05); c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-0.44 * L * w, -0.64 * L); c.quadraticCurveTo(0, -0.28 * L, 0.44 * L * w, -0.64 * L); c.stroke();
+    // side veins
+    c.strokeStyle = 'rgba(12,30,10,0.2)'; c.lineWidth = 0.55;
+    for (let i = 1; i <= 5; i++) {
+      const y = -L * (0.12 + i * 0.13);
+      c.beginPath();
+      c.moveTo(0, y); c.quadraticCurveTo(-0.22 * L * w, y - 0.04 * L, -0.56 * L * w, y - 0.14 * L);
+      c.moveTo(0, y); c.quadraticCurveTo(0.22 * L * w, y - 0.04 * L, 0.56 * L * w, y - 0.14 * L);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = 'rgba(14,34,12,0.4)'; c.lineWidth = 0.9;
+    c.beginPath(); c.moveTo(0, -0.04 * L); c.lineTo(0, -0.86 * L); c.stroke();
+    c.strokeStyle = 'rgba(236,246,222,0.12)'; c.lineWidth = 0.7; c.stroke(p);
+  }
+
+  // light from the top left, shadow cast down and to the right, the same for every sprite // taste-skill-ignore: a leaf's cast shadow on the soil, part of the drawing
+  function finish(src, tier, res) {
+    const S = src.width, c = src.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.globalCompositeOperation = 'source-atop';
+    const g = c.createLinearGradient(S * 0.15, S * 0.15, S * 0.85, S * 0.85);
+    g.addColorStop(0, 'rgba(255,250,215,0.16)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0.3)');
+    c.fillStyle = g; c.fillRect(0, 0, S, S);
+    if (tier < 1) { c.fillStyle = `rgba(8,16,10,${1 - tier})`; c.fillRect(0, 0, S, S); }
+    c.globalCompositeOperation = 'source-over';
+    const out = document.createElement('canvas');
+    out.width = out.height = S;
+    const o = out.getContext('2d');
+    o.shadowColor = 'rgba(0,0,0,0.6)'; o.shadowBlur = 6 * dpr * res; o.shadowOffsetX = 2 * dpr * res; o.shadowOffsetY = 4 * dpr * res;
+    o.drawImage(src, 0, 0);
+    return out;
+  }
+
+  function makeClover(n, base, rot, tier, res) {
+    const [s, c] = sheet(res);
+    const L = SPRITE * 0.29;
+    const col = jitterColor(base);
+    c.strokeStyle = shade(col, 0.72); c.lineWidth = 2.2; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(L * 0.3, L * 0.6, L * 0.12, L * 1.25); c.stroke();
+    c.rotate(rot);
+    for (let i = 0; i < n; i++) {
+      c.save();
+      c.rotate((Math.PI * 2 / n) * i + (Math.random() - 0.5) * 0.28);
+      const fore = 0.74 + Math.random() * 0.26; // a leaflet tilted away looks shorter
+      c.scale(0.96 + Math.random() * 0.08, fore);
+      leaflet(c, L, 0.9 + Math.random() * 0.15, jitterColor(base));
+      c.restore();
+    }
+    c.fillStyle = shade(col, 0.42);
+    c.beginPath(); c.arc(0, 0, 1.6, 0, Math.PI * 2); c.fill();
+    return finish(s, tier, res);
+  }
+
+  function makeTuft(tier) {
+    const [s, c] = sheet(0.8);
+    const blades = 3 + (Math.random() * 3 | 0);
+    for (let i = 0; i < blades; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.3;
+      const len = SPRITE * (0.28 + Math.random() * 0.16);
+      const bx = (Math.random() - 0.5) * 8, by = SPRITE * 0.14;
+      const tx = bx + Math.cos(a) * len, ty = by + Math.sin(a) * len;
+      const bend = (Math.random() - 0.5) * 18;
+      const col = jitterColor(GREENS[(Math.random() * GREENS.length) | 0]);
+      const g = c.createLinearGradient(bx, by, tx, ty);
+      g.addColorStop(0, shade(col, 0.45)); g.addColorStop(1, shade(col, 1.15));
+      c.fillStyle = g;
+      c.beginPath();
+      c.moveTo(bx - 1.6, by);
+      c.quadraticCurveTo((bx + tx) / 2 + bend - 1, (by + ty) / 2, tx, ty);
+      c.quadraticCurveTo((bx + tx) / 2 + bend + 1, (by + ty) / 2, bx + 1.6, by);
+      c.fill();
+    }
+    return finish(s, tier, 0.8);
+  }
+
+  function buildSprites() {
+    const r = k => (Math.PI * 2 / ROTS) * k;
+    cloverSprites = TIERS.map((t, ti) => GREENS.flatMap(g => Array.from({ length: ROTS }, (_, k) => makeClover(4, g, r(k), t, TIER_RES[ti]))));
+    grassSprites = TIERS.map(t => Array.from({ length: 3 }, () => makeTuft(t)));
+  }
+  // the three hidden clovers get their own sprites, plain and sunlit
+  function buildHiddenSprites() {
+    const lit = ['#6a9a54', '#74a35a', '#6c9a58'];
+    threeSprites = hidden.map((h, i) => makeClover(3, GREENS[i], (Math.PI * 2 / ROTS) * h.rk, 0.86, 0.64));
+    litSprites = hidden.map((h, i) => makeClover(3, lit[i], (Math.PI * 2 / ROTS) * h.rk, 1.0, 0.64));
+  }
+
+  function buildSoil() {
+    soil = document.createElement('canvas');
+    soil.width = Math.round(W * dpr); soil.height = Math.round(H * dpr);
+    const c = soil.getContext('2d');
+    c.fillStyle = '#0e1410'; c.fillRect(0, 0, soil.width, soil.height);
+    const dots = Math.round(W * H / 60);
+    for (let i = 0; i < dots; i++) {
+      const a = Math.random() * 0.12 + 0.03;
+      c.fillStyle = Math.random() < 0.65 ? `rgba(110,86,60,${a})` : `rgba(60,90,55,${a})`;
+      const r = (Math.random() * 1.6 + 0.4) * dpr;
+      c.fillRect(Math.random() * soil.width, Math.random() * soil.height, r, r);
+    }
+    // leaf litter and runners: what you see when you dig down to the ground
+    c.scale(dpr, dpr);
+    const litter = Math.round(W * H / 700);
+    for (let i = 0; i < litter; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      c.save(); c.translate(x, y); c.rotate(Math.random() * Math.PI * 2);
+      if (Math.random() < 0.55) {
+        const l = 3 + Math.random() * 5;
+        c.fillStyle = `rgba(${70 + Math.random() * 40},${60 + Math.random() * 30},${35 + Math.random() * 15},${0.35 + Math.random() * 0.3})`;
+        c.beginPath(); c.ellipse(0, 0, l, l * 0.55, 0, 0, Math.PI * 2); c.fill();
+      } else {
+        c.strokeStyle = `rgba(${45 + Math.random() * 25},${70 + Math.random() * 30},${40 + Math.random() * 15},0.5)`;
+        c.lineWidth = 0.8 + Math.random() * 0.8; c.lineCap = 'round';
+        const l = 10 + Math.random() * 18;
+        c.beginPath(); c.moveTo(-l / 2, 0); c.quadraticCurveTo(0, (Math.random() - 0.5) * 8, l / 2, 0); c.stroke();
+      }
+      c.restore();
+    }
+  }
+
+  function placeHidden(prev) {
+    if (prev && prev.length === 3) {
+      hidden = prev.map(h => ({ ...h, x: h.fx * W, y: h.fy * H }));
+      return;
+    }
+    const pts = [];
+    const minD = Math.min(W, H) * 0.3;
+    // on a phone the reading sheet covers the lower part of the field, so hide them higher up
+    const narrow = innerWidth <= 860;
+    const y0 = narrow ? 0.24 : 0.14, y1 = narrow ? 0.62 : 0.76;
+    let tries = 0;
+    while (pts.length < 3 && tries++ < 600) {
+      const fx = 0.16 + Math.random() * 0.68, fy = y0 + Math.random() * (y1 - y0);
+      const x = fx * W, y = fy * H;
+      // far enough apart that their name tags never overlap
+      if (pts.every(p => Math.hypot(p.x - x, p.y - y) > minD && (Math.abs(p.x - x) > 190 || Math.abs(p.y - y) > 84))) pts.push({ fx, fy, x, y });
+    }
+    while (pts.length < 3) { const i = pts.length, fx = 0.3 + (i % 2) * 0.4, fy = y0 + (y1 - y0) * i / 2; pts.push({ fx, fy, x: fx * W, y: fy * H }); }
+    hidden = pts.map((p, i) => ({
+      ...p, interest: INTERESTS[i], rk: (Math.random() * ROTS) | 0,
+      s: 0.6, v: i, found: false, t: 0, tag: null, seen: 0, shown: false,
+    }));
+  }
+
+  function buildItems() {
+    items = [];
+    const step = 18.3; // about 20% more leaves than a 20px grid
+    for (let y = -step; y < H + step; y += step * 0.86) {
+      for (let x = -step; x < W + step; x += step) {
+        const z = Math.random();
+        const tier = z < 0.33 ? 0 : z < 0.66 ? 1 : 2;
+        const grass = Math.random() < 0.16;
+        items.push({
+          hx: x + (Math.random() - 0.5) * step * 0.95,
+          hy: y + (Math.random() - 0.5) * step * 0.95,
+          rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0,
+          z, tier, grass,
+          // the bottom layer is drawn larger so no bare soil shows until you dig
+          s: (grass ? 0.5 : 0.44) + z * 0.2 + Math.random() * 0.06 + (tier === 0 && !grass ? 0.1 : 0),
+          v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0,
+        });
+      }
+    }
+    // back to front, so nearer leaves overlap farther ones
+    items.sort((a, b) => a.z - b.z);
+    split = items.findIndex(c => c.z >= HIDDEN_Z);
+  }
+
+  function resize() {
+    const r = field.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (r.width === W && r.height === H) return;
+    const prev = hidden.length ? hidden : null;
+    W = r.width; H = r.height;
+    const nd = Math.min(window.devicePixelRatio || 1, 2);
+    const rebuild = !cloverSprites.length || nd !== dpr;
+    dpr = nd;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    if (rebuild) buildSprites();
+    buildSoil(); buildItems(); placeHidden(prev); bury();
+    if (rebuild || !prev) buildHiddenSprites();
+    hidden.forEach(h => { if (h.tag) placeTag(h); });
+    draw(true);
+  }
+
+  const R = 66; // how far a fingertip parts the leaves
+
+  // is the hidden clover in the open? test its centre and its three leaflets against nearer leaves only
+  function exposed(h) {
+    const L = SPRITE * h.s * 0.29;
+    const pts = [[h.x, h.y]];
+    for (let i = 0; i < 3; i++) {
+      const a = (Math.PI * 2 / ROTS) * h.rk + (Math.PI * 2 / 3) * i - Math.PI / 2;
+      pts.push([h.x + Math.cos(a) * L * 0.55, h.y + Math.sin(a) * L * 0.55]);
+    }
+    let open = 0;
+    for (const [x, y] of pts) {
+      let covered = false;
+      for (let i = split; i < items.length && !covered; i++) {
+        const c = items[i], r = SPRITE * c.s * 0.25;
+        const dx = c.hx + c.ox - x, dy = c.hy + c.oy - y;
+        if (dx * dx + dy * dy < r * r) covered = true;
+      }
+      if (!covered) open++;
+    }
+    return open >= 3;
+  }
+
+  // make sure every hidden clover starts properly buried under a few nearer leaves
+  function bury() {
+    const extra = [];
+    for (const h of hidden) {
+      for (let k = 0; k < 4; k++) {
+        const a = Math.random() * Math.PI * 2, d = 4 + Math.random() * 8, z = 0.7 + Math.random() * 0.3;
+        extra.push({ hx: h.x + Math.cos(a) * d, hy: h.y + Math.sin(a) * d, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0,
+          z, tier: 2, grass: false, s: 0.6 + Math.random() * 0.08, v: (Math.random() * GREENS.length * ROTS) | 0 });
+      }
+    }
+    items = items.concat(extra).sort((a, b) => a.z - b.z);
+    split = items.findIndex(c => c.z >= HIDDEN_Z);
+  }
+
+  let last = 0;
+  function step(now) {
+    // physics runs on real time, so slow devices close the field just as quickly
+    const k = Math.min(3, last ? (now - last) / 16.67 : 1);
+    last = now;
+    let energy = 0;
+    const p = pointer;
+    for (const c of items) {
+      let tx = c.rx, ty = c.ry;
+      if (p.active) {
+        const bx = c.hx + c.rx, by = c.hy + c.ry;
+        const dx = bx - p.x, dy = by - p.y, d = Math.hypot(dx, dy) || 0.01;
+        if (d < R) {
+          const f = 1 - d / R;
+          // upper leaves part fully, the lower ones only lean, so a dug hole still shows layers
+          const push = R * f * (0.3 + c.z * 0.75);
+          tx += dx / d * push + p.vx * f * 0.6;
+          ty += dy / d * push + p.vy * f * 0.6;
+          // leaves that were dug through lag a moment before they settle back
+          c.rx += (tx - c.rx) * 0.03 * f * k;
+          c.ry += (ty - c.ry) * 0.03 * f * k;
+        }
+      }
+      c.vx += (tx - c.ox) * 0.09 * k; c.vy += (ty - c.oy) * 0.09 * k;
+      const damp = Math.pow(0.76, k);
+      c.vx *= damp; c.vy *= damp;
+      const mv = Math.abs(c.vx) + Math.abs(c.vy);
+      if (mv > 0.02) mark(c.hx + c.ox, c.hy + c.oy, reach(c));
+      c.ox += c.vx * k; c.oy += c.vy * k;
+      if (mv > 0.02) mark(c.hx + c.ox, c.hy + c.oy, reach(c));
+      const settle = Math.pow(0.965, k);
+      c.rx *= settle; c.ry *= settle;
+      c.rot = c.ox * 0.008;
+      energy += Math.abs(c.vx) + Math.abs(c.vy) + Math.abs(c.rx) * 0.05;
+    }
+    for (const h of hidden) {
+      const open = (p.active && Math.hypot(p.x - h.x, p.y - h.y) < R * 1.2) || h.found ? exposed(h) : false;
+      if (open) h.seen = now;
+      if (!h.found && open && p.active) find(h);
+      if (h.found) {
+        if (h.t < 0.999) { h.t += (1 - h.t) * 0.09; energy += 1; mark(h.x, h.y, SPRITE * h.s * 0.7); }
+        // the tag stays only while the clover is in the open, with a short grace period
+        const show = now - h.seen < 260;
+        if (show !== h.shown) { h.shown = show; h.tag.classList.toggle('is-hidden', !show); mark(h.x, h.y, SPRITE * h.s * 0.7); }
+        if (show) energy += 1;
+      }
+    }
+    p.vx *= 0.8; p.vy *= 0.8;
+    return energy;
+  }
+
+  function blit(img, x, y, rot, s) {
+    const cs = Math.cos(rot) * s * dpr, sn = Math.sin(rot) * s * dpr;
+    ctx.setTransform(cs, sn, -sn, cs, x * dpr, y * dpr);
+    ctx.drawImage(img, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
+  }
+
+  function drawItem(c) {
+    const img = c.grass ? grassSprites[c.tier][c.v] : cloverSprites[c.tier][c.v];
+    blit(img, c.hx + c.ox, c.hy + c.oy, c.rot, c.s);
+  }
+
+  // only the part of the field that moved is painted again each frame
+  let dirty = null;
+  function mark(x, y, r) {
+    if (!dirty) dirty = { x0: x - r, y0: y - r, x1: x + r, y1: y + r };
+    else { dirty.x0 = Math.min(dirty.x0, x - r); dirty.y0 = Math.min(dirty.y0, y - r); dirty.x1 = Math.max(dirty.x1, x + r); dirty.y1 = Math.max(dirty.y1, y + r); }
+  }
+  const reach = c => SPRITE * c.s * 0.5 + 6;
+
+  function draw(full) {
+    let x0 = 0, y0 = 0, x1 = W, y1 = H;
+    if (!full) {
+      if (!dirty) return;
+      x0 = Math.max(0, Math.floor(dirty.x0)); y0 = Math.max(0, Math.floor(dirty.y0));
+      x1 = Math.min(W, Math.ceil(dirty.x1)); y1 = Math.min(H, Math.ceil(dirty.y1));
+      if (x1 <= x0 || y1 <= y0) { dirty = null; return; }
+    }
+    dirty = null;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const px = Math.floor(x0 * dpr), py = Math.floor(y0 * dpr), pw = Math.ceil((x1 - x0) * dpr) + 1, ph = Math.ceil((y1 - y0) * dpr) + 1;
+    ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
+    ctx.drawImage(soil, px, py, pw, ph, px, py, pw, ph);
+    const hit = c => { const x = c.hx + c.ox, y = c.hy + c.oy, r = reach(c); return x + r > x0 && x - r < x1 && y + r > y0 && y - r < y1; };
+    for (let i = 0; i < split; i++) if (hit(items[i])) drawItem(items[i]);
+    for (const h of hidden) {
+      const r = SPRITE * h.s * 0.7;
+      if (h.x + r < x0 || h.x - r > x1 || h.y + r < y0 || h.y - r > y1) continue;
+      const pop = h.found ? 1 + Math.sin(Math.min(h.t, 1) * Math.PI) * 0.18 : 1;
+      blit(threeSprites[h.v], h.x, h.y, 0, h.s * pop);
+      if (h.found && h.shown) {
+        ctx.globalAlpha = 0.85;
+        blit(litSprites[h.v], h.x, h.y, 0, h.s * pop);
+        ctx.globalAlpha = 1;
+      }
+    }
+    for (let i = split; i < items.length; i++) if (hit(items[i])) drawItem(items[i]);
+    ctx.restore();
+  }
+
+  function tick(now) {
+    const e = step(now);
+    draw(false);
+    raf = (e > 0.4 || pointer.active || sweeping) ? requestAnimationFrame(tick) : (last = 0);
+  }
+  function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+
+  function placeTag(h) {
+    if (!h.tag) {
+      const a = document.createElement('a');
+      a.className = 'find-tag is-hidden';
+      a.href = h.interest.href;
+      a.textContent = h.interest.name;
+      // resting the cursor on the tag keeps the leaves parted, so it can be clicked
+      a.addEventListener('pointerleave', e => { if (e.relatedTarget !== canvas) release(); });
+      field.appendChild(a);
+      h.tag = a;
+    }
+    const x = Math.max(70, Math.min(W - 70, h.x));
+    h.tag.style.left = x + 'px';
+    h.tag.style.top = h.y + 'px';
+  }
+
+  const branchItems = {};
+  document.querySelectorAll('.branch-list li').forEach(li => { branchItems[li.dataset.interest] = li; });
+
+  function find(h) {
+    h.found = true; h.t = 0;
+    placeTag(h);
+    const li = branchItems[h.interest.id];
+    if (li) li.dataset.found = 'true';
+    const n = hidden.filter(x => x.found).length;
+    foundN.textContent = n;
+    hintText.textContent = n === 3
+      ? '세 개 모두 찾았어요. 행복은 원래 흔했습니다.'
+      : `${h.interest.obj} 찾았어요. 이름표를 누르면 기록으로 갑니다.`;
+    if (n === 3) { hintBtn.disabled = true; hintBtn.textContent = '다 찾았어요'; }
+    wake();
+  }
+
+  /* pointer */
+  let releaseTimer = 0;
+  function local(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function release() { clearTimeout(releaseTimer); if (!sweeping) pointer.active = false; }
+  canvas.addEventListener('pointermove', e => {
+    clearTimeout(releaseTimer);
+    const q = local(e);
+    if (pointer.active) { pointer.vx = q.x - pointer.x; pointer.vy = q.y - pointer.y; }
+    pointer.x = q.x; pointer.y = q.y; pointer.active = true;
+    wake();
+  });
+  canvas.addEventListener('pointerdown', e => {
+    clearTimeout(releaseTimer);
+    const q = local(e); pointer.x = q.x; pointer.y = q.y; pointer.active = true;
+    canvas.setPointerCapture?.(e.pointerId); wake();
+  });
+  canvas.addEventListener('pointerleave', e => {
+    if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.find-tag')) return;
+    if (e.pointerType === 'mouse') release();
+  });
+  // a lifted finger leaves the hole open long enough to tap the tag
+  canvas.addEventListener('pointerup', e => {
+    if (e.pointerType === 'mouse') return;
+    clearTimeout(releaseTimer); releaseTimer = setTimeout(release, 1500);
+  });
+  canvas.addEventListener('pointercancel', release);
+
+  /* the hint: a hand sweeps the leaves aside over one hidden clover, holds, then lets go */
+  let sweeping = false;
+  hintBtn.addEventListener('click', () => {
+    const h = hidden.find(x => !x.found);
+    if (!h || sweeping) return;
+    sweeping = true;
+    const t0 = performance.now(), dur = reduce ? 1 : 900;
+    const sx = h.x + (h.x < W / 2 ? 140 : -140), sy = h.y + 60;
+    const move = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      const wob = Math.sin(k * Math.PI * 4) * 18 * (1 - k);
+      const nx = sx + (h.x - sx) * e + wob, ny = sy + (h.y - sy) * e - wob * 0.5;
+      pointer.vx = nx - pointer.x; pointer.vy = ny - pointer.y;
+      pointer.x = nx; pointer.y = ny; pointer.active = true;
+      wake();
+      if (k < 1) requestAnimationFrame(move);
+      else {
+        // hold the leaves open while it is found, then let the field close again
+        const hold = performance.now();
+        const keep = t => {
+          pointer.vx = 0; pointer.vy = 0; pointer.x = h.x + 6; pointer.y = h.y + 4;
+          if (t - hold < 1800) requestAnimationFrame(keep);
+          else { sweeping = false; pointer.active = false; }
+        };
+        requestAnimationFrame(keep);
+      }
+    };
+    requestAnimationFrame(move);
+  });
+
+  /* hovering an interest name says where its clover is */
+  document.querySelectorAll('.branch-list a').forEach(a => {
+    a.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.branch-list a').forEach(o => o.classList.toggle('is-active', o === a));
+      const h = hidden.find(x => x.interest.id === a.parentElement.dataset.interest);
+      if (!h) return;
+      hintText.textContent = h.found ? '찾았던 자리에 다시 묻혀 있어요. 그 근처를 헤집어 보세요' : '이 잎은 아직 들판 속에 있어요';
+    });
+  });
+
+  new ResizeObserver(() => { resize(); }).observe(field);
+  resize();
+
+  // a small gust when the page opens, so the field reads as alive
+  if (!reduce) {
+    for (const c of items) { c.vx = (Math.random() - 0.3) * 3; c.vy = (Math.random() - 0.5) * 2; }
+    wake();
+  }
+})();
+</script>
+</body>
+</html>
