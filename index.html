@@ -189,7 +189,7 @@ a { color: inherit; }
 
 /* ---------- archive: three lists side by side ---------- */
 .archive {
-  margin-top: 120px;
+  margin-top: 140px;
   padding-left: var(--gutter-l); padding-right: var(--gutter-r);
   padding-block: 0 160px;
 }
@@ -199,6 +199,20 @@ a { color: inherit; }
 .archive-head p { color: var(--muted); font-size: var(--step-lead); }
 .groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px clamp(32px, 4vw, 64px); }
 .group { display: grid; align-content: start; gap: 22px; scroll-margin-top: 24px; }
+.photo { margin: 0; overflow: hidden; border-radius: 20px; background: var(--surface); }
+.photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 900ms var(--ease-out); }
+.group .photo { aspect-ratio: 4 / 3; max-width: 100%; }
+.group:hover .photo img { transform: scale(1.04); }
+.band { margin: 0 var(--gutter-r) 0 var(--gutter-l); padding-inline: 0; }
+.band .photo { aspect-ratio: 21 / 8; max-width: 100%; border-radius: var(--radius); }
+.band .photo img { transform: scale(var(--band-scale, 1.08)); transition: none; will-change: transform; }
+.band p { margin-top: 14px; padding-inline: calc(var(--pad) - 16px); color: var(--muted); font-size: var(--step-small); }
+.letter-side { display: grid; align-content: start; gap: 28px; }
+.letter-side .photo { aspect-ratio: 4 / 5; max-width: min(360px, 100%); }
+.credits { padding-left: calc(var(--gutter-l) + var(--pad) - 16px); padding-right: calc(var(--gutter-r) + var(--pad) - 16px); padding-block: 48px 0; color: var(--muted); font-size: var(--step-small); display: grid; gap: 6px; max-width: 60em; }
+.credits strong { color: var(--ink); font-weight: 500; }
+.credits a { color: inherit; text-underline-offset: 3px; }
+.credits a:hover { color: var(--accent); }
 .group h3 { font-size: 1.25rem; letter-spacing: -0.025em; color: var(--accent-deep); }
 .entries { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
 .entries li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; row-gap: 2px; }
@@ -261,6 +275,8 @@ a { color: inherit; }
 [data-rise] { transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); transition-delay: var(--d, 0ms); }
 .js [data-rise].pre { opacity: 0; transform: translateY(24px); }
 @media (prefers-reduced-motion: reduce) {
+  .band .photo img { transform: none; }
+  .group:hover .photo img { transform: none; }
   [data-rise] { transition: none; }
   .js [data-rise].pre { opacity: 1; transform: none; }
   .find-tag { transition: opacity 120ms ease; }
@@ -283,6 +299,8 @@ a { color: inherit; }
   .field-bar { top: 12px; bottom: auto; }
   .field-bar .hint-row .hint-text { display: none; }
   .archive { margin-top: 32px; padding-block: 0 112px; }
+  .band .photo { aspect-ratio: 4 / 3; }
+  .letter-side .photo { aspect-ratio: 16 / 10; max-width: 100%; }
   .archive-inner { padding-inline: 8px; gap: 36px; }
   .letter { padding-block: 0 112px; }
   .letter-inner { padding-inline: 8px; }
@@ -382,6 +400,10 @@ a { color: inherit; }
   </div>
 </div>
 
+<figure class="band" aria-label="토끼풀이 핀 잔디밭">
+  <div class="photo"><img src="assets/clover-lawn.jpg" width="1024" height="683" loading="lazy" alt="꽃이 핀 토끼풀이 가득한 잔디밭"></div>
+</figure>
+
 <section class="archive" id="archive" aria-labelledby="archive-title">
   <div class="archive-inner">
     <header class="archive-head" data-rise>
@@ -391,6 +413,7 @@ a { color: inherit; }
 
     <div class="groups">
       <section class="group" id="g-space" aria-labelledby="g-space-t" data-rise style="--d:60ms">
+        <figure class="photo"><img src="assets/window-light.jpg" width="569" height="1024" loading="lazy" alt="흰 창가에 꽂힌 꽃과 오후의 빛"></figure>
         <h3 id="g-space-t">공간과 인테리어</h3>
         <ul class="entries">
           <li><span class="t">북향 거실의 오후 세 시</span><time datetime="2026-03">2026.03</time><span class="d">빛이 늦게 드는 방에서 조명의 색과 높이를 고르는 법</span></li>
@@ -401,6 +424,7 @@ a { color: inherit; }
       </section>
 
       <section class="group" id="g-life" aria-labelledby="g-life-t" data-rise style="--d:120ms">
+        <figure class="photo"><img src="assets/morning-mug.jpg" width="1024" height="683" loading="lazy" alt="창가 탁자 위 흰 머그잔과 분홍 화분"></figure>
         <h3 id="g-life-t">라이프스타일</h3>
         <ul class="entries">
           <li><span class="t">아침 루틴 30일 기록</span><time datetime="2026-02">2026.02</time><span class="d">커피보다 먼저 창문을 여는 습관이 남긴 것</span></li>
@@ -411,6 +435,7 @@ a { color: inherit; }
       </section>
 
       <section class="group" id="g-service" aria-labelledby="g-service-t" data-rise style="--d:180ms">
+        <figure class="photo"><img src="assets/phone-hand.jpg" width="1024" height="683" loading="lazy" alt="휴대폰을 들고 화면을 누르려는 손"></figure>
         <h3 id="g-service-t">서비스 분석</h3>
         <ul class="entries">
           <li><span class="t">가계부 앱 세 개의 첫 화면</span><time datetime="2026-03">2026.03</time><span class="d">설치부터 첫 기록까지 몇 번을 눌러야 하는지 비교</span></li>
@@ -427,9 +452,11 @@ a { color: inherit; }
 
 <section class="letter" id="about" aria-labelledby="about-title">
   <div class="letter-inner">
-    <h2 id="about-title" data-rise>들판을 만든 사람</h2>
+    <div class="letter-side">
+      <h2 id="about-title" data-rise>들판을 만든 사람</h2>
+      <figure class="photo" data-rise style="--d:80ms"><img src="assets/clover-bloom.jpg" width="1024" height="683" loading="lazy" alt="잔디 사이에 핀 토끼풀꽃 한 송이"></figure>
+    </div>
     <div class="letter-col">
-      <div class="portrait" data-rise aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#trefoil"/></svg></div>
       <p data-rise style="--d:60ms">안녕하세요. 이 들판을 만든 사람입니다.</p>
       <p data-rise style="--d:120ms">어릴 때 친구들과 네잎클로버를 찾겠다고 풀밭을 한참 헤집은 적이 있어요. 끝내 하나도 못 찾았는데, 손바닥에는 세잎클로버만 한 움큼 남아 있었습니다.</p>
       <p data-rise style="--d:180ms">지금 생각해 보면 그날 제가 쥐고 있던 게 <mark>행복</mark>이었어요. 너무 흔해서 아무도 세어 보지 않을 뿐이었죠.</p>
@@ -453,10 +480,18 @@ a { color: inherit; }
   <a class="btn" href="mailto:you@example.com" data-rise style="--d:160ms">메일 보내기 <span class="arrow" aria-hidden="true">→</span></a>
 </section>
 
+<section class="credits" aria-label="사진 출처">
+  <strong>사진 출처</strong>
+  <span><a href="https://www.flickr.com/photos/99758165@N06/14442094141">White clover (Trifolium repens) in a backyard lawn</a>, <a href="https://www.flickr.com/photos/99758165@N06/14273626838">White clover</a> · The NYSIPM Image Gallery · <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a></span>
+  <span><a href="https://www.flickr.com/photos/59209848@N08/5549364569">Plage Nature Deco</a> · Plage Vinilos y Decoración · <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a></span>
+  <span><a href="https://www.flickr.com/photos/135396164@N05/31751560526">Coffee apology</a>, <a href="https://www.flickr.com/photos/135396164@N05/23707913564">Uber app</a>(화면 흐림 처리) · freestocks.org · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a></span>
+  <span>클로버 들판 그림은 코드로 그렸습니다. 사진은 분위기를 위한 것이며 이 사이트 주인의 공간이나 작업이 아닙니다.</span>
+</section>
+
 <footer class="foot">
   <span>세잎 아카이브, 흔한 행복의 기록</span>
   <nav aria-label="바닥 메뉴"><a href="#archive">아카이브</a><a href="#about">소개</a><a href="#contact">연락</a></nav>
-  <span class="yr">2026 · 모든 그림은 코드로 그렸습니다</span>
+  <span class="yr">2026</span>
 </footer>
 
 <script>
@@ -472,6 +507,20 @@ a { color: inherit; }
     rise.forEach(el => {
       if (el.getBoundingClientRect().top > innerHeight * 0.95) { el.classList.add('pre'); io.observe(el); }
     });
+  }
+
+  /* ---------- the band photo drifts slowly as it passes ---------- */
+  const bandImg = document.querySelector('.band img');
+  if (bandImg && !reduce) {
+    let ticking = false;
+    const drift = () => {
+      ticking = false;
+      const r = bandImg.parentElement.getBoundingClientRect();
+      const t = Math.max(0, Math.min(1, (innerHeight - r.top) / (innerHeight + r.height)));
+      bandImg.style.setProperty('--band-scale', (1.14 - t * 0.1).toFixed(4));
+    };
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(drift); } }, { passive: true });
+    drift();
   }
 
   /* ---------- the field ---------- */
