@@ -184,6 +184,8 @@ a { color: inherit; }
   .menu { font-size: 1rem; gap: 20px; }
   .wordmark { font-size: 1rem; }
   .lead { padding-block: 72px 32px; }
+  /* one sentence per line: shrink just enough that each line fits the phone's width */
+  .lead p { font-size: clamp(14px, 3.85vw, 16px); }
   .field { height: 64svh; }
   .field-bar .hint-row .hint-text { display: none; }
   .grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
