@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js')</script>
 <style>
-/* Layout: a quiet portfolio index. A thin wordmark and grey menu, a wide margin of white,
+/* Layout: a quiet portfolio index. A grey menu at the top right, a wide margin of white,
    the clover field across the whole width, then outline filter pills and a three-column grid
    of records with an empty thumbnail, a title and "interest / date". Light type throughout. */
 :root {
@@ -31,7 +31,6 @@
   --step-body: 1rem;
   --step-item: 1.25rem;
   --step-title: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
-  --step-wordmark: clamp(2rem, 1.4rem + 1.6vw, 2.75rem);
 
   --gutter-l: max(20px, env(safe-area-inset-left, 0px));
   --gutter-r: max(20px, env(safe-area-inset-right, 0px));
@@ -67,8 +66,7 @@ a { color: inherit; }
 .wrap { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
 
 /* ---------- header ---------- */
-.top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 56px 0; }
-.wordmark { font-size: var(--step-wordmark); font-weight: 300; letter-spacing: 0.02em; text-decoration: none; line-height: 1; }
+.top { display: flex; align-items: center; justify-content: flex-end; gap: 24px; padding-block: 56px 0; }
 .menu { display: flex; gap: clamp(20px, 3.4vw, 48px); font-size: 1.125rem; }
 .menu a { color: var(--muted); text-decoration: none; padding: 8px 0; transition: color 160ms ease; }
 .menu a:hover { color: var(--ink); }
@@ -105,22 +103,23 @@ a { color: inherit; }
 .hint-btn[disabled] { opacity: 0.55; cursor: default; }
 .find-tag {
   position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none;
-  transform: translate(-50%, calc(-100% - 30px));
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 16px; background: var(--bg); color: var(--ink); border-radius: 999px;
-  font: 400 var(--step-small)/1.2 var(--font); text-decoration: none; white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 22px));
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; background: var(--bg); color: var(--ink); border-radius: 999px;
+  font: 400 0.8125rem/1.2 var(--font); text-decoration: none; white-space: nowrap;
   transition: opacity 220ms ease, transform 260ms var(--ease-out), background-color 200ms ease, color 200ms ease;
 }
-.find-tag.is-hidden { opacity: 0; transform: translate(-50%, calc(-100% - 20px)) scale(0.94); pointer-events: none; }
+.find-tag.is-hidden { opacity: 0; transform: translate(-50%, calc(-100% - 14px)) scale(0.94); pointer-events: none; }
 .field noscript p { position: absolute; inset: 40% 24px auto; text-align: center; color: #e8ece6; }
 
 /* ---------- filter pills + grid ---------- */
 .archive { padding-block: 48px 160px; scroll-margin-top: 16px; }
-.filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 40px; padding: 0; list-style: none; }
+.archive-inner { max-width: 1040px; margin-inline: auto; }
+.filter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 32px; padding: 0; list-style: none; }
 .filter button {
   display: inline-flex; align-items: center;
-  min-height: 36px; padding: 0 16px;
-  font: 300 0.9375rem/1 var(--font); color: var(--muted);
+  min-height: 30px; padding: 0 12px;
+  font: 300 0.8125rem/1 var(--font); color: var(--muted);
   background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 160ms var(--ease-out);
 }
@@ -128,7 +127,7 @@ a { color: inherit; }
 .filter button:active { transform: scale(0.97); }
 .filter button[aria-pressed="true"] { background: var(--pill-on); border-color: var(--pill-on); color: var(--ink); font-weight: 400; }
 
-.grid { list-style: none; margin: 0; padding: 0; max-width: 1040px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px 28px; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px 28px; }
 .card { display: grid; gap: 12px; align-content: start; }
 .card[hidden] { display: none; }
 .thumb {
@@ -183,7 +182,6 @@ a { color: inherit; }
   .lead { padding-block: 72px 32px; }
   .field { height: 64svh; }
   .field-bar .hint-row .hint-text { display: none; }
-  .filter button { min-height: 36px; padding: 0 14px; }
   .grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .about, .contact { grid-template-columns: minmax(0, 1fr); }
   .about .col + .col { grid-column: 1; margin-top: 24px; }
@@ -210,13 +208,12 @@ a { color: inherit; }
 </svg>
 
 <header class="wrap top" id="top">
-  <a class="wordmark" href="#top">세잎 아카이브</a>
   <nav class="menu" aria-label="주요 메뉴"><a href="#archive">기록</a><a href="#about">소개</a><a href="#contact">연락</a></nav>
 </header>
 
 <section class="wrap lead" aria-labelledby="lead-title">
   <h1 id="lead-title">네잎 사이에서 세잎을 찾습니다</h1>
-  <p>모두가 행운을 찾느라 지나치는 행복. 흔해서 놓치기 쉬운 공간과 생활과 서비스를 모읍니다. 아래 들판에 세잎클로버 일곱 개가 숨어 있어요.</p>
+  <p>모두가 행운을 찾느라 지나치는 행복.<br>흔해서 놓치기 쉬운 공간과 생활과 서비스를 모읍니다.<br>아래 들판에 세잎클로버 일곱 개가 숨어 있어요.</p>
 </section>
 
 <div class="wrap">
@@ -234,6 +231,7 @@ a { color: inherit; }
 </div>
 
 <section class="wrap archive" id="archive" aria-label="기록">
+  <div class="archive-inner">
   <ul class="filter" aria-label="관심사로 거르기">
     <li><button type="button" aria-pressed="true" data-filter="all">전체</button></li>
     <li><button type="button" aria-pressed="false" data-filter="space">공간과 인테리어</button></li>
@@ -302,6 +300,7 @@ a { color: inherit; }
         <p>라이프스타일 / 2026.02</p>
       </li>
   </ul>
+  </div>
 </section>
 
 <section class="wrap about" id="about" aria-labelledby="about-title">
@@ -381,13 +380,13 @@ a { color: inherit; }
 
   // each hidden three-leaf clover carries one small, ordinary happiness
   const PHRASES = [
-    '창가에 드는 오후 햇살',
-    '막 내린 커피 냄새',
-    '딱 맞는 자리에 놓인 의자',
-    '퇴근길에 본 노을',
-    '제자리를 찾은 물건',
-    '화분에 난 새잎 하나',
-    '말 안 해도 알아듣는 버튼',
+    '햇살이 잘 드는 이불의 뽀송함',
+    '알람 없이 눈을 뜬 주말 아침',
+    '차가운 손을 녹여주는 따뜻한 컵',
+    '횡단보도 신호등이 바로 바뀔 때',
+    '책장에서 우연히 발견한 오만원권',
+    '약속 없는 저녁, 좋아하는 노래',
+    '오늘 하루도 무사히 끝났다는 안도',
   ];
   const N = PHRASES.length;
   // white clover greens: front, slightly yellow, and a cooler one
@@ -799,7 +798,9 @@ a { color: inherit; }
       field.appendChild(a);
       h.tag = a;
     }
-    const x = Math.max(70, Math.min(W - 70, h.x));
+    // keep the whole label inside the field, whatever the phrase's length
+    const half = (h.tag.offsetWidth || 140) / 2 + 8;
+    const x = Math.max(half, Math.min(W - half, h.x));
     h.tag.style.left = x + 'px';
     h.tag.style.top = h.y + 'px';
   }
