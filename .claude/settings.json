@@ -5,9 +5,16 @@
         "source": "github",
         "repo": "AThevon/genjutsu"
       }
+    },
+    "dembrandt": {
+      "source": {
+        "source": "github",
+        "repo": "dembrandt/dembrandt-skills"
+      }
     }
   },
   "enabledPlugins": {
-    "genjutsu@genjutsu": true
+    "genjutsu@genjutsu": true,
+    "dembrandt@dembrandt": true
   }
 }
