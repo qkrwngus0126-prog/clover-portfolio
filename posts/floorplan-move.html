@@ -115,11 +115,6 @@ img { display: block; max-width: 100%; height: auto; }
 .row > * { min-width: 0; flex: var(--r, 1) 1 0; }
 .row img { width: 100%; background: var(--thumb); }
 figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6; }
-.ph {
-  aspect-ratio: var(--ar, 4 / 3); max-width: 100%; background: var(--thumb);
-  display: grid; place-items: center; text-align: center; padding: 16px;
-  color: var(--muted); font-size: var(--step-small);
-}
 
 .conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
 .conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
@@ -235,10 +230,9 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
       <h3>사고 싶은 가구의 길이와 폭을 숫자로 적어요.</h3>
       <p>방 치수와 나란히 놓고 비교해요. 저도 길이나 폭이 안 맞아서 포기한 가구가 있었어요.</p>
       <figure class="fig">
-        <!-- 사진이 오면 .ph 두 칸을 <img>로 바꿉니다 -->
         <div class="row stack">
-          <div class="ph" style="--r: 1.2; --ar: 4 / 3">사진 준비 중<br>도면 위 3D 가구 배치</div>
-          <div class="ph" style="--r: 0.8; --ar: 3 / 4">사진 준비 중<br>가구 상품 치수</div>
+          <img src="images/floorplan-3d-layout.png" width="400" height="404" style="--r: 0.990" loading="lazy" alt="실측 도면 위에 침대와 책상을 놓아본 3D 인테리어 화면. 옆에는 가구의 너비, 깊이, 높이를 조절하는 칸이 있음">
+          <img src="images/floorplan-products.png" width="372" height="547" style="--r: 0.680" loading="lazy" alt="비교한 저상형 침대 프레임 상품들. 한 상품에 1164x2144x1002mm 치수와 가격이 적혀 있음">
         </div>
         <figcaption>도면을 토대로 가구를 배치해요.</figcaption>
       </figure>
@@ -248,8 +242,8 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
       <p>저도 마지막엔 가격이 우선이었어요.</p>
       <figure class="fig">
         <div class="row stack">
-          <div class="ph" style="--r: 1.2; --ar: 4 / 3">사진 준비 중<br>책상과 침대를 놓아본 배치</div>
-          <div class="ph" style="--r: 1; --ar: 1 / 1">사진 준비 중<br>실제 구매 내역</div>
+          <img src="images/floorplan-3d-closeup.png" width="400" height="376" style="--r: 1.064" loading="lazy" alt="책상과 침대 사이 통로 폭과 문이 열리는 방향을 화살표로 표시한 3D 배치 화면">
+          <img src="images/floorplan-orders.png" width="400" height="361" style="--r: 1.108" loading="lazy" alt="구매 확정 내역. 원목 책상 129,000원, 높은 선반 수납장 108,640원">
         </div>
         <figcaption>3D로 놓아본 배치와 실제로 산 책상, 수납장.</figcaption>
       </figure>
