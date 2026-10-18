@@ -104,46 +104,41 @@ a { color: inherit; }
 .hint-btn:active { transform: scale(0.97); }
 .hint-btn[disabled] { opacity: 0.55; cursor: default; }
 .find-tag {
-  position: absolute; z-index: 3; left: 0; top: 0;
+  position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none;
   transform: translate(-50%, calc(-100% - 30px));
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 16px; background: var(--bg); color: var(--ink); border-radius: 999px;
   font: 400 var(--step-small)/1.2 var(--font); text-decoration: none; white-space: nowrap;
   transition: opacity 220ms ease, transform 260ms var(--ease-out), background-color 200ms ease, color 200ms ease;
 }
-.find-tag:hover { background: var(--accent); color: var(--accent-ink); }
-.find-tag::after { content: "→"; }
 .find-tag.is-hidden { opacity: 0; transform: translate(-50%, calc(-100% - 20px)) scale(0.94); pointer-events: none; }
 .field noscript p { position: absolute; inset: 40% 24px auto; text-align: center; color: #e8ece6; }
 
 /* ---------- filter pills + grid ---------- */
 .archive { padding-block: 48px 160px; scroll-margin-top: 16px; }
-.filter { display: flex; flex-wrap: wrap; gap: 12px 14px; margin: 0 0 16px; padding: 0; list-style: none; }
+.filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 40px; padding: 0; list-style: none; }
 .filter button {
-  display: inline-flex; align-items: center; gap: 8px;
-  min-height: 48px; padding: 0 24px;
-  font: 300 1.125rem/1 var(--font); color: var(--muted);
+  display: inline-flex; align-items: center;
+  min-height: 36px; padding: 0 16px;
+  font: 300 0.9375rem/1 var(--font); color: var(--muted);
   background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 160ms var(--ease-out);
 }
 .filter button:hover { color: var(--ink); border-color: var(--muted); }
 .filter button:active { transform: scale(0.97); }
 .filter button[aria-pressed="true"] { background: var(--pill-on); border-color: var(--pill-on); color: var(--ink); font-weight: 400; }
-.filter svg { width: 20px; height: 20px; color: #b4bab3; --leaf-fill: none; --leaf-stroke: currentColor; --leaf-sw: 3; --stem: currentColor; transition: transform 300ms var(--ease-out); }
-.filter li[data-found="true"] svg { color: var(--accent); --leaf-fill: var(--accent); --leaf-stroke: var(--accent); --vein: var(--bg); transform: rotate(-10deg); }
-.filter-note { color: var(--muted); font-size: var(--step-small); margin-bottom: 40px; }
 
-.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px clamp(24px, 4.6vw, 68px); }
-.card { display: grid; gap: 14px; align-content: start; }
+.grid { list-style: none; margin: 0; padding: 0; max-width: 1040px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px 28px; }
+.card { display: grid; gap: 12px; align-content: start; }
 .card[hidden] { display: none; }
 .thumb {
   aspect-ratio: 3 / 2; max-width: 100%; background: var(--thumb);
   display: grid; place-items: center; overflow: hidden;
 }
-.thumb svg { width: 36px; height: 36px; color: #d3d7d2; --leaf-fill: currentColor; --stem: currentColor; transition: transform 500ms var(--ease-out), color 300ms ease; }
+.thumb svg { width: 28px; height: 28px; color: #d3d7d2; --leaf-fill: currentColor; --stem: currentColor; transition: transform 500ms var(--ease-out), color 300ms ease; }
 .card:hover .thumb svg { transform: rotate(-14deg) scale(1.1); color: #b9c4b8; }
-.card h3 { font-size: var(--step-item); letter-spacing: -0.01em; line-height: 1.35; }
-.card p { margin-top: -8px; color: var(--muted); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.card h3 { font-size: 1.0625rem; letter-spacing: -0.01em; line-height: 1.35; }
+.card p { margin-top: -8px; color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .grid.is-switching .card { animation: card-in 420ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes card-in { from { opacity: 0; transform: translateY(10px); } }
 
@@ -188,7 +183,7 @@ a { color: inherit; }
   .lead { padding-block: 72px 32px; }
   .field { height: 64svh; }
   .field-bar .hint-row .hint-text { display: none; }
-  .filter button { min-height: 44px; padding: 0 18px; font-size: 1rem; }
+  .filter button { min-height: 36px; padding: 0 14px; }
   .grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .about, .contact { grid-template-columns: minmax(0, 1fr); }
   .about .col + .col { grid-column: 1; margin-top: 24px; }
@@ -221,15 +216,15 @@ a { color: inherit; }
 
 <section class="wrap lead" aria-labelledby="lead-title">
   <h1 id="lead-title">네잎 사이에서 세잎을 찾습니다</h1>
-  <p>모두가 행운을 찾느라 지나치는 행복. 흔해서 놓치기 쉬운 공간과 생활과 서비스를 모읍니다. 아래 들판에 세잎클로버 세 개가 숨어 있어요.</p>
+  <p>모두가 행운을 찾느라 지나치는 행복. 흔해서 놓치기 쉬운 공간과 생활과 서비스를 모읍니다. 아래 들판에 세잎클로버 일곱 개가 숨어 있어요.</p>
 </section>
 
 <div class="wrap">
   <div class="field" id="field">
-    <canvas role="img" aria-label="빽빽한 네잎클로버 들판. 그 아래 세잎클로버 세 개가 숨어 있습니다. 하나 보여 주기 버튼으로도 찾을 수 있습니다."></canvas>
+    <canvas role="img" aria-label="빽빽한 네잎클로버 들판. 그 아래 세잎클로버 일곱 개가 숨어 있습니다. 하나 보여 주기 버튼으로도 찾을 수 있습니다."></canvas>
     <noscript><p>이 들판은 스크립트가 켜져 있을 때 헤집을 수 있어요. 기록은 아래에서 바로 볼 수 있습니다.</p></noscript>
     <div class="field-bar">
-      <span class="count" aria-live="polite">찾은 세잎 <b id="found-n">0</b> / 3</span>
+      <span class="count" aria-live="polite">찾은 세잎 <b id="found-n">0</b> / 7</span>
       <span class="hint-row">
         <span class="hint-text" id="hint-text">커서로 클로버를 헤집어 보세요</span>
         <button class="hint-btn" id="hint-btn" type="button">하나 보여 주기</button>
@@ -241,11 +236,10 @@ a { color: inherit; }
 <section class="wrap archive" id="archive" aria-label="기록">
   <ul class="filter" aria-label="관심사로 거르기">
     <li><button type="button" aria-pressed="true" data-filter="all">전체</button></li>
-    <li data-interest="space" data-found="false"><button type="button" aria-pressed="false" data-filter="space"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>공간과 인테리어</button></li>
-    <li data-interest="life" data-found="false"><button type="button" aria-pressed="false" data-filter="life"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>라이프스타일</button></li>
-    <li data-interest="service" data-found="false"><button type="button" aria-pressed="false" data-filter="service"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>서비스 분석</button></li>
+    <li><button type="button" aria-pressed="false" data-filter="space">공간과 인테리어</button></li>
+    <li><button type="button" aria-pressed="false" data-filter="life">라이프스타일</button></li>
+    <li><button type="button" aria-pressed="false" data-filter="service">서비스 분석</button></li>
   </ul>
-  <p class="filter-note">들판에서 찾은 세잎은 초록색으로 켜집니다.</p>
   <ul class="grid" id="grid">
       <li class="card" data-cat="service">
         <div class="thumb" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#trefoil"/></svg></div>
@@ -315,7 +309,7 @@ a { color: inherit; }
   <div class="col">
     <p data-rise>네잎클로버의 꽃말은 행운이고, 세잎클로버의 꽃말은 행복입니다.</p>
     <p data-rise style="--d:60ms">사람들은 네잎을 찾으려고 세잎을 헤집습니다. 발밑에 가장 많이 자라는 것이 행복인데도, 흔하다는 이유로 그냥 지나칩니다.</p>
-    <p data-rise style="--d:120ms">이 페이지는 반대로 걷습니다. 들판은 온통 네잎클로버이고, 그 사이 어딘가에 세잎클로버가 딱 세 개 있습니다. 세 개의 세잎은 제가 오래 들여다보는 세 가지, 공간과 인테리어, 라이프스타일, 그리고 서비스 분석입니다.</p>
+    <p data-rise style="--d:120ms">이 페이지는 반대로 걷습니다. 들판은 온통 네잎클로버이고, 그 사이에 세잎클로버가 일곱 개 숨어 있습니다. 하나씩 찾을 때마다 제가 아끼는 작은 행복이 하나씩 보여요.</p>
   </div>
   <div class="col">
     <p data-rise>안녕하세요. 이 들판을 만든 사람입니다.</p>
@@ -385,11 +379,17 @@ a { color: inherit; }
   const coarse = matchMedia('(pointer: coarse)').matches;
   if (coarse) hintText.textContent = '손가락으로 클로버를 헤집어 보세요';
 
-  const INTERESTS = [
-    { id: 'space', name: '공간과 인테리어', obj: '공간과 인테리어를', href: '#archive' },
-    { id: 'life', name: '라이프스타일', obj: '라이프스타일을', href: '#archive' },
-    { id: 'service', name: '서비스 분석', obj: '서비스 분석을', href: '#archive' },
+  // each hidden three-leaf clover carries one small, ordinary happiness
+  const PHRASES = [
+    '창가에 드는 오후 햇살',
+    '막 내린 커피 냄새',
+    '딱 맞는 자리에 놓인 의자',
+    '퇴근길에 본 노을',
+    '제자리를 찾은 물건',
+    '화분에 난 새잎 하나',
+    '말 안 해도 알아듣는 버튼',
   ];
+  const N = PHRASES.length;
   // white clover greens: front, slightly yellow, and a cooler one
   const GREENS = ['#4f7f45', '#5c8a48', '#44713f'];
   const TIERS = [0.66, 0.86, 1.0];      // back, middle, front layer brightness
@@ -523,8 +523,8 @@ a { color: inherit; }
   // the three hidden clovers get their own sprites, plain and sunlit
   function buildHiddenSprites() {
     const lit = ['#6a9a54', '#74a35a', '#6c9a58'];
-    threeSprites = hidden.map((h, i) => makeClover(3, GREENS[i], (Math.PI * 2 / ROTS) * h.rk, 0.86, 0.64));
-    litSprites = hidden.map((h, i) => makeClover(3, lit[i], (Math.PI * 2 / ROTS) * h.rk, 1.0, 0.64));
+    threeSprites = hidden.map((h, i) => makeClover(3, GREENS[i % GREENS.length], (Math.PI * 2 / ROTS) * h.rk, 0.86, 0.64));
+    litSprites = hidden.map((h, i) => makeClover(3, lit[i % lit.length], (Math.PI * 2 / ROTS) * h.rk, 1.0, 0.64));
   }
 
   function buildSoil() {
@@ -560,26 +560,36 @@ a { color: inherit; }
   }
 
   function placeHidden(prev) {
-    if (prev && prev.length === 3) {
+    if (prev && prev.length === N) {
       hidden = prev.map(h => ({ ...h, x: h.fx * W, y: h.fy * H }));
       return;
     }
     const pts = [];
-    const minD = Math.min(W, H) * 0.3;
-    // on a phone the reading sheet covers the lower part of the field, so hide them higher up
-    const narrow = innerWidth <= 860;
-    const y0 = narrow ? 0.24 : 0.14, y1 = narrow ? 0.62 : 0.76;
-    let tries = 0;
-    while (pts.length < 3 && tries++ < 600) {
-      const fx = 0.16 + Math.random() * 0.68, fy = y0 + Math.random() * (y1 - y0);
-      const x = fx * W, y = fy * H;
-      // far enough apart that their name tags never overlap
-      if (pts.every(p => Math.hypot(p.x - x, p.y - y) > minD && (Math.abs(p.x - x) > 190 || Math.abs(p.y - y) > 84))) pts.push({ fx, fy, x, y });
+    // keep clear of the bar along the bottom edge
+    const y0 = 0.16, y1 = 0.76;
+    // far enough apart that two tags never sit on top of each other; on a small field the rule loosens step by step
+    let minD = Math.min(W, H) * 0.2, tagW = 190, tagH = 84;
+    for (let round = 0; round < 6 && pts.length < N; round++) {
+      for (let tries = 0; tries < 1500 && pts.length < N; tries++) {
+        const fx = 0.14 + Math.random() * 0.72, fy = y0 + Math.random() * (y1 - y0);
+        const x = fx * W, y = fy * H;
+        if (pts.every(p => Math.hypot(p.x - x, p.y - y) > minD && (Math.abs(p.x - x) > tagW || Math.abs(p.y - y) > tagH))) pts.push({ fx, fy, x, y });
+      }
+      minD = Math.max(60, minD * 0.85); tagH = Math.max(48, tagH * 0.85);
     }
-    while (pts.length < 3) { const i = pts.length, fx = 0.3 + (i % 2) * 0.4, fy = y0 + (y1 - y0) * i / 2; pts.push({ fx, fy, x: fx * W, y: fy * H }); }
+    // still short on a tiny field: take whichever of many random spots is farthest from the rest
+    while (pts.length < N) {
+      let pick = null, far = -1;
+      for (let t = 0; t < 400; t++) {
+        const fx = 0.14 + Math.random() * 0.72, fy = y0 + Math.random() * (y1 - y0), x = fx * W, y = fy * H;
+        const d = Math.min(...pts.map(p => Math.hypot(p.x - x, p.y - y)));
+        if (d > far) { far = d; pick = { fx, fy, x, y }; }
+      }
+      pts.push(pick);
+    }
     hidden = pts.map((p, i) => ({
-      ...p, interest: INTERESTS[i], rk: (Math.random() * ROTS) | 0,
-      s: 0.6, v: i, found: false, t: 0, tag: null, seen: 0, shown: false,
+      ...p, phrase: PHRASES[i], rk: (Math.random() * ROTS) | 0,
+      s: 0.6, v: i, found: false, t: 0, tag: null, seen: 0, shown: false, lit: false,
     }));
   }
 
@@ -702,11 +712,22 @@ a { color: inherit; }
       if (!h.found && open && p.active) find(h);
       if (h.found) {
         if (h.t < 0.999) { h.t += (1 - h.t) * 0.09; energy += 1; mark(h.x, h.y, SPRITE * h.s * 0.7); }
-        // the tag stays only while the clover is in the open, with a short grace period
-        const show = now - h.seen < 260;
-        if (show !== h.shown) { h.shown = show; h.tag.classList.toggle('is-hidden', !show); mark(h.x, h.y, SPRITE * h.s * 0.7); }
-        if (show) energy += 1;
+        // a found clover is lit while it is in the open, with a short grace period
+        const lit = now - h.seen < 260;
+        if (lit !== h.lit) { h.lit = lit; mark(h.x, h.y, SPRITE * h.s * 0.7); }
+        if (lit) energy += 1;
       }
+    }
+    // only one tag at a time: the lit clover nearest the hand
+    let best = null, bestD = Infinity;
+    for (const h of hidden) {
+      if (!h.lit) continue;
+      const d = p.active ? Math.hypot(p.x - h.x, p.y - h.y) : now - h.seen;
+      if (d < bestD) { bestD = d; best = h; }
+    }
+    for (const h of hidden) {
+      const show = h === best;
+      if (h.tag && show !== h.shown) { h.shown = show; h.tag.classList.toggle('is-hidden', !show); }
     }
     p.vx *= 0.8; p.vy *= 0.8;
     return energy;
@@ -752,7 +773,7 @@ a { color: inherit; }
       if (h.x + r < x0 || h.x - r > x1 || h.y + r < y0 || h.y - r > y1) continue;
       const pop = h.found ? 1 + Math.sin(Math.min(h.t, 1) * Math.PI) * 0.18 : 1;
       blit(threeSprites[h.v], h.x, h.y, 0, h.s * pop);
-      if (h.found && h.shown) {
+      if (h.found && h.lit) {
         ctx.globalAlpha = 0.85;
         blit(litSprites[h.v], h.x, h.y, 0, h.s * pop);
         ctx.globalAlpha = 1;
@@ -771,13 +792,10 @@ a { color: inherit; }
 
   function placeTag(h) {
     if (!h.tag) {
-      const a = document.createElement('a');
+      // a plain label, not a link: the cursor passes straight through it to the leaves
+      const a = document.createElement('span');
       a.className = 'find-tag is-hidden';
-      a.href = h.interest.href;
-      a.textContent = h.interest.name;
-      a.addEventListener('click', () => setFilter(h.interest.id));
-      // resting the cursor on the tag keeps the leaves parted, so it can be clicked
-      a.addEventListener('pointerleave', e => { if (e.relatedTarget !== canvas) release(); });
+      a.textContent = h.phrase;
       field.appendChild(a);
       h.tag = a;
     }
@@ -786,20 +804,15 @@ a { color: inherit; }
     h.tag.style.top = h.y + 'px';
   }
 
-  const branchItems = {};
-  document.querySelectorAll('.filter li[data-interest]').forEach(li => { branchItems[li.dataset.interest] = li; });
-
   function find(h) {
     h.found = true; h.t = 0;
     placeTag(h);
-    const li = branchItems[h.interest.id];
-    if (li) li.dataset.found = 'true';
     const n = hidden.filter(x => x.found).length;
     foundN.textContent = n;
-    hintText.textContent = n === 3
-      ? '세 개 모두 찾았어요. 행복은 원래 흔했습니다.'
-      : `${h.interest.obj} 찾았어요. 이름표를 누르면 기록으로 갑니다.`;
-    if (n === 3) { hintBtn.disabled = true; hintBtn.textContent = '다 찾았어요'; }
+    hintText.textContent = n === N
+      ? '일곱 개 모두 찾았어요. 행복은 원래 흔했습니다.'
+      : `세잎 하나, ${h.phrase}.`;
+    if (n === N) { hintBtn.disabled = true; hintBtn.textContent = '다 찾았어요'; }
     wake();
   }
 
