@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도면이 있어 운이 좋았던 이사 · 세잎 아카이브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="평면도 조회가 안 되는 집에서, 아버지가 만들어준 도면으로 가구를 3D에 놓아보고 산 기록. 서비스 분석.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one record, read like a magazine column. The same header as the index, then a narrow
+   text column (about 40 characters of Korean) with figures that step out wider than the text.
+   Clover green marks the interest, the summary, step numbers, key sentences and the conclusion. */
+:root {
+  --bg: #ffffff;
+  --thumb: #f2f3f1;
+  --ink: #1a1c1a;
+  --muted: #6b716b;        /* 5:1 on white */
+  --rule: #e3e6e2;
+  --accent: #17803f;       /* clover green, 5.2:1 on white, readable as text */
+  --accent-soft: #eef6f0;  /* summary ground */
+
+  --font: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+
+  --step-small: 0.875rem;
+  --step-body: 1.0625rem;
+  --step-h2: 1.5rem;
+  --step-title: clamp(2rem, 1.35rem + 2.4vw, 3.25rem);
+
+  --text: 680px;
+  --wide: 1040px;
+  --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: var(--step-body);
+  line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+h1, h2, h3 { font-weight: 300; letter-spacing: -0.02em; line-height: 1.3; margin: 0; text-wrap: balance; }
+p, ol, ul, figure { margin: 0; }
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: #dff0e3; color: var(--ink); }
+
+.wrap { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+
+/* ---------- header, same as the index ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 56px 0; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; text-decoration: none; padding: 8px 0; }
+.wordmark svg { width: 20px; height: 20px; color: var(--accent); --leaf-fill: currentColor; --stem: currentColor; transition: transform 300ms var(--ease-out); }
+.wordmark:hover svg { transform: rotate(-12deg); }
+.menu { display: flex; gap: clamp(20px, 3.4vw, 48px); font-size: 1.125rem; }
+.menu a { color: var(--muted); text-decoration: none; padding: 8px 0; transition: color 160ms ease; }
+.menu a:hover { color: var(--ink); }
+
+/* ---------- the record ---------- */
+.post { display: grid; gap: 28px; padding-block: clamp(56px, 7vw, 104px) 120px; }
+.post > * { width: 100%; max-width: var(--text); margin-inline: auto; }
+.post > .wide { max-width: var(--wide); }
+
+.back { font-size: var(--step-small); color: var(--muted); text-decoration: none; justify-self: start; transition: color 160ms ease; }
+.back:hover { color: var(--accent); }
+
+.head { display: grid; gap: 16px; padding-bottom: 36px; border-bottom: 1px solid var(--rule); }
+.kicker { color: var(--accent); font-size: var(--step-small); font-weight: 500; letter-spacing: 0.02em; }
+.head h1 { font-size: var(--step-title); line-height: 1.22; }
+.dek { color: var(--muted); font-size: 1.1875rem; line-height: 1.6; }
+.meta { color: var(--muted); font-size: var(--step-small); font-variant-numeric: tabular-nums; }
+
+.summary { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 22px 26px; display: grid; gap: 8px; }
+.summary h2 { font-size: 1rem; font-weight: 500; color: var(--accent); letter-spacing: 0; }
+.summary ol { padding-left: 1.3em; display: grid; gap: 4px; }
+.summary li::marker { color: var(--accent); font-weight: 500; }
+
+.post h2.sec { font-size: var(--step-h2); font-weight: 400; margin-top: 36px; }
+.post strong { font-weight: 500; }
+.key { color: var(--accent); font-weight: 500; }
+
+.walls { list-style: none; padding: 0; display: grid; gap: 6px; }
+.walls b { font-weight: 500; }
+
+/* the steps are a real order: read the floor plan, compare numbers, then decide on price */
+.steps { list-style: none; padding: 0; display: grid; gap: 40px; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 4px 16px; counter-increment: step; }
+.steps > li::before {
+  content: counter(step); grid-row: 1 / span 3;
+  color: var(--accent); font-size: 2.25rem; font-weight: 300; line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.steps h3 { font-size: 1.1875rem; font-weight: 400; line-height: 1.5; }
+.steps .fig { grid-column: 1 / -1; margin-top: 20px; }
+
+/* figures: images side by side at one common height, each keeping its own shape */
+.fig { display: grid; gap: 12px; }
+.row { display: flex; gap: 12px; align-items: flex-start; }
+.row > * { min-width: 0; flex: var(--r, 1) 1 0; }
+.row img { width: 100%; background: var(--thumb); }
+figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6; }
+.ph {
+  aspect-ratio: var(--ar, 4 / 3); max-width: 100%; background: var(--thumb);
+  display: grid; place-items: center; text-align: center; padding: 16px;
+  color: var(--muted); font-size: var(--step-small);
+}
+
+.conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
+.conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
+.conclusion p { font-size: 1.1875rem; line-height: 1.85; font-weight: 400; }
+
+.next { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+.next a { text-decoration: none; transition: color 160ms ease; }
+.next a:hover { color: var(--accent); }
+.next .label { color: var(--muted); font-size: var(--step-small); }
+
+.foot { padding-block: 0 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: var(--step-small); color: var(--muted); }
+
+/* ---------- phone ---------- */
+@media (max-width: 720px) {
+  body { font-size: 1rem; }
+  .top { padding-block: 32px 0; flex-wrap: wrap; }
+  .menu { font-size: 1rem; gap: 20px; }
+  .wordmark { font-size: 1rem; }
+  .post { padding-block: 48px 96px; gap: 24px; }
+  .dek { font-size: 1.0625rem; }
+  .summary { padding: 18px 20px; }
+  .steps > li { grid-template-columns: 1.75rem minmax(0, 1fr); gap: 4px 12px; }
+  .steps > li::before { font-size: 1.75rem; }
+  .conclusion p { font-size: 1.0625rem; }
+  /* three tall pictures: swipe sideways instead of shrinking them to stamps */
+  .row.swipe { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .row.swipe > * { flex: 0 0 72%; scroll-snap-align: start; }
+  /* a tall and a wide picture: stack them, the tall one kept to a readable height */
+  .row.stack { flex-direction: column; align-items: center; }
+  .row.stack > * { flex: none; width: 100%; }
+  .row.stack img { width: auto; max-width: 100%; max-height: 520px; margin-inline: auto; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="leaf" d="M0 0 C-6 -8 -24 -16 -22 -31.2 C-20 -42 -4 -43.2 0 -32.8 C4 -43.2 20 -42 22 -31.2 C24 -16 6 -8 0 0Z"/>
+    <symbol id="trefoil" viewBox="0 0 100 100">
+      <path d="M50 52 Q62 70 56 96" fill="none" stroke-width="3.2" stroke-linecap="round" style="stroke: var(--stem, currentColor)"/>
+      <g transform="translate(50 52)" style="fill: var(--leaf-fill, currentColor)">
+        <use href="#leaf"/>
+        <use href="#leaf" transform="rotate(120)"/>
+        <use href="#leaf" transform="rotate(240)"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="wrap top">
+  <a class="wordmark" href="../index.html"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>세잎 아카이브</a>
+  <nav class="menu" aria-label="주요 메뉴"><a href="../index.html#archive">기록</a><a href="../index.html#about">소개</a><a href="../index.html#contact">연락</a></nav>
+</header>
+
+<main class="wrap">
+<article class="post">
+  <a class="back" href="../index.html#archive">← 기록으로</a>
+
+  <header class="head">
+    <p class="kicker">서비스 분석</p>
+    <h1>도면이 있어 운이 좋았던 이사</h1>
+    <p class="dek">평면도 조회가 안 되는 집에서 가구를 고르며 알게 된 것</p>
+    <p class="meta">세잎 수집가 · 2026.10</p>
+  </header>
+
+  <section class="summary" aria-labelledby="summary-title">
+    <h2 id="summary-title">3줄 요약</h2>
+    <ol>
+      <li>서울에서 이사하면서, 아버지가 만들어준 도면으로 가구를 3D에 놓아보고 샀어요.</li>
+      <li>오늘의집에는 평면도 조회 기능이 있는데요, 제가 이사한 집은 조회가 안 됐어요.</li>
+      <li>이렇게 조회가 안 되는 집의 치수를 얻는 일이 플랫폼의 다음 과제라고 생각해요.</li>
+    </ol>
+  </section>
+
+  <h2 class="sec">도면이 있었던 이사</h2>
+  <p>서울에서 이사할 때 가구를 사려고 했어요. 아버지가 만들어준 도면으로 오늘의집 3D 인테리어에 넣어서 가구도 배치해봤어요. 사이즈로 먼저 거르고, 마지막엔 결국 가격이 중요했어요. 책상, 수납장 등을 사는 데에 성공했답니다.</p>
+
+  <figure class="fig wide">
+    <div class="row swipe">
+      <img src="images/floorplan-pin-1.jpg" width="736" height="1041" style="--r: 0.707" loading="lazy" alt="주택 평면도 위에 같은 집을 3D로 띄워 가구 배치를 보여 주는 그림">
+      <img src="images/floorplan-pin-2.jpg" width="736" height="969" style="--r: 0.760" loading="lazy" alt="침실과 거실이 있는 집의 2D 평면도와 그 위의 3D 모형">
+      <img src="images/floorplan-pin-3.jpg" width="736" height="1104" style="--r: 0.667" loading="lazy" alt="원룸 평면도와 그 평면도로 만든 3D 가구 배치 두 가지">
+    </div>
+    <figcaption>도면이 있으면 이렇게 2D 도면 위에 3D 배치를 할 수 있어요. (출처: Pinterest)</figcaption>
+  </figure>
+
+  <h2 class="sec">기능은 있는데, 쓰려면 뭐가 필요할까요</h2>
+  <p>오늘의집에는 아파트 평면도를 조회해서 도면을 불러오면 2D, 3D가 자동으로 만들어지는 기능이 있어요. 그런데 제가 확인해보니 전국의 모든 집이 되는 건 아니었어요.</p>
+  <p>제가 이사한 집도 조회가 안 됐어요. 아버지가 직접 재서 만들어준 도면이 있어서 쓸 수 있었던 거예요. 운이 좋았어요.</p>
+  <p>가구를 사기 전에 걸리는 벽은 세 가지예요.</p>
+  <ul class="walls">
+    <li><b>첫째,</b> 예산이에요. 저는 학생이라 가장 큰 이유예요.</li>
+    <li><b>둘째,</b> 오래 살 집이 아니에요.</li>
+    <li><b>셋째,</b> 내 방에 맞는지 알기 어려워요. 평면도가 조회되지 않으면 치수를 직접 재야 해요.</li>
+  </ul>
+  <p class="key">앞의 둘은 서비스가 바꾸기 어렵지만, 셋째는 서비스가 도울 수 있어요.</p>
+
+  <h2 class="sec">도면부터 구매까지</h2>
+  <ol class="steps">
+    <li>
+      <h3>먼저 오늘의집 평면도 조회에서 우리 집이 나오는지 찾아봐요.</h3>
+      <p>안 나오면 방의 가로, 세로, 높이를 직접 재서 메모해요. 이게 시작점이 돼요.</p>
+      <figure class="fig">
+        <div class="row stack">
+          <img src="images/floorplan-ohou-search.png" width="400" height="755" style="--r: 0.530" loading="lazy" alt="오늘의집 평면도 조회 화면. 검색 결과로 건물 30개가 나오지만 제 집은 없음">
+          <img src="images/floorplan-my-plan.png" width="800" height="550" style="--r: 1.455" loading="lazy" alt="실측해서 만든 제 집의 평면도. 방 두 칸과 주방, 욕실, 창문 위치가 표시됨">
+        </div>
+        <figcaption>제 집은 도면을 불러올 수 없어서 실측해서 도면을 만들었습니다.</figcaption>
+      </figure>
+    </li>
+    <li>
+      <h3>사고 싶은 가구의 길이와 폭을 숫자로 적어요.</h3>
+      <p>방 치수와 나란히 놓고 비교해요. 저도 길이나 폭이 안 맞아서 포기한 가구가 있었어요.</p>
+      <figure class="fig">
+        <!-- 사진이 오면 .ph 두 칸을 <img>로 바꿉니다 -->
+        <div class="row stack">
+          <div class="ph" style="--r: 1.2; --ar: 4 / 3">사진 준비 중<br>도면 위 3D 가구 배치</div>
+          <div class="ph" style="--r: 0.8; --ar: 3 / 4">사진 준비 중<br>가구 상품 치수</div>
+        </div>
+        <figcaption>도면을 토대로 가구를 배치해요.</figcaption>
+      </figure>
+    </li>
+    <li>
+      <h3>3D나 AR로 한 번 놓아본 다음, 마지막은 예산으로 정해요.</h3>
+      <p>저도 마지막엔 가격이 우선이었어요.</p>
+      <figure class="fig">
+        <div class="row stack">
+          <div class="ph" style="--r: 1.2; --ar: 4 / 3">사진 준비 중<br>책상과 침대를 놓아본 배치</div>
+          <div class="ph" style="--r: 1; --ar: 1 / 1">사진 준비 중<br>실제 구매 내역</div>
+        </div>
+        <figcaption>3D로 놓아본 배치와 실제로 산 책상, 수납장.</figcaption>
+      </figure>
+    </li>
+  </ol>
+
+  <section class="conclusion" aria-labelledby="conclusion-title">
+    <h2 id="conclusion-title">결론</h2>
+    <p>오늘의집은 평면도가 조회되는 아파트에는 2D, 3D를 자동으로 만들어줘요. 하지만 조회가 안 되는 집은 치수를 직접 구해야 하고, 거기서 막히기 쉬워요. 저는 3D로 놓아본 뒤에 구매까지 갔어요. 그래서 <span class="key">조회가 안 되는 집의 치수를 쉽게 얻게 돕는 일이, 둘러만 보던 사람을 구매까지 데려가는 다음 과제</span>라고 생각해요.</p>
+  </section>
+
+  <nav class="next" aria-label="다음으로">
+    <span class="label">세잎 아카이브의 기록</span>
+    <a href="../index.html#archive">다른 기록 보기 →</a>
+  </nav>
+</article>
+</main>
+
+<footer class="wrap foot">
+  <span>세잎 아카이브, 흔한 행복의 기록</span>
+  <span>2026</span>
+</footer>
+
+</body>
+</html>
