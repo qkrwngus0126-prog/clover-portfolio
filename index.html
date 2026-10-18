@@ -251,10 +251,10 @@ a { color: inherit; }
   </ul>
   <ul class="grid" id="grid">
       <!-- 글이 있는 기록: 카드 전체가 글 페이지로 가는 링크입니다.
-           썸네일을 넣을 때는 .thumb 안의 <svg>…</svg>를 <img src="posts/images/floorplan-thumb.jpg" alt="">로 바꾸면 됩니다. (3:2 비율, 1200×800px 권장) -->
+           썸네일은 .thumb 안의 <img>입니다. 새 글은 빈 칸(<svg>…</svg>)을 <img src="…" alt="">로 바꾸면 됩니다. (3:2 비율, 1200×800px) -->
       <li class="card" data-cat="service">
         <a class="card-link" href="posts/floorplan-move.html">
-          <div class="thumb"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg></div>
+          <div class="thumb"><img src="posts/images/floorplan-thumb.jpg" width="1200" height="800" loading="lazy" alt=""></div>
           <h3>도면이 있어 운이 좋았던 이사</h3>
           <p>서비스 분석 / 2026.10</p>
         </a>
