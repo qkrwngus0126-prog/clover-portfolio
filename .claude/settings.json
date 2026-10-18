@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "genjutsu": {
+      "source": {
+        "source": "github",
+        "repo": "AThevon/genjutsu"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "genjutsu@genjutsu": true
+  }
+}
