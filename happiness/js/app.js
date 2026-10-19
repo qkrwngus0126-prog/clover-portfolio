@@ -398,14 +398,53 @@
     return false;
   }
 
-  function openLogin(why) {
+  // inside KakaoTalk, Instagram, Facebook, LINE, Naver… Google refuses to sign anyone in ("disallowed_useragent")
+  const UA = navigator.userAgent || '';
+  const IN_APP = /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER\(inapp|DaumApps|everytimeApp|Whale\/.*inapp|; wv\)/i.test(UA);
+  const IN_KAKAO = /KAKAOTALK/i.test(UA);
+  const IS_IOS = /iPhone|iPad|iPod/i.test(UA);
+  function openOutside() {
+    const url = location.href;
+    if (IN_KAKAO) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+    else if (!IS_IOS) location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+  }
+
+  // which sign-in providers are switched on in Supabase, asked once (so a button never leads to "provider is not enabled")
+  let enabledProviders = null;
+  async function providersOn() {
+    const wanted = cfg.loginProviders && cfg.loginProviders.length ? cfg.loginProviders : [{ id: 'google' }];
+    if (demo) return wanted;
+    if (!enabledProviders) {
+      try {
+        const r = await fetch(cfg.supabaseUrl + '/auth/v1/settings', { headers: { apikey: cfg.supabaseKey } });
+        const j = await r.json();
+        enabledProviders = wanted.filter(p => j.external ? j.external[p.id] : true);
+      } catch (_) { enabledProviders = wanted; }
+      if (!enabledProviders.length) enabledProviders = wanted;
+    }
+    return enabledProviders;
+  }
+
+  async function openLogin(why) {
     let leaving = false;
-    const providers = (cfg.loginProviders && cfg.loginProviders.length ? cfg.loginProviders : [{ id: 'google' }]);
+    const all = await providersOn();
+    // in an app's own browser Google can't be used; Kakao still works inside KakaoTalk
+    const providers = IN_APP ? all.filter(p => p.id !== 'google') : all;
+    const label = p => (tr('provider_' + p.id) === 'provider_' + p.id ? p.label : tr('provider_' + p.id));
+    const copyBtn = h('button', { type: 'button', class: 'btn quiet', async onclick() {
+      try { await navigator.clipboard.writeText(location.href); toast(tr('linkCopiedPlain')); } catch (_) { window.prompt(tr('copyLink'), location.href); }
+    } }, tr('copyLink'));
     open([
       head(null, tr('loginTitle')),
       h('p', { class: 'note' }, why || tr('loginWhyWrite'), h('br'), tr('loginBack')),
+      IN_APP ? h('div', { class: 'inapp' },
+        h('b', null, tr('inAppTitle')),
+        h('p', null, all.some(p => p.id === 'kakao') && IN_KAKAO ? tr('inAppKakao') : (IS_IOS && !IN_KAKAO ? tr('inAppIos') : tr('inAppOther'))),
+        h('div', { class: 'row' },
+          IN_KAKAO || !IS_IOS ? h('button', { type: 'button', class: 'btn', onclick: openOutside }, tr('openBrowser')) : null,
+          copyBtn)) : null,
       h('div', { class: 'providers' }, providers.map(p => h('button', {
-        type: 'button', class: 'btn wide' + (p.id === 'google' ? ' primary' : ''),
+        type: 'button', class: 'btn wide provider-' + p.id + (p.id === 'google' ? ' primary' : ''),
         async onclick(e) {
           const btn = e.currentTarget;
           btn.disabled = true;
@@ -414,8 +453,10 @@
           const { error } = await sb.auth.signInWithOAuth({ provider: p.id, options: { redirectTo: returnUrl() } });
           if (error) { leaving = false; btn.disabled = false; toast(tr('loginFail') + ' ' + errMsg(error)); }
         },
-      }, tr('provider_' + p.id) === 'provider_' + p.id ? p.label : tr('provider_' + p.id)))),
-      h('p', { class: 'note small' }, tr('loginAge'), ' ', h('a', { href: tr('privacyHref'), target: '_blank', rel: 'noopener' }, tr('privacy'))),
+      }, label(p)))),
+      h('p', { class: 'note small' }, tr('loginAge'), ' ',
+        h('a', { href: tr('termsHref'), target: '_blank', rel: 'noopener' }, tr('terms')), ' · ',
+        h('a', { href: tr('privacyHref'), target: '_blank', rel: 'noopener' }, tr('privacy'))),
       demo ? h('p', { class: 'note' }, tr('loginDemo')) : null,
     ], () => { if (!leaving) takePending(); }); // 그냥 닫으면 하던 일도 잊습니다
   }
@@ -764,7 +805,7 @@
       h('p', { class: 'note' }, lines(tr('mapNote'))),
       skyPicker(),
       h('div', { class: 'row split' },
-        h('a', { href: tr('privacyHref'), class: 'btn quiet' }, tr('privacy')),
+        h('div', { class: 'row' }, h('a', { href: tr('termsHref'), class: 'btn quiet' }, tr('terms')), h('a', { href: tr('privacyHref'), class: 'btn quiet' }, tr('privacy'))),
         h('button', { type: 'button', class: 'btn primary', onclick: close }, tr('toField'))),
     ]);
   }

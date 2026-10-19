@@ -360,6 +360,13 @@ details.more[open] summary { margin-bottom: 8px; }
 
 /* login */
 .providers { display: grid; gap: 10px; }
+/* Kakao's own button colours, as Kakao asks for them */
+.btn.provider-kakao { background: #fee500; border-color: #fee500; color: #191919; }
+.btn.provider-kakao:hover { background: #f3da00; border-color: #f3da00; }
+.inapp { display: grid; gap: 6px; padding: 14px 16px; border-radius: 14px; background: var(--accent-soft); font-size: 0.875rem; }
+.inapp b { font-weight: 500; }
+.inapp p { color: var(--muted); }
+.inapp .row { margin-top: 4px; }
 
 /* my records */
 .mine { list-style: none; margin: 0; padding: 0; display: grid; }
