@@ -25,6 +25,7 @@
     const SPRITE = 96;
     const HIDDEN_Z = 0.3;
     const TIER_RES = [0.68, 0.64, 0.72];  // sprites are rendered at the largest size each layer is drawn
+    const S_STEP = 0.05;                  // leaf sizes come in steps of this, each with a ready-made picture
 
     // the whole meadow, in CSS pixels; the canvas is a window onto part of it
     let WW = opts.width || 3600, WH = opts.height || 2400; // the meadow can grow later (setWorld)
@@ -210,6 +211,7 @@
     }
 
     function leafAt(x, y, z, tier, grass, s) {
+      s = Math.round(s / S_STEP) * S_STEP; // a handful of sizes, so each has a ready-made picture (see sized)
       return { hx: x, hy: y, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0, z, tier, grass, s, order: 0,
         v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0,
         // a few leaves carry something of the season: a fallen leaf, a petal, snow or a drop of dew
@@ -306,7 +308,7 @@
       const rebuild = !cloverSprites.length || nd !== dpr;
       dpr = nd;
       canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
-      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; if (airKey) { const [p, se, w] = airKey.split(','); airKey = ''; api.setAtmosphere({ phase: p, season: se, weather: w }); } }
+      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; sizedCache = new Map(); if (airKey) { const [p, se, w] = airKey.split(','); airKey = ''; api.setAtmosphere({ phase: p, season: se, weather: w }); } }
       chunkMax = Math.max(24, Math.ceil(VW / CHUNK + 2) * Math.ceil(VH / CHUNK + 2) * 2);
       if (!items.length) { buildItems(); bury(hidden); index(); }
       if (first) { cam.x = (WW - VW) / 2; cam.y = (WH - VH) / 2; }
@@ -386,7 +388,7 @@
         mark(c.hx + c.ox, c.hy + c.oy, reach(c));
         const settle = Math.pow(0.965, k);
         c.rx *= settle; c.ry *= settle;
-        c.rot = c.ox * 0.008;
+        c.rot = 0; // leaves slide aside without turning; turning made every frame much slower to paint
         const e = Math.abs(c.vx) + Math.abs(c.vy) + Math.abs(c.rx) * 0.05;
         if (e < 0.01 && Math.abs(c.ox) + Math.abs(c.oy) < 0.05 && Math.abs(c.rx) + Math.abs(c.ry) < 0.05) {
           c.ox = c.oy = c.vx = c.vy = c.rx = c.ry = c.rot = 0;
@@ -454,6 +456,23 @@
     }
     const reach = c => SPRITE * c.s * 0.5 + 6;
 
+    // each leaf picture is kept ready at the exact size it is drawn, so painting a leaf is a plain copy:
+    // no scaling and no turning, which is what keeps digging smooth on slower phones
+    let sizedCache = new Map();
+    function sized(l) {
+      const key = (l.grass ? 'g' : 'c') + l.tier + ':' + l.v + ':' + l.s;
+      let img = sizedCache.get(key);
+      if (img) return img;
+      const src = l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v];
+      const n = Math.max(2, Math.round(SPRITE * l.s * dpr));
+      img = document.createElement('canvas'); img.width = img.height = n;
+      const c = img.getContext('2d');
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(src, 0, 0, n, n);
+      sizedCache.set(key, img);
+      return img;
+    }
+
     function blit(c, img, x, y, rot, s, ox, oy) {
       const cs = Math.cos(rot) * s * dpr, sn = Math.sin(rot) * s * dpr;
       c.setTransform(cs, sn, -sn, cs, (x - ox) * dpr, (y - oy) * dpr);
@@ -479,7 +498,9 @@
       const leaf = l => {
         const [x, y, rot] = at(l), r = reach(l);
         if (x + r < x0 || x - r > x1 || y + r < y0 || y - r > y1) return;
-        blit(c, l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v], x, y, rot, l.s, ox, oy);
+        const img = sized(l);
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.drawImage(img, Math.round((x - ox) * dpr - img.width / 2), Math.round((y - oy) * dpr - img.height / 2));
         if (decor && l.tier === 2 && !l.grass && l.deco < decor.rate) {
           const img = decor.sprites[l.dv], d = SPRITE * l.s * l.dd * 0.5, k = img.width / dpr / 2;
           c.setTransform(1, 0, 0, 1, 0, 0);

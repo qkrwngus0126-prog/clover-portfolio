@@ -183,6 +183,7 @@
     onShow(c) {
       shown = c;
       openBtn.hidden = !c;
+      document.querySelector('.field-bar').classList.toggle('has-open', !!c); // narrow phones show one button at a time
       if (c) openBtn.textContent = c.kind === 'empty' ? tr('writeHere') : tr('open');
     },
     onFound(n, all, c) {
