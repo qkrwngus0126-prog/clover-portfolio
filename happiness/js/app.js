@@ -79,7 +79,7 @@
     async list() {
       const out = [];
       for (let from = 0; from < 10000; from += 1000) {
-        const { data, error } = await sb.from('happies').select('id,fx,fy,user_id').order('created_at').range(from, from + 999);
+        const { data, error } = await sb.from('happies').select('id,fx,fy,user_id,line').order('created_at').range(from, from + 999);
         if (error) throw error;
         out.push(...data);
         if (data.length < 1000) break;
@@ -138,7 +138,7 @@
   const demoPhotos = new Map();
   const memory = {
     rows: DEMO.slice(),
-    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, user_id: r.user_id })); },
+    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, user_id: r.user_id, line: r.line })); },
     async get(id) { return this.rows.find(r => r.id === id) || null; },
     async mine() { return this.rows.filter(r => r.user_id === user.id).reverse(); },
     async create(row) {
@@ -205,7 +205,7 @@
     empties.push(e);
     return e;
   }
-  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, mine: !!user && r.user_id === user.id });
+  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: !!user && r.user_id === user.id });
 
   async function load() {
     let list = [];
@@ -489,15 +489,16 @@
         // 바꾸거나 뺀 예전 사진은 지웁니다
         if (record && record.photo_path && record.photo_path !== photo_path) api.unlink(record.photo_path).catch(() => {});
         if (photo.url) URL.revokeObjectURL(photo.url);
-        records.set(saved.id, { id: saved.id, fx: saved.fx, fy: saved.fy, user_id: saved.user_id });
+        records.set(saved.id, { id: saved.id, fx: saved.fx, fy: saved.fy, user_id: saved.user_id, line: saved.line });
 
         if (editing) {
+          field.update(saved.id, { text: saved.line });
           toast('고쳤어요.');
           openRead(saved.id);
         } else {
           // 빈 세잎이 내 세잎이 되고, 들판 어딘가에 새 빈 세잎이 하나 생깁니다
           empties = empties.filter(x => x.key !== spot.key);
-          field.update(spot.key, { key: saved.id, kind: 'happy', mine: true });
+          field.update(spot.key, { key: saved.id, kind: 'happy', mine: true, text: saved.line });
           field.add(newEmpty());
           close();
           field.reveal(saved.id);
