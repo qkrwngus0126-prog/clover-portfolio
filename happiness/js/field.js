@@ -484,7 +484,26 @@
         }
       }
       for (; i < list.length; i++) leaf(list[i]);
+      // a written clover carries a small white blossom above the leaves, so you can tell from afar that someone wrote there
+      for (const h of hidden) {
+        if (h.kind !== 'happy' || (!rest && h.found && h.lit)) continue;
+        if (h.x + 12 < x0 || h.x - 12 > x1 || h.y + 12 < y0 || h.y - 12 > y1) continue;
+        blossom(c, h, ox, oy);
+      }
       c.restore();
+    }
+
+    function blossom(c, h, ox, oy) {
+      const x = (h.x - ox) * dpr, y = (h.y - oy - 2) * dpr, r = 3.2 * dpr;
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      const glow = c.createRadialGradient(x, y, 0, x, y, r * 3.2);
+      glow.addColorStop(0, h.mine ? 'rgba(240,206,110,0.55)' : 'rgba(246,244,226,0.5)');
+      glow.addColorStop(1, 'rgba(246,244,226,0)');
+      c.fillStyle = glow; c.beginPath(); c.arc(x, y, r * 3.2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = h.mine ? '#f0ce6e' : '#f4f1e0';
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.fillStyle = h.mine ? '#b58a1e' : '#c9c39a';
+      c.beginPath(); c.arc(x, y, r * 0.38, 0, Math.PI * 2); c.fill();
     }
 
     // the sleeping meadow is kept as picture tiles, so moving the view only copies pictures;
@@ -551,7 +570,7 @@
       mctx.setTransform(1, 0, 0, 1, 0, 0);
       mctx.clearRect(0, 0, w, hgt);
       for (const h of hidden) {
-        if (!h.found) continue;
+        if (!h.found && h.kind !== 'happy') continue;
         mctx.fillStyle = h.kind === 'empty' ? 'rgba(190,214,176,0.55)' : h.mine ? '#e0b84a' : '#7fcf95';
         mctx.beginPath(); mctx.arc(h.x * k, h.y * k, 1.8 * dpr, 0, Math.PI * 2); mctx.fill();
       }
@@ -688,7 +707,7 @@
         const wx = q.x + cam.x, wy = q.y + cam.y;
         let bestD = 34;
         for (const h of hidden) {
-          if (!h.found) continue;
+          if (!h.found && h.kind !== 'happy') continue; // written ones can be opened straight from their blossom
           const d = Math.hypot(h.x - wx, h.y - wy);
           if (d < bestD) { bestD = d; pick = h; }
         }
@@ -767,6 +786,7 @@
         const h = byKey(key);
         if (!h) return;
         Object.assign(h, patch);
+        forget(h.x - 80, h.y - 80, h.x + 80, h.y + 80); full = true;
         if (shownNow === h) show(h);
         mark(h.x, h.y, SPRITE); wake(); drawMini();
       },
