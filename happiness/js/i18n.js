@@ -89,6 +89,13 @@
     loginWhyMine: ['내 기록을 보려면 로그인해 주세요.', 'Log in to see your clovers.', '自分の記録を見るにはログインしてください。'],
     loginExpired: ['로그인이 풀렸어요. 다시 로그인하면 쓰던 글로 돌아와요.', "You were logged out. Log in again and you'll return to your draft.", 'ログインが切れました。もう一度ログインすると、書きかけの文章に戻ります。'],
 
+    loginAge: ['만 14세 이상만 기록할 수 있어요. 계속하면 개인정보처리방침에 동의하는 것으로 봐요.', 'You must be 14 or older to write. By continuing you agree to the privacy policy.', '記録できるのは14歳以上の方です。続けると、プライバシーポリシーに同意したものとみなします。'],
+    errDaily: ['오늘은 여기까지 심을 수 있어요. 내일 또 와 주세요.', "That's all you can plant today. Come back tomorrow.", '今日植えられるのはここまでです。また明日来てください。'],
+    shareLink: ['링크 보내기', 'Share link', 'リンクを送る'],
+    linkCopied: ['링크를 복사했어요. 이 링크로 들어오면 이 세잎으로 바로 와요.', 'Link copied. It opens right at this clover.', 'リンクをコピーしました。このリンクから来ると、この三つ葉がすぐに開きます。'],
+    shareText: ['세잎 들판에 심어 둔 행복 하나', 'A little happiness planted in the meadow', '野原に植えた小さな幸せ'],
+    spreading: ['들판을 펼치는 중…', 'Spreading out the meadow…', '野原を広げています…'],
+
     // an empty clover
     emptyEyebrow: ['빈 세잎', 'Empty clover', '空っぽの三つ葉'],
     emptyTitle: ['아직 아무도 적지 않은 세잎이에요', 'No one has written on this one yet', 'まだ誰も書いていない三つ葉です'],

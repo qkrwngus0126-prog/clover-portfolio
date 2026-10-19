@@ -217,3 +217,13 @@ update public.happies set hidden = true where id = '기록-id';
 - 위치를 묻지 않고, 방문자 기기의 시간대 도시(예: 서울, 도쿄, 뉴욕)의 날씨를 Open-Meteo에서 가져와요.
 - 남반구(예: 시드니)에서는 계절이 반대로 보여요.
 - 도움말에서 "실제 날씨를 내 위치로 보기"를 켠 사람만 실제 위치(약 10km 단위)를 써요.
+
+## 운영: 잠들지 않게, 백업은 직접
+
+- **일시 정지 막기**: Supabase 무료 프로젝트는 일주일 동안 요청이 없으면 일시 정지돼요. 저장소의 GitHub Actions(`happiness keep-alive`)가 사흘에 한 번 기록 하나를 읽어서 깨워 둬요. 저장소 **Actions** 탭에서 초록 체크가 보이면 잘 돌고 있는 거예요. 그래도 멈췄다면 Supabase 대시보드에서 **Restore project**를 누르면 돌아와요.
+- **백업**: 무료 플랜은 자동 백업을 내려받을 수 없어요. 한 달에 한 번쯤 아래처럼 받아 두세요.
+  1. Supabase → **Table Editor** → `happies` → 오른쪽 위 **Export** → **Export table as CSV**
+  2. `reports`도 같은 방법으로
+  3. 사진은 **Storage** → `happy-photos`에서 폴더째 내려받기
+- **하루 제한**: 한 사람이 하루에 세잎 20개, 신고 30개까지만 할 수 있어요. 숫자는 `supabase-setup.sql`의 5번 블록에서 바꾸고 그 블록만 다시 Run 하면 돼요.
+- **작성자 비공개**: 기록을 읽을 때 작성자 ID는 아무에게도 보내지 않아요. 관리자는 대시보드에서 볼 수 있어요.

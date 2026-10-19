@@ -28,7 +28,9 @@ alter table public.happies enable row level security;
 -- 손님(anon)과 로그인한 사람(authenticated)이 만질 수 있는 칸을 좁힙니다.
 -- 숨김 여부, 신고 수, 작성자, 위치는 글쓴이도 직접 바꿀 수 없어요.
 revoke all on public.happies from anon, authenticated;
-grant select on public.happies to anon, authenticated;
+-- 누가 썼는지(user_id)는 아무에게도 보내지 않아요. 내 글인지는 아래 my_happy_ids()로만 알려 줘요.
+grant select (id, happy_on, place, line, more, photo_path, fx, fy, created_at, updated_at, report_count, hidden)
+  on public.happies to anon, authenticated;
 grant insert (happy_on, place, line, more, photo_path, fx, fy) on public.happies to authenticated;
 grant update (happy_on, place, line, more, photo_path) on public.happies to authenticated;
 grant delete on public.happies to authenticated;
@@ -146,3 +148,55 @@ drop policy if exists "happy-photos 지우기: 자기 사진만" on storage.obje
 create policy "happy-photos 지우기: 자기 사진만" on storage.objects
   for delete to authenticated
   using (bucket_id = 'happy-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- ============================================================
+-- 4. 내 글 알아보기 (작성자를 공개하지 않고)
+-- ============================================================
+create or replace function public.my_happy_ids()
+returns setof uuid language sql stable security definer set search_path = '' as $$
+  select id from public.happies where user_id = (select auth.uid())
+$$;
+
+create or replace function public.my_happies()
+returns table (id uuid, happy_on date, place text, line text, more text, photo_path text, fx real, fy real,
+               created_at timestamptz, updated_at timestamptz, hidden boolean)
+language sql stable security definer set search_path = '' as $$
+  select id, happy_on, place, line, more, photo_path, fx, fy, created_at, updated_at, hidden
+    from public.happies where user_id = (select auth.uid()) order by created_at desc
+$$;
+
+revoke execute on function public.my_happy_ids() from public, anon;
+revoke execute on function public.my_happies() from public, anon;
+grant execute on function public.my_happy_ids() to authenticated;
+grant execute on function public.my_happies() to authenticated;
+
+-- ============================================================
+-- 5. 하루 제한: 한 사람이 하루에 세잎 20개, 신고 30개까지
+-- ============================================================
+create or replace function public.happies_daily_limit()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if (select count(*) from public.happies where user_id = new.user_id and created_at > now() - interval '1 day') >= 20 then
+    raise exception 'daily_limit';
+  end if;
+  return new;
+end $$;
+
+create or replace function public.reports_daily_limit()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if (select count(*) from public.reports where reporter = new.reporter and created_at > now() - interval '1 day') >= 30 then
+    raise exception 'daily_limit';
+  end if;
+  return new;
+end $$;
+
+revoke execute on function public.happies_daily_limit() from public, anon, authenticated;
+revoke execute on function public.reports_daily_limit() from public, anon, authenticated;
+
+drop trigger if exists happies_daily_limit on public.happies;
+create trigger happies_daily_limit before insert on public.happies
+  for each row execute function public.happies_daily_limit();
+drop trigger if exists reports_daily_limit on public.reports;
+create trigger reports_daily_limit before insert on public.reports
+  for each row execute function public.reports_daily_limit();
