@@ -181,7 +181,8 @@
       hintBtn.textContent = hintBtn.disabled ? '다 찾았어요' : '하나 보여 주기';
     },
   });
-  hintBtn.addEventListener('click', () => field.hint());
+  // 적힌 세잎은 꽃 표시로 이미 보이니, "하나 보여 주기"는 빈 세잎부터 찾아 줘요
+  hintBtn.addEventListener('click', () => field.hint('empty'));
   openBtn.addEventListener('click', () => { if (shown) pick(shown); });
 
   const records = new Map(); // id -> { id, fx, fy, user_id }
@@ -220,7 +221,76 @@
     const n = Math.max(1, cfg.emptyClovers ?? 30);
     for (let i = 0; i < n; i++) newEmpty();
     field.set([...list.map(asClover), ...empties]);
+    feed.reset();
   }
+
+  /* ---------- the list beside the field: a few lines people wrote, one of them changing every few seconds ---------- */
+  const feed = (() => {
+    const box = $('feed'), list = $('feed-list');
+    const narrow = matchMedia('(max-width: 640px)');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let shownIds = [], timer = 0, paused = false, turn = 0;
+    const size = () => narrow.matches ? 1 : 6;
+    const pool = () => [...records.values()].filter(r => r.line);
+    const pickNew = () => {
+      const left = pool().filter(r => !shownIds.includes(r.id));
+      return left.length ? left[(Math.random() * left.length) | 0] : null;
+    };
+    function item(r) {
+      return h('li', { 'data-id': r.id },
+        h('button', { type: 'button', title: '들판에서 보기', onclick: () => field.reveal(r.id, () => openRead(r.id)) },
+          h('span', { class: 'dot' + (user && r.user_id === user.id ? ' mine' : '') }), h('span', { class: 't' }, r.line)));
+    }
+    function reset() {
+      shownIds = [];
+      const n = Math.min(size(), pool().length);
+      for (let i = 0; i < n; i++) { const r = pickNew(); if (r) shownIds.push(r.id); }
+      list.replaceChildren(...shownIds.map(id => item(records.get(id))));
+      box.hidden = !shownIds.length;
+      clearInterval(timer);
+      timer = setInterval(rotate, narrow.matches ? 4500 : 3800);
+    }
+    // swap one line for one not on screen, oldest slot first, fading between them
+    function rotate() {
+      if (paused || document.hidden || sheet.open) return;
+      const r = pickNew();
+      if (!r || !shownIds.length) return;
+      const slot = turn++ % shownIds.length;
+      const li = list.children[slot];
+      const swap = () => { shownIds[slot] = r.id; li.replaceWith(item(r)); };
+      if (reduceMotion || !li) { swap(); return; }
+      li.classList.add('out');
+      setTimeout(() => { swap(); const n = list.children[slot]; n.classList.add('in'); requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('in'))); }, 380);
+    }
+    box.addEventListener('pointerenter', () => { paused = true; });
+    box.addEventListener('pointerleave', () => { paused = false; });
+    box.addEventListener('focusin', () => { paused = true; });
+    box.addEventListener('focusout', () => { paused = false; });
+    narrow.addEventListener('change', reset);
+    return {
+      reset,
+      // a line someone just wrote goes to the top at once
+      put(id) {
+        const r = records.get(id);
+        if (!r) return;
+        const at = shownIds.indexOf(id);
+        if (at >= 0) { list.children[at].replaceWith(item(r)); return; }
+        shownIds.unshift(id);
+        list.prepend(item(r));
+        while (shownIds.length > size()) { shownIds.pop(); list.lastElementChild.remove(); }
+        box.hidden = false;
+      },
+      drop(id) {
+        const at = shownIds.indexOf(id);
+        if (at < 0) return;
+        const r = pickNew();
+        if (r) { shownIds[at] = r.id; list.children[at].replaceWith(item(r)); }
+        else { shownIds.splice(at, 1); list.children[at].remove(); }
+        box.hidden = !shownIds.length;
+      },
+      mine() { for (const li of list.children) li.querySelector('.dot').classList.toggle('mine', !!user && records.get(li.dataset.id)?.user_id === user.id); },
+    };
+  })();
 
   function pick(c) {
     if (c.kind === 'empty') openEmpty(c);
@@ -293,7 +363,7 @@
     const changed = (user && user.id) !== (u && u.id);
     user = u;
     navAuth.textContent = user ? '로그아웃' : '로그인';
-    if (changed) for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id });
+    if (changed) { for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id }); feed.mine(); }
   }
   navAuth.addEventListener('click', async () => {
     if (!user) { takePending(); openLogin('로그인하면 행복을 적고, 내가 쓴 기록을 고치거나 지울 수 있어요.'); return; }
@@ -348,7 +418,7 @@
     catch (e) { open([head(null, '세잎을 열지 못했어요'), h('p', { class: 'note' }, errMsg(e))]); return; }
     if (!r) {
       open([head(null, '이제 볼 수 없는 세잎이에요'), h('p', { class: 'note' }, '글쓴이가 지웠거나, 신고가 쌓여 잠시 숨겨진 기록이에요.')]);
-      records.delete(id); field.remove(id);
+      records.delete(id); field.remove(id); feed.drop(id);
       return;
     }
     const mine = !!user && r.user_id === user.id;
@@ -490,6 +560,7 @@
         if (record && record.photo_path && record.photo_path !== photo_path) api.unlink(record.photo_path).catch(() => {});
         if (photo.url) URL.revokeObjectURL(photo.url);
         records.set(saved.id, { id: saved.id, fx: saved.fx, fy: saved.fy, user_id: saved.user_id, line: saved.line });
+        feed.put(saved.id);
 
         if (editing) {
           field.update(saved.id, { text: saved.line });
@@ -523,7 +594,7 @@
       try {
         await api.remove(r.id);
         if (r.photo_path) api.unlink(r.photo_path).catch(() => {});
-        records.delete(r.id); field.remove(r.id);
+        records.delete(r.id); field.remove(r.id); feed.drop(r.id);
         toast('지웠어요.');
         if (back) back(); else close();
       } catch (e) { yes.disabled = false; yes.textContent = '지우기'; toast(errMsg(e)); }
@@ -594,8 +665,8 @@
     const steps = [
       ['헤집기', coarse ? '한 손가락으로 네잎을 헤치면 아래 숨은 세잎이 드러나요.' : '마우스를 들판 위에서 움직이면 네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.'],
       ['둘러보기', coarse ? '들판은 화면보다 훨씬 넓어요. 두 손가락으로 끌어서 옮겨 다니세요.' : '들판은 화면보다 훨씬 넓어요. 끌거나 스크롤해서 옮겨 다니세요.'],
-      ['읽기', '누군가 적어 둔 세잎을 찾으면 그 한 줄이 보여요. 누르면 전부 읽을 수 있어요. 로그인은 필요 없어요.'],
-      ['심기', '빈 세잎을 찾으면 내 행복을 적을 수 있어요. 그 자리에 남아 다음 사람을 기다립니다.'],
+      ['읽기', '누군가 적어 둔 세잎 위에는 작은 흰 꽃이 피어 있어요. 꽃을 누르면 바로 읽을 수 있어요. 옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요. 로그인은 필요 없어요.'],
+      ['심기', '꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요. 헤집어서 찾으면 내 행복을 적을 수 있고, 그 자리에 꽃이 피어 다음 사람을 기다립니다. 내가 심은 곳의 꽃은 금색이에요.'],
     ];
     open([
       head(null, '이렇게 써요'),
