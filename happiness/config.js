@@ -18,6 +18,11 @@ window.HAPPY_CONFIG = {
     // { id: 'kakao', label: '카카오로 계속하기' },
   ],
 
+  // 들판 전체 크기(px). 화면보다 훨씬 넓고, 끌거나 스크롤해서 둘러봐요.
+  // 나중에 키워도 기존 세잎은 들판 안의 같은 비율 위치에 그대로 남아요.
+  fieldWidth: 3600,
+  fieldHeight: 2400,
+
   // 들판에 함께 숨겨 둘 빈 세잎 개수
-  emptyClovers: 5,
+  emptyClovers: 30,
 };

@@ -160,11 +160,12 @@
   /* ---------- the field ---------- */
   const foundN = $('found-n'), totalN = $('total-n'), hintText = $('hint-text'), hintBtn = $('hint-btn'), openBtn = $('open-btn');
   const coarse = matchMedia('(pointer: coarse)').matches;
-  const IDLE_HINT = coarse ? '손가락으로 클로버를 헤집어 보세요' : '커서로 클로버를 헤집어 보세요';
+  const IDLE_HINT = coarse ? '한 손가락으로 헤집고, 두 손가락으로 둘러보세요' : '마우스를 올려 헤집고, 끌거나 스크롤해서 둘러보세요';
   hintText.textContent = IDLE_HINT;
   let shown = null;
 
   const field = CloverField($('field'), {
+    width: cfg.fieldWidth, height: cfg.fieldHeight,
     onPick: pick,
     onShow(c) {
       shown = c;
@@ -187,14 +188,16 @@
   let empties = [];
   let emptySeq = 0;
 
-  // 빈 세잎 자리: 기존 세잎과 너무 가깝지 않은 곳을 무작위로 고릅니다 (아래쪽 막대는 피해서)
+  // 빈 세잎 자리: 들판 어디든, 기존 세잎과 너무 가깝지 않은 곳을 무작위로 고릅니다
   function freeSpot() {
     const taken = [...records.values(), ...empties];
+    const { width: W, height: H } = field.world;
     let pick = null, far = -1;
     for (let t = 0; t < 300; t++) {
-      const fx = 0.08 + Math.random() * 0.84, fy = 0.1 + Math.random() * 0.68;
-      const d = taken.length ? Math.min(...taken.map(p => Math.hypot(p.fx - fx, (p.fy - fy) * 0.7))) : 1;
-      if (d > 0.09) return { fx, fy };
+      const fx = 0.03 + Math.random() * 0.94, fy = 0.03 + Math.random() * 0.94;
+      let d = Infinity;
+      for (const p of taken) d = Math.min(d, Math.hypot((p.fx - fx) * W, (p.fy - fy) * H));
+      if (d > 130) return { fx, fy };
       if (d > far) { far = d; pick = { fx, fy }; }
     }
     return pick;
@@ -214,7 +217,7 @@
     records.clear();
     list.forEach(r => records.set(r.id, r));
     empties = [];
-    const n = Math.max(1, cfg.emptyClovers ?? 5);
+    const n = Math.max(1, cfg.emptyClovers ?? 30);
     for (let i = 0; i < n; i++) newEmpty();
     field.set([...list.map(asClover), ...empties]);
   }
@@ -330,14 +333,11 @@
     if (!requireLogin({ type: 'write', spot: { key: spot.key, fx: spot.fx, fy: spot.fy }, draft })) return;
     openWrite({ spot, draft });
   }
-  // 머리말의 "행복 적기": 빈 세잎 하나로 손을 데려간 다음 적기 창을 엽니다
+  // 머리말의 "행복 적기": 들판을 빈 세잎 하나로 옮겨 가서 손으로 헤친 다음 적기 창을 엽니다
   $('nav-write').addEventListener('click', () => {
     let spot = empties[(Math.random() * empties.length) | 0];
     if (!spot) { spot = newEmpty(); field.add(spot); }
-    field.reveal(spot.key);
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    $('field').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
-    setTimeout(() => startWrite(spot), reduce ? 0 : 1300);
+    field.reveal(spot.key, () => startWrite(spot));
   });
 
   /* ---------- reading ---------- */
@@ -579,7 +579,7 @@
         h('span', { class: 'l' }, r.line),
         r.hidden ? h('span', { class: 'badge warn' }, '신고가 쌓여 숨겨짐') : null,
         h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'btn', onclick: () => { close(); field.reveal(r.id); setTimeout(() => openRead(r.id), 900); } }, '들판에서 보기'),
+          h('button', { type: 'button', class: 'btn', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, '들판에서 보기'),
           h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, '고치기'),
           h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r, openMine) }, '지우기'))))),
       h('div', { class: 'row' }, out),
@@ -587,6 +587,31 @@
   }
   $('nav-mine').addEventListener('click', () => {
     if (requireLogin({ type: 'mine' }, '내 기록을 보려면 로그인해 주세요.')) openMine();
+  });
+
+  /* ---------- help, and the card shown on a first visit ---------- */
+  function openHelp() {
+    const steps = [
+      ['헤집기', coarse ? '한 손가락으로 네잎을 헤치면 아래 숨은 세잎이 드러나요.' : '마우스를 들판 위에서 움직이면 네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.'],
+      ['둘러보기', coarse ? '들판은 화면보다 훨씬 넓어요. 두 손가락으로 끌어서 옮겨 다니세요.' : '들판은 화면보다 훨씬 넓어요. 끌거나 스크롤해서 옮겨 다니세요.'],
+      ['읽기', '누군가 적어 둔 세잎을 찾으면 그 한 줄이 보여요. 누르면 전부 읽을 수 있어요. 로그인은 필요 없어요.'],
+      ['심기', '빈 세잎을 찾으면 내 행복을 적을 수 있어요. 그 자리에 남아 다음 사람을 기다립니다.'],
+    ];
+    open([
+      head(null, '이렇게 써요'),
+      h('ol', { class: 'steps' }, steps.map(([b, t]) => h('li', null, h('b', null, b), h('span', null, t)))),
+      h('p', { class: 'note' }, '오른쪽 위 작은 지도는 들판 전체예요. 누르면 그곳으로 옮겨 가요.'),
+      h('div', { class: 'row split' },
+        h('a', { href: 'privacy.html', class: 'btn quiet' }, '개인정보처리방침'),
+        h('button', { type: 'button', class: 'btn primary', onclick: close }, '들판으로')),
+    ]);
+  }
+  $('help-btn').addEventListener('click', openHelp);
+  const intro = $('intro');
+  try { if (localStorage.getItem('happy:intro-closed')) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }
+  $('intro-close').addEventListener('click', () => {
+    intro.hidden = true;
+    try { localStorage.setItem('happy:intro-closed', '1'); } catch (_) { /* 괜찮아요 */ }
   });
 
   /* ---------- start ---------- */
