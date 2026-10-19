@@ -763,10 +763,13 @@
   // the first card also offers the other languages, for someone who landed in the wrong one
   $('intro-langs').replaceChildren(...window.I18N.langs.filter(l => l !== window.I18N.lang)
     .map(l => h('button', { type: 'button', class: 'btn link', lang: l, onclick: () => window.I18N.set(l) }, window.I18N.names[l])));
-  try { if (localStorage.getItem('happy:intro-closed')) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }
-  $('intro-close').addEventListener('click', () => {
+  // the card greets every visit; "don't show for a day" hides it for 24 hours on this device
+  const SNOOZE = 'happy:intro-until', DAY = 24 * 60 * 60 * 1000;
+  try { if (Date.now() < Number(localStorage.getItem(SNOOZE) || 0)) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }
+  $('intro-close').addEventListener('click', () => { intro.hidden = true; });
+  $('intro-snooze').addEventListener('click', () => {
     intro.hidden = true;
-    try { localStorage.setItem('happy:intro-closed', '1'); } catch (_) { /* 괜찮아요 */ }
+    try { localStorage.setItem(SNOOZE, String(Date.now() + DAY)); } catch (_) { /* 이번만 닫혀요 */ }
   });
 
   /* ---------- on this day: a line you planted on today's date in an earlier year ---------- */
