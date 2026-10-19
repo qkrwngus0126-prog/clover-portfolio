@@ -117,18 +117,21 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .wordmark:hover svg { transform: rotate(60deg); }
 .menu { display: flex; gap: 4px; }
 .menu button {
+  white-space: nowrap;
   background: none; border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer;
   color: var(--ink); opacity: 0.82; font-size: 0.9375rem; font-weight: 400;
   transition: opacity 160ms ease, background-color 160ms ease;
 }
 .menu button:hover { opacity: 1; background: var(--hover); }
+.menu .lang-btn { display: inline-grid; place-items: center; width: 38px; padding: 8px 0; }
+.lang-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.4; }
 #nav-write { background: var(--accent); color: var(--accent-ink); opacity: 1; }
 #nav-write:hover { background: var(--accent-hover); }
 
 /* ---------- first-visit card ---------- */
 .intro {
   position: absolute; z-index: 3; left: var(--edge-l); top: calc(var(--edge-t) + 60px);
-  width: min(400px, calc(100% - var(--edge-l) - var(--edge-r)));
+  width: min(460px, calc(100% - var(--edge-l) - var(--edge-r)));
   display: grid; gap: 10px; padding: 20px 22px;
   background: var(--glass); border: 1px solid var(--edge-line); border-radius: 18px;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -136,7 +139,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .intro h1 { font-size: 1.25rem; }
 .intro p { color: var(--muted); font-size: 0.9375rem; line-height: 1.7; text-wrap: pretty; }
-.intro .btn { justify-self: start; margin-top: 4px; }
+.intro-actions { justify-content: space-between; margin-top: 4px; }
+.intro-langs { display: inline-flex; gap: 12px; }
+.intro-langs .btn.link { color: var(--muted); font-size: 0.8125rem; min-height: 28px; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 
 .demo-note {
@@ -178,7 +183,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .feed-open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--blossom); box-shadow: 0 0 0 1px var(--blossom-edge); }
 .feed-open:hover { background: var(--surface); }
-.feed-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.feed-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .feed-list li { transition: opacity 360ms ease, transform 420ms var(--ease-out); }
 .feed-list li.out { opacity: 0; transform: translateY(-6px); }
 .feed-list li.in { opacity: 0; transform: translateY(6px); transition: none; }
@@ -360,6 +365,8 @@ details.more[open] summary { margin-bottom: 8px; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---------- plain pages (privacy) ---------- */
+.doc-langs a { color: var(--accent); }
+.doc .eyebrow.doc-langs { margin: 0 0 -12px; }
 .page-top { display: flex; align-items: center; padding: 28px max(20px, env(safe-area-inset-left, 0px)) 0; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -369,8 +376,13 @@ details.more[open] summary { margin-bottom: 8px; }
 
 /* ---------- phone ---------- */
 @media (max-width: 640px) {
+  /* on a phone the header keeps only the mark; the name is on the first card */
   .wordmark { font-size: 1rem; }
-  .menu button { padding: 8px 10px; font-size: 0.875rem; }
+  .wordmark span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wordmark svg { width: 22px; height: 22px; }
+  .menu { gap: 2px; }
+  .menu button { padding: 8px 9px; font-size: 0.875rem; }
+  .menu .lang-btn { width: 34px; }
   .intro { top: auto; bottom: calc(var(--edge-b) + 66px); padding: 18px; }
   .intro h1 { font-size: 1.125rem; }
   .intro p { font-size: 0.875rem; }
@@ -399,6 +411,6 @@ details.more[open] summary { margin-bottom: 8px; }
   .two { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 380px) {
-  .wordmark span, .menu #nav-mine { font-size: 0.8125rem; }
+  .menu button { font-size: 0.8125rem; padding: 8px 7px; }
   .count { font-size: 0.8125rem; }
 }

@@ -1,7 +1,8 @@
 /* 하늘: 시간대, 계절, 날씨에 따라 들판의 빛과 화면 위에 떠다니는 것들을 바꿉니다.
    - 시간대: 새벽 5–7시 · 낮 7–17시 · 해 질 녘 17–19시 · 밤 19–5시 (방문자 컴퓨터의 시계 기준)
-   - 계절: 봄 3–5월 · 여름 6–8월 · 가을 9–11월 · 겨울 12–2월
-   - 날씨: Open-Meteo(무료, 키 없음)에서 서울의 지금 날씨를 가져와요. 도움말 창에서 켜면 내 위치 날씨를 써요.
+   - 계절: 봄 3–5월 · 여름 6–8월 · 가을 9–11월 · 겨울 12–2월 (남반구에서는 반대로)
+   - 날씨: Open-Meteo(무료, 키 없음)에서 지금 날씨를 가져와요. 위치는 묻지 않고, 방문자 컴퓨터의 시간대 도시
+     (예: Asia/Seoul → 서울, America/New_York → 뉴욕)로 정해요. 도움말 창에서 켜면 실제 위치를 써요.
    도움말 창에서 셋 다 직접 고를 수도 있어요.
 
    Sky.set(kind, value)   kind: 'time' | 'season' | 'weather' | 'geo'
@@ -10,7 +11,8 @@
   const root = document.documentElement;
   const KEYS = { time: 'happy:time', season: 'happy:season', weather: 'happy:weather', geo: 'happy:geo' };
   const THEME = { dawn: '#1a1820', day: '#eef0e4', dusk: '#21170f', night: '#0b1017' };
-  const SEOUL = { lat: 37.57, lon: 126.98 };
+  const SEOUL = { lat: 37.57, lon: 126.98, name: 'Seoul' };
+  let here = SEOUL; // the place whose weather and seasons the meadow shows
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const listeners = [];
   let state = null, liveWeather = 'clear';
@@ -26,7 +28,8 @@
     return 'night';
   }
   function byMonth(d = new Date()) {
-    const m = d.getMonth() + 1;
+    let m = d.getMonth() + 1;
+    if (here.lat < 0) m = (m + 5) % 12 + 1; // south of the equator, spring comes in September
     return m >= 3 && m <= 5 ? 'spring' : m >= 6 && m <= 8 ? 'summer' : m >= 9 && m <= 11 ? 'autumn' : 'winter';
   }
 
@@ -56,26 +59,44 @@
     if (code === 2 || code === 3) return 'cloud';
     return 'clear';
   }
+  // without asking anyone: the city of the computer's time zone, looked up once with Open-Meteo's place search and kept
+  const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) { return ''; } })();
+  async function zoneCity() {
+    if (!TZ || TZ === 'Asia/Seoul' || !TZ.includes('/')) return SEOUL;
+    const key = 'happy:zone:' + TZ + ':' + ((window.I18N && window.I18N.lang) || 'en');
+    try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c) return c; } catch (_) { /* 다시 찾아요 */ }
+    const name = TZ.split('/').pop().replace(/_/g, ' ');
+    try {
+      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=${(window.I18N && window.I18N.lang) || 'en'}&format=json`);
+      const j = r.ok ? await r.json() : null;
+      const g = j && j.results && j.results[0];
+      if (!g) return SEOUL;
+      const c = { lat: Math.round(g.latitude * 10) / 10, lon: Math.round(g.longitude * 10) / 10, name: g.name };
+      try { localStorage.setItem(key, JSON.stringify(c)); } catch (_) { /* 괜찮아요 */ }
+      return c;
+    } catch (_) { return SEOUL; }
+  }
   async function where() {
-    if (read('geo') !== 'on' || !navigator.geolocation) return SEOUL;
+    if (read('geo') !== 'on' || !navigator.geolocation) return zoneCity();
     return new Promise(res => navigator.geolocation.getCurrentPosition(
-      p => res({ lat: Math.round(p.coords.latitude * 10) / 10, lon: Math.round(p.coords.longitude * 10) / 10 }), // 약 10km 단위로 흐리게
-      () => res(SEOUL), { maximumAge: 3600000, timeout: 8000 }));
+      p => res({ lat: Math.round(p.coords.latitude * 10) / 10, lon: Math.round(p.coords.longitude * 10) / 10, name: '' }), // 약 10km 단위로 흐리게
+      () => res(zoneCity()), { maximumAge: 3600000, timeout: 8000 }));
   }
   async function fetchWeather(force) {
     const cacheKey = 'happy:weather-cache';
     try {
       const c = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (!force && c && Date.now() - c.at < 20 * 60 * 1000 && c.geo === read('geo')) { liveWeather = c.kind; apply(); return; }
+      if (!force && c && Date.now() - c.at < 20 * 60 * 1000 && c.geo === read('geo') && c.tz === TZ) { liveWeather = c.kind; if (c.here) here = c.here; state = null; apply(); return; }
     } catch (_) { /* 저장소를 못 쓰면 매번 물어봐요 */ }
     try {
-      const { lat, lon } = await where();
+      here = await where();
+      const { lat, lon } = here;
       const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code&timezone=auto`);
       if (!r.ok) return;
       const j = await r.json();
       liveWeather = kindOf(j.current && j.current.weather_code);
-      try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), kind: liveWeather, geo: read('geo') })); } catch (_) { /* 괜찮아요 */ }
-      apply();
+      try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), kind: liveWeather, geo: read('geo'), tz: TZ, here })); } catch (_) { /* 괜찮아요 */ }
+      state = null; apply(); // the season may change too, if the place is south of the equator
     } catch (_) { /* 날씨를 못 가져오면 맑음으로 둬요 */ }
   }
 
@@ -190,6 +211,12 @@
       apply();
     },
     choice: read,
+    // the city whose weather the meadow shows, for the help sheet
+    placeName: () => {
+      const l = (window.I18N && window.I18N.lang) || 'en';
+      if (here === SEOUL) return { ko: '서울', ja: 'ソウル', en: 'Seoul' }[l];
+      return here.name || { ko: '내 위치', ja: '現在地', en: 'your location' }[l];
+    },
     state: () => state,
     mount(el) { air.mount(el); },
     // call fn now and whenever the light changes

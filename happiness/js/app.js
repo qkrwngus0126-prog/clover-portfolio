@@ -6,6 +6,10 @@
   const sheet = $('sheet'), body = $('sheet-body');
   const PENDING = 'happy:pending';     // 로그인하러 다녀오는 동안 하던 일을 기억해 두는 곳
   const LIMITS = { line: 80, place: 40, more: 2000 };
+  const tr = window.I18N.t;
+  window.I18N.fill();
+  document.title = tr('brand');
+  document.querySelector('meta[name="description"]').content = tr('desc');
 
   /* ---------- small helpers ---------- */
   // h('p', { class: 'note' }, '글자', child) — 글자는 항상 textContent로 들어가서 안전합니다
@@ -23,8 +27,8 @@
   }
   const pad = n => String(n).padStart(2, '0');
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-  const dot = s => (s || '').slice(0, 10).replace(/-/g, '.');
-  const localDay = iso => { const d = new Date(iso); return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`; };
+  const dot = s => window.I18N.date((s || '').slice(0, 10)); // a day, written the way the visitor's language writes it
+  const localDay = iso => window.I18N.date(iso);
   const chars = s => [...(s || '')].length; // 이모지도 한 글자로 셉니다
 
   let toastTimer = 0;
@@ -35,9 +39,9 @@
   }
   function errMsg(e) {
     const m = (e && (e.message || e.error_description)) || String(e);
-    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return '인터넷 연결을 확인하고 다시 해 주세요.';
-    if (/JWT|token/i.test(m)) return '로그인이 풀렸어요. 다시 로그인해 주세요.';
-    return `잠시 후 다시 해 주세요. (${m})`;
+    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return tr('errNet');
+    if (/JWT|token/i.test(m)) return tr('errAuth');
+    return tr('errRetry', { m });
   }
 
   /* ---------- connect ---------- */
@@ -59,7 +63,7 @@
   const wantsServer = !!(cfg.supabaseUrl && cfg.supabaseKey);
   if (wantsServer && keyProblem(cfg.supabaseKey)) {
     document.body.prepend(h('p', { class: 'wrap', style: 'padding:16px 20px;background:#fbeae8;color:#b3261e;margin:0' },
-      'config.js에 관리자용(secret / service_role) 키가 들어 있어요. 이 키는 공개되면 안 됩니다. 지금 바로 지우고, Supabase에서 그 키를 새로 발급(rotate)해 주세요. 공개용 Publishable(anon) 키를 넣어야 해요.'));
+      tr('secretKey')));
     return;
   }
   if (wantsServer && window.supabase) {
@@ -69,7 +73,7 @@
   }
   const demo = !sb;
   if (demo) $('demo-note').hidden = false;
-  if (wantsServer && !sb) $('demo-note').textContent = 'Supabase 라이브러리를 불러오지 못해 미리보기로 열었어요. 인터넷 연결을 확인해 주세요.';
+  if (wantsServer && !sb) $('demo-note').textContent = tr('libFail');
 
   /* ---------- data: Supabase, or memory in preview ---------- */
   const BUCKET = cfg.photoBucket || 'happy-photos';
@@ -109,7 +113,7 @@
     async remove(id) {
       const { data, error } = await sb.from('happies').delete().eq('id', id).select('id');
       if (error) throw error;
-      if (!data.length) throw new Error('지울 수 없는 기록이에요.');
+      if (!data.length) throw new Error(tr('cantDelete'));
     },
     async report(id, reason) {
       const { error } = await sb.from('reports').insert({ happy_id: id, reason: reason || null });
@@ -160,7 +164,7 @@
   /* ---------- the field ---------- */
   const foundN = $('found-n'), totalN = $('total-n'), hintText = $('hint-text'), hintBtn = $('hint-btn'), openBtn = $('open-btn');
   const coarse = matchMedia('(pointer: coarse)').matches;
-  const IDLE_HINT = coarse ? '한 손가락으로 헤집고, 두 손가락으로 둘러보세요' : '마우스를 올려 헤집고, 끌거나 스크롤해서 둘러보세요';
+  const IDLE_HINT = coarse ? tr('idleTouch') : tr('idleMouse');
   hintText.textContent = IDLE_HINT;
   let shown = null;
 
@@ -170,15 +174,15 @@
     onShow(c) {
       shown = c;
       openBtn.hidden = !c;
-      if (c) openBtn.textContent = c.kind === 'empty' ? '여기에 적기' : '열어 보기';
+      if (c) openBtn.textContent = c.kind === 'empty' ? tr('writeHere') : tr('open');
     },
     onFound(n, all, c) {
       foundN.textContent = n; totalN.textContent = all;
-      if (c) hintText.textContent = c.kind === 'empty' ? '빈 세잎이에요. 눌러서 행복을 적어 보세요.' : c.mine ? '내가 심은 세잎이에요.' : '누군가의 행복이에요. 눌러서 읽어 보세요.';
-      if (all && n === all) hintText.textContent = '들판의 세잎을 모두 찾았어요. 행복은 원래 흔했습니다.';
+      if (c) hintText.textContent = c.kind === 'empty' ? tr('foundEmpty') : c.mine ? tr('foundMine') : tr('foundOther');
+      if (all && n === all) hintText.textContent = tr('foundAll');
       if (!c && n === 0) hintText.textContent = IDLE_HINT;
       hintBtn.disabled = all > 0 && n === all;
-      hintBtn.textContent = hintBtn.disabled ? '다 찾았어요' : '하나 보여 주기';
+      hintBtn.textContent = hintBtn.disabled ? tr('allFound') : tr('showOne');
     },
   });
   // 적힌 세잎은 꽃 표시로 이미 보이니, "하나 보여 주기"는 빈 세잎부터 찾아 줘요
@@ -236,7 +240,7 @@
   async function load() {
     let list = [];
     try { list = await api.list(); }
-    catch (e) { toast('기록을 불러오지 못했어요. ' + errMsg(e)); }
+    catch (e) { toast(tr('loadFail') + ' ' + errMsg(e)); }
     records.clear();
     list.forEach(r => records.set(r.id, r));
     // the meadow grows with the number of records, so there is always room to hide empty clovers;
@@ -268,7 +272,7 @@
     };
     function item(r) {
       return h('li', { 'data-id': r.id },
-        h('button', { type: 'button', title: '들판에서 보기', onclick: () => field.reveal(r.id, () => openRead(r.id)) },
+        h('button', { type: 'button', title: tr('showInField'), onclick: () => field.reveal(r.id, () => openRead(r.id)) },
           h('span', { class: 'dot' + (user && r.user_id === user.id ? ' mine' : '') }), h('span', { class: 't' }, r.line)));
     }
     function reset() {
@@ -362,9 +366,9 @@
       h('div', { style: 'display:grid;gap:6px' },
         eyebrow ? h('p', { class: 'eyebrow' }, eyebrow) : null,
         h('h2', { id: 'sheet-title' }, title)),
-      h('button', { type: 'button', class: 'x-btn', 'aria-label': '닫기', onclick: close }, '×'));
+      h('button', { type: 'button', class: 'x-btn', 'aria-label': tr('close'), onclick: close }, '×'));
   }
-  function loading(text) { open([head(null, text || '불러오는 중…')]); }
+  function loading(text) { open([head(null, text || tr('loading'))]); }
 
   /* ---------- login ---------- */
   const returnUrl = () => location.origin + location.pathname;
@@ -384,10 +388,10 @@
 
   function openLogin(why) {
     let leaving = false;
-    const providers = (cfg.loginProviders && cfg.loginProviders.length ? cfg.loginProviders : [{ id: 'google', label: 'Google로 계속하기' }]);
+    const providers = (cfg.loginProviders && cfg.loginProviders.length ? cfg.loginProviders : [{ id: 'google' }]);
     open([
-      head(null, '로그인이 필요해요'),
-      h('p', { class: 'note' }, why || '행복을 적으려면 로그인해 주세요. 읽기는 로그인 없이 할 수 있어요.', h('br'), '로그인하면 지금 하던 곳으로 바로 돌아와요.'),
+      head(null, tr('loginTitle')),
+      h('p', { class: 'note' }, why || tr('loginWhyWrite'), h('br'), tr('loginBack')),
       h('div', { class: 'providers' }, providers.map(p => h('button', {
         type: 'button', class: 'btn wide' + (p.id === 'google' ? ' primary' : ''),
         async onclick(e) {
@@ -396,10 +400,10 @@
           leaving = true;
           if (demo) { setUser({ id: 'demo-me' }); close(); resume(); return; }
           const { error } = await sb.auth.signInWithOAuth({ provider: p.id, options: { redirectTo: returnUrl() } });
-          if (error) { leaving = false; btn.disabled = false; toast('로그인을 시작하지 못했어요. ' + errMsg(error)); }
+          if (error) { leaving = false; btn.disabled = false; toast(tr('loginFail') + ' ' + errMsg(error)); }
         },
-      }, p.label))),
-      demo ? h('p', { class: 'note' }, '미리보기에서는 누르면 바로 로그인한 것처럼 움직여요.') : null,
+      }, tr('provider_' + p.id) === 'provider_' + p.id ? p.label : tr('provider_' + p.id)))),
+      demo ? h('p', { class: 'note' }, tr('loginDemo')) : null,
     ], () => { if (!leaving) takePending(); }); // 그냥 닫으면 하던 일도 잊습니다
   }
 
@@ -408,14 +412,14 @@
   function setUser(u) {
     const changed = (user && user.id) !== (u && u.id);
     user = u;
-    navAuth.textContent = user ? '로그아웃' : '로그인';
+    navAuth.textContent = user ? tr('logout') : tr('login');
     if (changed) { for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id }); feed.mine(); if (user && booted) onThisDay(); }
   }
   navAuth.addEventListener('click', async () => {
-    if (!user) { takePending(); openLogin('로그인하면 행복을 적고, 내가 쓴 기록을 고치거나 지울 수 있어요.'); return; }
+    if (!user) { takePending(); openLogin(tr('loginWhyHeader')); return; }
     if (sb) await sb.auth.signOut();
     setUser(null);
-    toast('로그아웃했어요.');
+    toast(tr('loggedOut'));
   });
 
   // 로그인하고 돌아왔을 때, 하던 일을 이어서 합니다
@@ -438,11 +442,11 @@
   /* ---------- an empty clover ---------- */
   function openEmpty(c) {
     open([
-      head('빈 세잎', '아직 아무도 적지 않은 세잎이에요'),
-      h('p', { class: 'note' }, '여기에 행복을 적으면 이 자리에 계속 남아서, 다음에 들판을 헤집는 사람이 찾을 수 있어요.'),
+      head(tr('emptyEyebrow'), tr('emptyTitle')),
+      h('p', { class: 'note' }, tr('emptyBody')),
       h('div', { class: 'row end' },
-        h('button', { type: 'button', class: 'btn quiet', onclick: close }, '닫기'),
-        h('button', { type: 'button', class: 'btn primary', onclick: () => startWrite(c) }, '여기에 행복 적기')),
+        h('button', { type: 'button', class: 'btn quiet', onclick: close }, tr('close')),
+        h('button', { type: 'button', class: 'btn primary', onclick: () => startWrite(c) }, tr('emptyWrite'))),
     ]);
   }
   function startWrite(spot, draft) {
@@ -461,9 +465,9 @@
     loading();
     let r;
     try { r = await api.get(id); }
-    catch (e) { open([head(null, '세잎을 열지 못했어요'), h('p', { class: 'note' }, errMsg(e))]); return; }
+    catch (e) { open([head(null, tr('readFail')), h('p', { class: 'note' }, errMsg(e))]); return; }
     if (!r) {
-      open([head(null, '이제 볼 수 없는 세잎이에요'), h('p', { class: 'note' }, '글쓴이가 지웠거나, 신고가 쌓여 잠시 숨겨진 기록이에요.')]);
+      open([head(null, tr('gone')), h('p', { class: 'note' }, tr('goneBody'))]);
       records.delete(id); field.remove(id); feed.drop(id);
       return;
     }
@@ -475,24 +479,24 @@
         const on = moreText.hidden;
         moreText.hidden = !on;
         e.currentTarget.setAttribute('aria-expanded', String(on));
-        e.currentTarget.textContent = on ? '접기' : '조금 더 읽기';
+        e.currentTarget.textContent = on ? tr('fold') : tr('readMore');
       },
-    }, '조금 더 읽기') : null;
+    }, tr('readMore')) : null;
 
     open([
       head([dot(r.happy_on), r.place].filter(Boolean).join(' · '), r.line),
       (mine || r.hidden) ? h('div', { class: 'row' },
-        mine ? h('span', { class: 'badge' }, '내가 심은 세잎') : null,
-        r.hidden ? h('span', { class: 'badge warn' }, '신고가 쌓여 지금은 나에게만 보여요') : null) : null,
-      r.photo_path ? h('figure', { class: 'read-photo', style: 'margin-block:0' }, h('img', { src: api.photoUrl(r.photo_path), alt: '글쓴이가 함께 올린 사진', loading: 'lazy' })) : null,
+        mine ? h('span', { class: 'badge' }, tr('badgeMine')) : null,
+        r.hidden ? h('span', { class: 'badge warn' }, tr('badgeHidden')) : null) : null,
+      r.photo_path ? h('figure', { class: 'read-photo', style: 'margin-block:0' }, h('img', { src: api.photoUrl(r.photo_path), alt: tr('photoAlt'), loading: 'lazy' })) : null,
       moreBtn, moreText,
       h('div', { class: 'row split' },
-        h('span', { class: 'eyebrow' }, `${localDay(r.created_at)}에 심음${r.updated_at ? ' · 고침' : ''}`),
+        h('span', { class: 'eyebrow' }, tr('plantedOn', { d: localDay(r.created_at) }) + (r.updated_at ? ' · ' + tr('edited') : '')),
         mine
           ? h('div', { class: 'row' },
-              h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, '고치기'),
-              h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r) }, '지우기'))
-          : h('button', { type: 'button', class: 'btn quiet', onclick: () => { if (requireLogin({ type: 'report', id: r.id }, '신고하려면 로그인해 주세요. 한 사람이 한 기록에 한 번만 신고할 수 있어요.')) openReport(r.id); } }, '신고')),
+              h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, tr('edit')),
+              h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r) }, tr('del')))
+          : h('button', { type: 'button', class: 'btn quiet', onclick: () => { if (requireLogin({ type: 'report', id: r.id }, tr('loginWhyReport'))) openReport(r.id); } }, tr('report'))),
     ]);
   }
 
@@ -518,32 +522,32 @@
     const t = today();
 
     const dateIn = h('input', { type: 'date', id: 'f-date', required: true, max: t, value: src.happy_on || t });
-    const placeIn = h('input', { type: 'text', id: 'f-place', maxlength: LIMITS.place, placeholder: '예: 동네 빵집 앞 벤치', autocomplete: 'off', value: src.place || '' });
-    const lineIn = h('input', { type: 'text', id: 'f-line', required: true, maxlength: LIMITS.line, placeholder: '오늘 나를 웃게 한 작은 일', autocomplete: 'off', value: src.line || '', 'aria-describedby': 'f-err' });
-    const moreIn = h('textarea', { id: 'f-more', maxlength: LIMITS.more, rows: 5, placeholder: '길게 쓰고 싶을 때만 적어 주세요. 읽는 사람은 한 줄을 먼저 보고, 눌러야 이 글이 펼쳐져요.' });
+    const placeIn = h('input', { type: 'text', id: 'f-place', maxlength: LIMITS.place, placeholder: tr('placePh'), autocomplete: 'off', value: src.place || '' });
+    const lineIn = h('input', { type: 'text', id: 'f-line', required: true, maxlength: LIMITS.line, placeholder: tr('linePh'), autocomplete: 'off', value: src.line || '', 'aria-describedby': 'f-err' });
+    const moreIn = h('textarea', { id: 'f-more', maxlength: LIMITS.more, rows: 5, placeholder: tr('morePh') });
     moreIn.value = src.more || '';
     const err = h('p', { class: 'err', id: 'f-err', role: 'alert' });
 
     // 사진: 고르는 순간 줄여 두고, 저장할 때 올립니다
     const photo = { blob: null, removed: false, url: null };
     const fileIn = h('input', { type: 'file', id: 'f-photo', accept: 'image/*', tabindex: '-1', 'aria-hidden': 'true' });
-    const prevImg = h('img', { alt: '고른 사진 미리보기' });
+    const prevImg = h('img', { alt: tr('photoPrevAlt') });
     const prevMeta = h('span', { class: 'meta' });
     const prev = h('div', { class: 'photo-prev', hidden: true }, prevImg, prevMeta);
-    const pickBtn = h('button', { type: 'button', class: 'btn', onclick: () => fileIn.click() }, '사진 고르기');
+    const pickBtn = h('button', { type: 'button', class: 'btn', onclick: () => fileIn.click() }, tr('pickPhoto'));
     const dropBtn = h('button', { type: 'button', class: 'btn quiet', hidden: true, onclick() {
       photo.blob = null; photo.removed = true; fileIn.value = '';
       if (photo.url) URL.revokeObjectURL(photo.url);
-      photo.url = null; prev.hidden = true; dropBtn.hidden = true; pickBtn.textContent = '사진 고르기';
-    } }, '사진 빼기');
+      photo.url = null; prev.hidden = true; dropBtn.hidden = true; pickBtn.textContent = tr('pickPhoto');
+    } }, tr('dropPhoto'));
     if (record && record.photo_path) {
-      prevImg.src = api.photoUrl(record.photo_path); prevMeta.textContent = '지금 사진';
-      prev.hidden = false; dropBtn.hidden = false; pickBtn.textContent = '다른 사진으로';
+      prevImg.src = api.photoUrl(record.photo_path); prevMeta.textContent = tr('photoNow');
+      prev.hidden = false; dropBtn.hidden = false; pickBtn.textContent = tr('photoOther');
     }
     fileIn.addEventListener('change', async () => {
       const f = fileIn.files && fileIn.files[0];
       if (!f) return;
-      pickBtn.disabled = true; pickBtn.textContent = '사진 줄이는 중…';
+      pickBtn.disabled = true; pickBtn.textContent = tr('shrinking');
       try {
         const blob = await window.shrinkPhoto(f);
         if (photo.url) URL.revokeObjectURL(photo.url);
@@ -551,25 +555,25 @@
         prevImg.src = photo.url;
         prevMeta.textContent = `${Math.round(f.size / 1024).toLocaleString()}KB → ${Math.round(blob.size / 1024).toLocaleString()}KB`;
         prev.hidden = false; dropBtn.hidden = false;
-      } catch (e) { toast(e.message || '사진을 줄이지 못했어요.'); }
-      pickBtn.disabled = false; pickBtn.textContent = photo.blob || !prev.hidden ? '다른 사진으로' : '사진 고르기';
+      } catch (e) { toast(e.message || tr('shrinkFail')); }
+      pickBtn.disabled = false; pickBtn.textContent = photo.blob || !prev.hidden ? tr('photoOther') : tr('pickPhoto');
     });
 
-    const submit = h('button', { type: 'submit', class: 'btn primary' }, editing ? '고친 내용 저장' : '들판에 심기');
+    const submit = h('button', { type: 'submit', class: 'btn primary' }, editing ? tr('saveEdit') : tr('plant'));
     const form = h('form', { class: 'form', novalidate: true },
       h('div', { class: 'two' },
-        h('div', { class: 'f' }, h('label', { for: 'f-date' }, '행복했던 날'), dateIn),
-        h('div', { class: 'f' }, h('label', { for: 'f-place' }, h('span', null, '장소 ', h('span', { class: 'opt' }, '선택')), counter(placeIn, LIMITS.place)), placeIn)),
-      h('div', { class: 'f' }, h('label', { for: 'f-line' }, h('span', null, '한 줄'), counter(lineIn, LIMITS.line)), lineIn),
+        h('div', { class: 'f' }, h('label', { for: 'f-date' }, tr('labelDate')), dateIn),
+        h('div', { class: 'f' }, h('label', { for: 'f-place' }, h('span', null, tr('labelPlace') + ' ', h('span', { class: 'opt' }, tr('optional'))), counter(placeIn, LIMITS.place)), placeIn)),
+      h('div', { class: 'f' }, h('label', { for: 'f-line' }, h('span', null, tr('labelLine')), counter(lineIn, LIMITS.line)), lineIn),
       h('details', { class: 'more', open: !!src.more },
-        h('summary', null, '조금 더 적기 (선택)'),
-        h('div', { class: 'f' }, h('label', { for: 'f-more' }, h('span', { class: 'opt' }, '길게 적기'), counter(moreIn, LIMITS.more)), moreIn)),
+        h('summary', null, tr('moreSummary')),
+        h('div', { class: 'f' }, h('label', { for: 'f-more' }, h('span', { class: 'opt' }, tr('moreLabel')), counter(moreIn, LIMITS.more)), moreIn)),
       h('div', { class: 'f photo-pick' },
-        h('span', { class: 'lab' }, h('span', null, '사진 ', h('span', { class: 'opt' }, '선택 · 1장'))),
+        h('span', { class: 'lab' }, h('span', null, tr('labelPhoto') + ' ', h('span', { class: 'opt' }, tr('photoOpt')))),
         prev, h('div', { class: 'row' }, pickBtn, dropBtn, fileIn)),
       err,
       h('div', { class: 'row end' },
-        h('button', { type: 'button', class: 'btn quiet', onclick: close }, '취소'),
+        h('button', { type: 'button', class: 'btn quiet', onclick: close }, tr('cancel')),
         submit));
 
     form.addEventListener('submit', async e => {
@@ -581,24 +585,24 @@
         line: lineIn.value.trim(),
         more: moreIn.value.trim() || null,
       };
-      if (!row.line) { err.textContent = '한 줄은 꼭 적어 주세요.'; lineIn.focus(); return; }
-      if (chars(row.line) > LIMITS.line) { err.textContent = `한 줄은 ${LIMITS.line}자까지예요.`; lineIn.focus(); return; }
-      if (!row.happy_on || row.happy_on > today()) { err.textContent = '행복했던 날은 오늘이나 그 전 날짜로 골라 주세요.'; dateIn.focus(); return; }
-      if (chars(row.place) > LIMITS.place || chars(row.more) > LIMITS.more) { err.textContent = '글자 수를 조금 줄여 주세요.'; return; }
+      if (!row.line) { err.textContent = tr('errLineReq'); lineIn.focus(); return; }
+      if (chars(row.line) > LIMITS.line) { err.textContent = tr('errLineMax', { n: LIMITS.line }); lineIn.focus(); return; }
+      if (!row.happy_on || row.happy_on > today()) { err.textContent = tr('errDate'); dateIn.focus(); return; }
+      if (chars(row.place) > LIMITS.place || chars(row.more) > LIMITS.more) { err.textContent = tr('errLen'); return; }
       // 쓰는 사이에 로그인이 풀렸다면, 쓴 글을 기억해 두고 다시 로그인합니다 (사진은 다시 골라야 해요)
       if (!user) {
         requireLogin(editing ? { type: 'edit', id: record.id } : { type: 'write', spot: { key: spot.key, fx: spot.fx, fy: spot.fy }, draft: row },
-          '로그인이 풀렸어요. 다시 로그인하면 쓰던 글로 돌아와요.');
+          tr('loginExpired'));
         return;
       }
 
-      submit.disabled = true; submit.textContent = photo.blob ? '사진 올리는 중…' : '저장하는 중…';
+      submit.disabled = true; submit.textContent = photo.blob ? tr('uploading') : tr('saving');
       let uploaded = null;
       try {
         let photo_path = record ? record.photo_path : null;
         if (photo.blob) { uploaded = await api.upload(photo.blob); photo_path = uploaded; }
         else if (photo.removed) photo_path = null;
-        submit.textContent = '저장하는 중…';
+        submit.textContent = tr('saving');
         const saved = editing
           ? await api.update(record.id, { ...row, photo_path })
           : await api.create({ ...row, photo_path, fx: spot.fx, fy: spot.fy });
@@ -610,7 +614,7 @@
 
         if (editing) {
           field.update(saved.id, { text: saved.line });
-          toast('고쳤어요.');
+          toast(tr('toastEdited'));
           openRead(saved.id);
         } else {
           // 빈 세잎이 내 세잎이 되고, 들판 어딘가에 새 빈 세잎이 하나 생깁니다
@@ -619,16 +623,16 @@
           field.add(newEmpty());
           close();
           field.reveal(saved.id);
-          toast(demo ? '심었어요. 미리보기라서 새로고침하면 사라져요.' : '들판에 심었어요. 다음 사람이 이 자리에서 찾을 수 있어요.');
+          toast(demo ? tr('toastPlantedDemo') : tr('toastPlanted'));
         }
       } catch (e2) {
         if (uploaded) api.unlink(uploaded).catch(() => {});
         err.textContent = errMsg(e2);
-        submit.disabled = false; submit.textContent = editing ? '고친 내용 저장' : '들판에 심기';
+        submit.disabled = false; submit.textContent = editing ? tr('saveEdit') : tr('plant');
       }
     });
 
-    open([head(editing ? '내 세잎 고치기' : '빈 세잎에 적기', editing ? '행복을 고쳐 적어요' : '오늘의 세잎 한 장'), form],
+    open([head(editing ? tr('writeEyebrowEdit') : tr('writeEyebrowNew'), editing ? tr('writeTitleEdit') : tr('writeTitleNew')), form],
       () => { if (photo.url) URL.revokeObjectURL(photo.url); });
     setTimeout(() => lineIn.focus({ preventScroll: true }), 50);
   }
@@ -636,98 +640,98 @@
   /* ---------- deleting ---------- */
   function openDelete(r, back) {
     const yes = h('button', { type: 'button', class: 'btn danger', async onclick() {
-      yes.disabled = true; yes.textContent = '지우는 중…';
+      yes.disabled = true; yes.textContent = tr('deleting');
       try {
         await api.remove(r.id);
         if (r.photo_path) api.unlink(r.photo_path).catch(() => {});
         records.delete(r.id); field.remove(r.id); feed.drop(r.id);
-        toast('지웠어요.');
+        toast(tr('toastDeleted'));
         if (back) back(); else close();
-      } catch (e) { yes.disabled = false; yes.textContent = '지우기'; toast(errMsg(e)); }
-    } }, '지우기');
+      } catch (e) { yes.disabled = false; yes.textContent = tr('del'); toast(errMsg(e)); }
+    } }, tr('del'));
     open([
-      head(null, '이 세잎을 지울까요?'),
-      h('p', { class: 'note' }, `“${r.line}”`, h('br'), '지우면 들판에서 사라지고 되돌릴 수 없어요.'),
-      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn quiet', onclick: () => back ? back() : openRead(r.id) }, '그대로 두기'), yes),
+      head(null, tr('delTitle')),
+      h('p', { class: 'note' }, `“${r.line}”`, h('br'), tr('delBody')),
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn quiet', onclick: () => back ? back() : openRead(r.id) }, tr('keep')), yes),
     ]);
   }
 
   /* ---------- reporting ---------- */
   function openReport(id) {
     const reason = h('select', { id: 'f-reason' },
-      ['불쾌하거나 혐오스러운 내용', '광고나 스팸', '다른 사람의 개인정보', '기타'].map(v => h('option', { value: v }, v)));
+      // the reason is saved in Korean so the admin reads every report the same way
+      window.I18N.t('reasons').map((label, i) => h('option', { value: ['불쾌하거나 혐오스러운 내용', '광고나 스팸', '다른 사람의 개인정보', '기타'][i] }, label)));
     const yes = h('button', { type: 'button', class: 'btn danger', async onclick() {
       yes.disabled = true;
       try {
         await api.report(id, reason.value);
-        toast('신고했어요. 고맙습니다.');
+        toast(tr('toastReported'));
         close();
       } catch (e) {
         yes.disabled = false;
-        toast(e && e.code === '23505' ? '이미 신고한 기록이에요.' : errMsg(e));
+        toast(e && e.code === '23505' ? tr('alreadyReported') : errMsg(e));
         if (e && e.code === '23505') close();
       }
-    } }, '신고하기');
+    } }, tr('reportBtn'));
     open([
-      head(null, '이 기록을 신고할까요?'),
-      h('p', { class: 'note' }, '신고가 3번 쌓이면 관리자가 확인할 때까지 들판에서 숨겨져요. 누가 신고했는지는 글쓴이에게 보이지 않아요.'),
-      h('div', { class: 'f' }, h('label', { for: 'f-reason' }, '이유'), reason),
-      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn quiet', onclick: () => openRead(id) }, '취소'), yes),
+      head(null, tr('reportTitle')),
+      h('p', { class: 'note' }, tr('reportBody')),
+      h('div', { class: 'f' }, h('label', { for: 'f-reason' }, tr('reason')), reason),
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn quiet', onclick: () => openRead(id) }, tr('cancel')), yes),
     ]);
   }
 
   /* ---------- my records ---------- */
   async function openMine() {
-    loading('내 기록');
+    loading(tr('mineTitle'));
     let list;
     try { list = await api.mine(); }
-    catch (e) { open([head(null, '내 기록'), h('p', { class: 'note' }, errMsg(e))]); return; }
-    const out = h('button', { type: 'button', class: 'btn quiet', onclick: () => navAuth.click() }, '로그아웃');
+    catch (e) { open([head(null, tr('mineTitle')), h('p', { class: 'note' }, errMsg(e))]); return; }
+    const out = h('button', { type: 'button', class: 'btn quiet', onclick: () => navAuth.click() }, tr('logout'));
     if (!list.length) {
-      open([head(null, '내 기록'),
-        h('p', { class: 'note' }, '아직 심은 세잎이 없어요. 들판에서 빈 세잎을 찾아보세요.'),
-        h('div', { class: 'row split' }, out, h('button', { type: 'button', class: 'btn primary', onclick: () => { close(); $('nav-write').click(); } }, '행복 적기'))]);
+      open([head(null, tr('mineTitle')),
+        h('p', { class: 'note' }, tr('mineEmpty')),
+        h('div', { class: 'row split' }, out, h('button', { type: 'button', class: 'btn primary', onclick: () => { close(); $('nav-write').click(); } }, tr('navWrite')))]);
       return;
     }
     open([
-      head(`모두 ${list.length}개`, '내 기록'),
+      head(tr('countAll', { n: list.length }), tr('mineTitle')),
       h('ul', { class: 'mine' }, list.map(r => h('li', null,
         h('span', { class: 'eyebrow' }, [dot(r.happy_on), r.place].filter(Boolean).join(' · ')),
         h('span', { class: 'l' }, r.line),
-        r.hidden ? h('span', { class: 'badge warn' }, '신고가 쌓여 숨겨짐') : null,
+        r.hidden ? h('span', { class: 'badge warn' }, tr('badgeHiddenShort')) : null,
         h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'btn', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, '들판에서 보기'),
-          h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, '고치기'),
-          h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r, openMine) }, '지우기'))))),
+          h('button', { type: 'button', class: 'btn', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, tr('showInField')),
+          h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, tr('edit')),
+          h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r, openMine) }, tr('del')))))),
       h('div', { class: 'row' }, out),
     ]);
   }
   $('nav-mine').addEventListener('click', () => {
-    if (requireLogin({ type: 'mine' }, '내 기록을 보려면 로그인해 주세요.')) openMine();
+    if (requireLogin({ type: 'mine' }, tr('loginWhyMine'))) openMine();
   });
 
   /* ---------- help, and the card shown on a first visit ---------- */
+  function lines(list) { return list.flatMap((l, i) => i ? [h('br'), l] : [l]); }
   function openHelp() {
-    // one sentence to a line, so the help reads in short, even steps
-    const steps = [
-      ['헤집기', coarse
-        ? ['한 손가락으로 네잎을 헤치면', '아래 숨은 세잎이 드러나요.']
-        : ['마우스를 들판 위에서 움직이면', '네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.']],
-      ['둘러보기', coarse
-        ? ['들판은 화면보다 훨씬 넓어요.', '두 손가락으로 끌어서 옮겨 다니세요.']
-        : ['들판은 화면보다 훨씬 넓어요.', '끌거나 스크롤해서 옮겨 다니세요.']],
-      ['읽기', ['누군가 적은 세잎 위엔 흰 꽃이 피어 있어요.', '꽃을 누르면 로그인 없이 바로 읽을 수 있어요.', '옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요.']],
-      ['심기', ['꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요.', '헤집어서 찾으면 내 행복을 적을 수 있고,', '그 자리에 꽃이 피어 다음 사람을 기다려요.', '내가 심은 곳의 꽃은 금색이에요.']],
-    ];
+    // one sentence to a line, so the help reads in short, even steps; the first two depend on touch or mouse
+    const steps = tr('steps').map(([b, touch, mouse]) => [b, mouse && !coarse ? mouse : touch]);
     open([
-      head(null, '이렇게 써요'),
-      h('ol', { class: 'steps' }, steps.map(([b, lines]) => h('li', null, h('b', null, b), h('span', null, lines.flatMap((l, i) => i ? [h('br'), l] : [l]))))),
-      h('p', { class: 'note' }, coarse ? '오른쪽 위 작은 지도는 들판 전체예요.' : '오른쪽 위 작은 지도는 들판 전체예요.', h('br'), '누르면 그곳으로 옮겨 가요.'),
+      head(null, tr('help')),
+      langPicker(),
+      h('ol', { class: 'steps' }, steps.map(([b, ls]) => h('li', null, h('b', null, b), h('span', null, lines(ls))))),
+      h('p', { class: 'note' }, lines(tr('mapNote'))),
       skyPicker(),
       h('div', { class: 'row split' },
-        h('a', { href: 'privacy.html', class: 'btn quiet' }, '개인정보처리방침'),
-        h('button', { type: 'button', class: 'btn primary', onclick: close }, '들판으로')),
+        h('a', { href: tr('privacyHref'), class: 'btn quiet' }, tr('privacy')),
+        h('button', { type: 'button', class: 'btn primary', onclick: close }, tr('toField'))),
     ]);
+  }
+  // 한국어 · English · 日本語: choosing one reloads the page in that language
+  function langPicker() {
+    const I = window.I18N;
+    return h('div', { class: 'seg', role: 'radiogroup', 'aria-label': tr('language') },
+      I.langs.map(l => h('button', { type: 'button', role: 'radio', lang: l, 'aria-checked': String(l === I.lang), onclick: () => { if (l !== I.lang) I.set(l); } }, I.names[l])));
   }
   // 들판의 시간·계절·날씨: 평소엔 시계와 달력과 날씨를 따르고, 원하면 하나로 고정할 수 있어요
   function seg(kind, label, opts) {
@@ -744,17 +748,21 @@
     const geo = h('input', { type: 'checkbox', id: 'f-geo', checked: window.Sky.choice('geo') === 'on' });
     geo.addEventListener('change', () => window.Sky.set('geo', geo.checked ? 'on' : 'auto'));
     return h('details', { class: 'more' },
-      h('summary', null, '들판 꾸미기 (시간 · 계절 · 날씨)'),
+      h('summary', null, tr('decorate')),
       h('div', { class: 'form', style: 'gap:14px' },
-        seg('time', '시간', [['auto', '시계 따라'], ['dawn', '새벽'], ['day', '낮'], ['dusk', '해 질 녘'], ['night', '밤']]),
-        seg('season', '계절', [['auto', '달력 따라'], ['spring', '봄'], ['summer', '여름'], ['autumn', '가을'], ['winter', '겨울']]),
-        seg('weather', '날씨', [['auto', '실제 날씨'], ['clear', '맑음'], ['cloud', '흐림'], ['rain', '비'], ['snow', '눈'], ['fog', '안개']]),
+        seg('time', tr('time'), [['auto', tr('tAuto')], ['dawn', tr('tDawn')], ['day', tr('tDay')], ['dusk', tr('tDusk')], ['night', tr('tNight')]]),
+        seg('season', tr('season'), [['auto', tr('sAuto')], ['spring', tr('sSpring')], ['summer', tr('sSummer')], ['autumn', tr('sAutumn')], ['winter', tr('sWinter')]]),
+        seg('weather', tr('weather'), [['auto', tr('wAuto')], ['clear', tr('wClear')], ['cloud', tr('wCloud')], ['rain', tr('wRain')], ['snow', tr('wSnow')], ['fog', tr('wFog')]]),
         h('label', { class: 'check', for: 'f-geo' }, geo,
-          h('span', null, '실제 날씨를 내 위치로 보기', h('br'), h('small', null, '끄면 서울 날씨예요. 켜면 브라우저가 위치를 물어보고, 대략적인 위치(약 10km 단위)만 날씨 서비스(Open-Meteo)에 보내요. 저장하지 않아요.')))));
+          h('span', null, tr('geoLabel'), h('br'), h('small', null, tr('geoNote', { place: window.Sky.placeName() }))))));
   }
   if (window.Sky) { window.Sky.mount($('flies')); window.Sky.onChange(st => field.setAtmosphere(st)); }
   $('help-btn').addEventListener('click', openHelp);
+  $('nav-lang').addEventListener('click', () => open([head(null, tr('language')), langPicker()]));
   const intro = $('intro');
+  // the first card also offers the other languages, for someone who landed in the wrong one
+  $('intro-langs').replaceChildren(...window.I18N.langs.filter(l => l !== window.I18N.lang)
+    .map(l => h('button', { type: 'button', class: 'btn link', lang: l, onclick: () => window.I18N.set(l) }, window.I18N.names[l])));
   try { if (localStorage.getItem('happy:intro-closed')) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }
   $('intro-close').addEventListener('click', () => {
     intro.hidden = true;
@@ -774,11 +782,11 @@
     const years = Number(t.slice(0, 4)) - Number(r.happy_on.slice(0, 4));
     if (sheet.open) return; // 다른 창을 쓰는 중이면 방해하지 않아요
     open([
-      head(`${years}년 전 오늘`, r.line),
-      h('p', { class: 'note' }, [dot(r.happy_on), r.place].filter(Boolean).join(' · '), h('br'), '그날 심어 둔 세잎이 아직 들판에 있어요.'),
+      head(tr(years === 1 ? 'yearsAgo' : 'yearsAgoPl', { n: years }), r.line),
+      h('p', { class: 'note' }, [dot(r.happy_on), r.place].filter(Boolean).join(' · '), h('br'), tr('annivNote')),
       h('div', { class: 'row end' },
-        h('button', { type: 'button', class: 'btn quiet', onclick: close }, '닫기'),
-        h('button', { type: 'button', class: 'btn primary', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, '들판에서 보기')),
+        h('button', { type: 'button', class: 'btn quiet', onclick: close }, tr('close')),
+        h('button', { type: 'button', class: 'btn primary', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, tr('showInField'))),
     ]);
   }
 
@@ -791,7 +799,7 @@
       const q = new URLSearchParams(location.search), hash = new URLSearchParams(location.hash.slice(1));
       const failed = q.get('error_description') || hash.get('error_description');
       if (q.has('code') || q.has('error') || hash.has('access_token') || hash.has('error')) history.replaceState(null, '', location.pathname);
-      if (failed) { toast('로그인하지 못했어요. ' + failed); takePending(); }
+      if (failed) { toast(tr('loginFailed') + ' ' + failed); takePending(); }
       sb.auth.onAuthStateChange((_event, session) => setUser(session ? session.user : null));
     }
     await load();

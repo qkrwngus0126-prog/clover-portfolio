@@ -48,7 +48,7 @@
     // a small map of the whole meadow: where you are, and the clovers you have found
     const mini = document.createElement('canvas');
     mini.className = 'minimap';
-    mini.setAttribute('aria-label', '들판 지도. 누르면 그곳으로 옮겨 갑니다.');
+    mini.setAttribute('aria-hidden', 'true'); // a pointer shortcut; the arrow keys and the hint button do the same
     field.appendChild(mini);
     const mctx = mini.getContext('2d');
 
@@ -421,9 +421,10 @@
 
     // a written clover shows its one line right away; an empty one invites writing
     function label(h) {
-      if (h.kind === 'empty') return '빈 세잎 · 눌러서 적기';
+      const t = window.I18N ? window.I18N.t : k => k;
+      if (h.kind === 'empty') return t('tagEmpty');
       if (h.text) return h.text;
-      return h.mine ? '내가 심은 세잎 · 눌러서 읽기' : '누군가의 행복 · 눌러서 읽기';
+      return h.mine ? t('tagMine') : t('tagOther');
     }
     function show(h) {
       shownNow = h;

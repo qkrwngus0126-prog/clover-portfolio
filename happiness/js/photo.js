@@ -4,14 +4,16 @@
   const TARGET = 900 * 1024;   // 이보다 크면 화질을 조금씩 낮춰 다시 저장
   const LIMIT = 2 * 1024 * 1024; // Storage 버킷 한도와 같아요
 
+  const t = k => (window.I18N ? window.I18N.t(k) : k);
+
   window.shrinkPhoto = async function (file) {
-    if (!file.type.startsWith('image/')) throw new Error('사진 파일만 올릴 수 있어요.');
+    if (!file.type.startsWith('image/')) throw new Error(t('photoOnly'));
     const url = URL.createObjectURL(file);
     try {
       const img = new Image();
       img.src = url;
       // 휴대폰 사진의 회전 정보는 브라우저가 알아서 반영해요
-      await img.decode().catch(() => { throw new Error('이 사진은 열 수 없어요. JPG나 PNG로 다시 골라 주세요.'); });
+      await img.decode().catch(() => { throw new Error(t('photoBad')); });
       let side = MAX_SIDE, quality = 0.84, blob = null;
       for (let round = 0; round < 6; round++) {
         const k = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight));
@@ -25,7 +27,7 @@
         if (blob && blob.size <= TARGET) break;
         if (quality > 0.62) quality -= 0.08; else side = Math.round(side * 0.8);
       }
-      if (!blob || blob.size > LIMIT) throw new Error('사진을 충분히 줄이지 못했어요. 다른 사진을 골라 주세요.');
+      if (!blob || blob.size > LIMIT) throw new Error(t('photoBig'));
       return blob;
     } finally {
       URL.revokeObjectURL(url);
