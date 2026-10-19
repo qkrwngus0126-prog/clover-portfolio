@@ -89,7 +89,17 @@
     loginWhyMine: ['내 기록을 보려면 로그인해 주세요.', 'Log in to see your clovers.', '自分の記録を見るにはログインしてください。'],
     loginExpired: ['로그인이 풀렸어요. 다시 로그인하면 쓰던 글로 돌아와요.', "You were logged out. Log in again and you'll return to your draft.", 'ログインが切れました。もう一度ログインすると、書きかけの文章に戻ります。'],
 
-    loginAge: ['만 14세 이상만 기록할 수 있어요. 계속하면 개인정보처리방침에 동의하는 것으로 봐요.', 'You must be 14 or older to write. By continuing you agree to the privacy policy.', '記録できるのは14歳以上の方です。続けると、プライバシーポリシーに同意したものとみなします。'],
+    loginAge: ['만 14세 이상만 기록할 수 있어요. 계속하면 이용 규칙과 개인정보처리방침에 동의하는 것으로 봐요.', 'You must be 14 or older to write. By continuing you agree to the house rules and the privacy policy.', '記録できるのは14歳以上の方です。続けると、利用ルールとプライバシーポリシーに同意したものとみなします。'],
+    // opened inside an app (KakaoTalk, Instagram…), where Google refuses to sign anyone in
+    inAppTitle: ['이 앱 안에서는 구글 로그인이 막혀 있어요', 'Google sign-in is blocked inside this app', 'このアプリの中では Google ログインが使えません'],
+    inAppKakao: ['카카오로 로그인하거나, 바깥 브라우저로 열어 구글로 로그인해 주세요.', 'Log in with Kakao, or open this page in your browser to use Google.', 'カカオでログインするか、ブラウザで開いて Google でログインしてください。'],
+    inAppOther: ['바깥 브라우저(Chrome, Safari)로 열면 로그인할 수 있어요.', 'Open this page in your browser (Chrome or Safari) to log in.', 'ブラウザ(Chrome・Safari)で開くとログインできます。'],
+    inAppIos: ['오른쪽 아래나 위의 ⋯ 메뉴에서 "Safari로 열기"를 눌러 주세요. 링크를 복사해서 Safari에 붙여넣어도 돼요.', 'Tap the ⋯ menu and choose "Open in Safari", or copy the link and paste it into Safari.', '⋯ メニューから「Safariで開く」を選ぶか、リンクをコピーして Safari に貼り付けてください。'],
+    openBrowser: ['브라우저로 열기', 'Open in browser', 'ブラウザで開く'],
+    copyLink: ['링크 복사', 'Copy link', 'リンクをコピー'],
+    linkCopiedPlain: ['링크를 복사했어요.', 'Link copied.', 'リンクをコピーしました。'],
+    terms: ['이용 규칙', 'House rules', '利用ルール'],
+    termsHref: ['terms.html', 'terms-en.html', 'terms-ja.html'],
     errDaily: ['오늘은 여기까지 심을 수 있어요. 내일 또 와 주세요.', "That's all you can plant today. Come back tomorrow.", '今日植えられるのはここまでです。また明日来てください。'],
     shareLink: ['링크 보내기', 'Share link', 'リンクを送る'],
     linkCopied: ['링크를 복사했어요. 이 링크로 들어오면 이 세잎으로 바로 와요.', 'Link copied. It opens right at this clover.', 'リンクをコピーしました。このリンクから来ると、この三つ葉がすぐに開きます。'],

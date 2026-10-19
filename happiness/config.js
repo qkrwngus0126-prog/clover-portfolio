@@ -12,10 +12,10 @@ window.HAPPY_CONFIG = {
   // 사진을 넣을 Storage 버킷 이름 (supabase-setup.sql과 같아야 해요)
   photoBucket: 'happy-photos',
 
-  // 로그인 버튼 목록. 카카오를 켜려면 Supabase에서 Kakao를 켠 뒤 아래 줄의 // 를 지우면 됩니다.
+  // 로그인 버튼 목록. Supabase에서 켜져 있는 것만 버튼으로 보여요(꺼져 있으면 저절로 숨어요).
   loginProviders: [
     { id: 'google', label: 'Google로 계속하기' },
-    // { id: 'kakao', label: '카카오로 계속하기' },
+    { id: 'kakao', label: '카카오로 계속하기' },
   ],
 
   // 들판의 처음 크기(px)와 빈 세잎 개수. 손댈 필요 없어요.
