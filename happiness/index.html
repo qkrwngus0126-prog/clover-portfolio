@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- 파일을 고칠 때마다 아래 ?v= 숫자를 올리면, 방문자 브라우저가 예전 파일 대신 새 파일을 바로 받아요 -->
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 <!-- 시간대(새벽·낮·해 질 녘·밤)를 화면이 그려지기 전에 정해 둬요 -->
-<script src="js/sky.js?v=6"></script>
+<script src="js/sky.js?v=7"></script>
 </head>
 <body class="app">
 
@@ -52,9 +52,13 @@
   </aside>
 
   <section class="feed" id="feed" aria-labelledby="feed-title" hidden>
-    <h2 class="feed-title" id="feed-title">들판에 적힌 행복</h2>
+    <div class="feed-head">
+      <h2 class="feed-title" id="feed-title">들판에 적힌 행복</h2>
+      <button class="feed-x" id="feed-close" type="button" aria-label="목록 닫기">×</button>
+    </div>
     <ul class="feed-list" id="feed-list"></ul>
   </section>
+  <button class="feed-open" id="feed-open" type="button" hidden>들판에 적힌 행복</button>
 
   <p class="demo-note" id="demo-note" hidden>미리보기예요 · <code>config.js</code>를 채우면 실제로 저장돼요</p>
 
@@ -77,9 +81,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="config.js?v=6"></script>
-<script src="js/field.js?v=6"></script>
-<script src="js/photo.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
+<script src="config.js?v=7"></script>
+<script src="js/field.js?v=7"></script>
+<script src="js/photo.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
 </body>
 </html>

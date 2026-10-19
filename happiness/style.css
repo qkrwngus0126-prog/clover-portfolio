@@ -162,7 +162,22 @@ button, input, textarea, select { font: inherit; color: inherit; }
   padding: 14px 8px 8px; background: var(--glass); border: 1px solid var(--edge-line); border-radius: 16px;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.feed-title { font-size: 0.75rem; font-weight: 400; letter-spacing: 0.02em; color: var(--muted); padding: 0 10px 6px; }
+.feed-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px 10px; }
+.feed-title { font-size: 0.75rem; font-weight: 400; letter-spacing: 0.02em; color: var(--muted); }
+.feed-x {
+  flex: none; width: 28px; height: 28px; margin: -6px 0 -4px; border: 0; border-radius: 50%; background: none; cursor: pointer;
+  color: var(--muted); font-size: 1.125rem; line-height: 1; transition: background-color 160ms ease, color 160ms ease;
+}
+.feed-x:hover { background: var(--hover); color: var(--ink); }
+/* the list put away: a small pill in its place */
+.feed-open {
+  position: absolute; z-index: 3; right: var(--edge-r); top: calc(var(--edge-t) + 60px + 99px + 12px);
+  min-height: 36px; padding: 0 14px 0 12px; border-radius: 999px; border: 1px solid var(--edge-line); cursor: pointer;
+  background: var(--glass); color: var(--ink); font-size: 0.8125rem; display: inline-flex; align-items: center; gap: 8px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.feed-open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--blossom); box-shadow: 0 0 0 1px var(--blossom-edge); }
+.feed-open:hover { background: var(--surface); }
 .feed-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .feed-list li { transition: opacity 360ms ease, transform 420ms var(--ease-out); }
 .feed-list li.out { opacity: 0; transform: translateY(-6px); }
@@ -259,6 +274,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: var(--step-small); cursor: pointer; }
+.check input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.check small { color: var(--muted); font-size: 0.8125rem; line-height: 1.5; display: inline-block; margin-top: 2px; }
 
 /* reading */
 .read-photo { margin: 0 -28px; background: #0a0f0c; }
@@ -362,6 +381,11 @@ details.more[open] summary { margin-bottom: 8px; }
   /* on a phone the list becomes one changing line under the header */
   .feed { left: var(--edge-l); right: calc(var(--edge-r) + 92px + 8px); width: auto; top: calc(var(--edge-t) + 60px); max-height: none; padding: 4px; border-radius: 14px; }
   .feed-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .feed { display: flex; align-items: center; }
+  .feed-head { order: 2; padding: 0 2px 0 0; }
+  .feed-x { margin: 0; }
+  .feed-list { flex: 1; min-width: 0; }
+  .feed-open { top: calc(var(--edge-t) + 60px); right: auto; left: var(--edge-l); }
   .feed-list button { padding: 7px 10px; font-size: 0.8125rem; }
   .demo-note { bottom: calc(var(--edge-b) + 70px); white-space: normal; width: max-content; max-width: calc(100% - 28px); text-align: center; }
   .count-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

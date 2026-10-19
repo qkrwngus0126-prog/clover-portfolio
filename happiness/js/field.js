@@ -211,7 +211,9 @@
 
     function leafAt(x, y, z, tier, grass, s) {
       return { hx: x, hy: y, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0, z, tier, grass, s, order: 0,
-        v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0 };
+        v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0,
+        // a few leaves carry something of the season: a fallen leaf, a petal, snow or a drop of dew
+        deco: Math.random(), dv: (Math.random() * 4) | 0, da: Math.random() * Math.PI * 2, dd: 0.25 + Math.random() * 0.45 };
     }
     function buildItems() {
       items = [];
@@ -304,7 +306,7 @@
       const rebuild = !cloverSprites.length || nd !== dpr;
       dpr = nd;
       canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
-      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; }
+      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; if (airKey) { const [p, se, w] = airKey.split(','); airKey = ''; api.setAtmosphere({ phase: p, season: se, weather: w }); } }
       chunkMax = Math.max(24, Math.ceil(VW / CHUNK + 2) * Math.ceil(VH / CHUNK + 2) * 2);
       if (!items.length) { buildItems(); bury(hidden); index(); }
       if (first) { cam.x = (WW - VW) / 2; cam.y = (WH - VH) / 2; }
@@ -477,6 +479,11 @@
         const [x, y, rot] = at(l), r = reach(l);
         if (x + r < x0 || x - r > x1 || y + r < y0 || y - r > y1) return;
         blit(c, l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v], x, y, rot, l.s, ox, oy);
+        if (decor && l.tier === 2 && !l.grass && l.deco < decor.rate) {
+          const img = decor.sprites[l.dv], d = SPRITE * l.s * l.dd * 0.5, k = img.width / dpr / 2;
+          c.setTransform(1, 0, 0, 1, 0, 0);
+          c.drawImage(img, Math.round((x + Math.cos(l.da + rot) * d - k - ox) * dpr), Math.round((y + Math.sin(l.da + rot) * d - k - oy) * dpr));
+        }
       };
       let i = 0;
       for (; i < list.length && list[i].z < HIDDEN_Z; i++) leaf(list[i]);
@@ -493,10 +500,9 @@
       }
       for (; i < list.length; i++) leaf(list[i]);
       // the light of the hour, painted into the picture itself (no extra layers for the browser to blend every frame)
-      if (light) {
+      if (light.length) {
         c.setTransform(1, 0, 0, 1, 0, 0);
-        if (light.mul) { c.globalCompositeOperation = 'multiply'; c.fillStyle = light.mul; c.fillRect(px, py, pw, ph); }
-        if (light.add) { c.globalCompositeOperation = 'screen'; c.fillStyle = light.add; c.fillRect(px, py, pw, ph); }
+        for (const [op, color] of light) { c.globalCompositeOperation = op; c.fillStyle = color; c.fillRect(px, py, pw, ph); }
         c.globalCompositeOperation = 'source-over';
       }
       // a written clover carries a small white blossom above the leaves, so you can tell from afar that someone wrote there
@@ -547,13 +553,55 @@
       c.drawImage(img, Math.round((h.x - ox - 18) * dpr), Math.round((h.y - oy - 20) * dpr));
     }
 
-    let light = null;
-    const LIGHTS = {
-      dawn: { mul: 'rgb(214,208,238)', add: 'rgba(255,214,206,0.07)' },
-      day: { add: 'rgba(255,250,222,0.17)' },
-      dusk: { mul: 'rgb(250,200,172)', add: 'rgba(255,160,100,0.05)' },
-      night: { mul: 'rgb(116,136,186)' },
+    /* ---------- the hour, the season and the weather ---------- */
+    let light = [], decor = null, airKey = '';
+    const M = 'multiply', S = 'screen', O = 'source-over';
+    const HOURS = {
+      dawn: [[M, 'rgb(214,208,238)'], [S, 'rgba(255,214,206,0.07)']],
+      day: [[S, 'rgba(255,250,222,0.17)']],
+      dusk: [[M, 'rgb(250,200,172)'], [S, 'rgba(255,160,100,0.05)']],
+      night: [[M, 'rgb(116,136,186)']],
     };
+    const SEASONS = {
+      spring: [[M, 'rgb(252,250,246)'], [S, 'rgba(255,236,242,0.04)']],
+      summer: [[S, 'rgba(210,255,170,0.05)']],
+      autumn: [[M, 'rgb(255,234,198)']],
+      winter: [[M, 'rgb(228,236,246)'], [S, 'rgba(235,242,255,0.05)']],
+    };
+    const WEATHER = {
+      clear: [],
+      cloud: [[M, 'rgb(220,224,228)']],
+      rain: [[M, 'rgb(192,204,218)']],
+      snow: [[M, 'rgb(234,240,248)'], [S, 'rgba(255,255,255,0.07)']],
+      fog: [[O, 'rgba(214,222,226,0.22)']],
+    };
+    // the things that rest on the leaves, drawn once as tiny pictures
+    function makeDecor(season, phase, weather) {
+      const tiny = (w, draw) => {
+        const out = document.createElement('canvas'); out.width = out.height = Math.ceil(w * dpr);
+        const c = out.getContext('2d'); c.scale(dpr, dpr); c.translate(w / 2, w / 2); draw(c); return out;
+      };
+      const wet = weather === 'rain' || phase === 'dawn';
+      if (wet) return { rate: weather === 'rain' ? 0.32 : 0.2, sprites: [0, 1, 2, 3].map(i => tiny(8, c => {
+        const r = 1.1 + i * 0.25;
+        c.fillStyle = 'rgba(210,235,255,0.35)'; c.beginPath(); c.arc(0, 0, r + 0.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(-r * 0.3, -r * 0.3, r * 0.5, 0, Math.PI * 2); c.fill();
+      })) };
+      if (season === 'autumn') return { rate: 0.12, sprites: ['#d9822b', '#b8432f', '#e0b23a', '#8a5a2b'].map((col, i) => tiny(14, c => {
+        c.rotate(i * 1.3); c.fillStyle = col;
+        c.beginPath(); c.ellipse(0, 0, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = 'rgba(60,30,10,0.45)'; c.lineWidth = 0.6; c.beginPath(); c.moveTo(-5, 0); c.lineTo(5, 0); c.stroke();
+      })) };
+      if (season === 'winter' || weather === 'snow') return { rate: weather === 'snow' ? 0.4 : 0.18, sprites: [0, 1, 2, 3].map(i => tiny(14, c => {
+        c.fillStyle = 'rgba(250,252,255,0.9)';
+        for (let k = 0; k < 3 + i; k++) { c.beginPath(); c.arc(Math.cos(k * 2.1 + i) * 3, Math.sin(k * 2.1 + i) * 2.4, 1.2 + (k % 2) * 0.6, 0, Math.PI * 2); c.fill(); }
+      })) };
+      if (season === 'spring') return { rate: 0.06, sprites: ['#f6cfdc', '#f2bccd', '#fae0e8', '#efc2d2'].map((col, i) => tiny(10, c => {
+        c.rotate(i * 1.6); c.fillStyle = col;
+        c.beginPath(); c.moveTo(0, 3); c.bezierCurveTo(-3.4, 0.6, -2.4, -3, 0, -1.6); c.bezierCurveTo(2.4, -3, 3.4, 0.6, 0, 3); c.fill();
+      })) };
+      return null;
+    }
 
     // the sleeping meadow is kept as picture tiles, so moving the view only copies pictures;
     // whatever is moving right now is painted fresh on top
@@ -818,7 +866,7 @@
     }
 
     const byKey = key => hidden.find(h => h.key === key);
-    return {
+    const api = {
       world: { width: WW, height: WH },
       set(list) {
         hidden = list.map(makeHidden);
@@ -851,11 +899,14 @@
         full = true; wake(); drawMini();
         opts.onFound && opts.onFound(found(), hidden.length, null);
       },
-      // the time of day: 'dawn' | 'day' | 'dusk' | 'night'
-      setLight(phase) {
-        const next = LIGHTS[phase] || null;
-        if (next === light) return;
-        light = next; chunks.clear(); full = true; wake(); requestAnimationFrame(drawMini);
+      // the time of day ('dawn' | 'day' | 'dusk' | 'night'), the season and the weather
+      setAtmosphere({ phase, season, weather }) {
+        const key = [phase, season, weather, dpr].join();
+        if (key === airKey) return;
+        airKey = key;
+        light = [...(HOURS[phase] || []), ...(SEASONS[season] || []), ...(WEATHER[weather] || [])];
+        decor = makeDecor(season, phase, weather);
+        chunks.clear(); full = true; wake(); requestAnimationFrame(drawMini);
       },
       reveal(key, done) { reveal(byKey(key), done); },
       // show one nearby: the hidden clover closest to the middle of the screen
@@ -870,5 +921,6 @@
       },
       left: () => hidden.length - found(),
     };
+    return api;
   };
 })();

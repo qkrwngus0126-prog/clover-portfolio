@@ -246,13 +246,13 @@
       const n = Math.min(size(), pool().length);
       for (let i = 0; i < n; i++) { const r = pickNew(); if (r) shownIds.push(r.id); }
       list.replaceChildren(...shownIds.map(id => item(records.get(id))));
-      box.hidden = !shownIds.length;
+      sync();
       clearInterval(timer);
       timer = setInterval(rotate, narrow.matches ? 4500 : 3800);
     }
     // swap one line for one not on screen, oldest slot first, fading between them
     function rotate() {
-      if (paused || document.hidden || sheet.open) return;
+      if (paused || document.hidden || sheet.open || closed()) return;
       const r = pickNew();
       if (!r || !shownIds.length) return;
       const slot = turn++ % shownIds.length;
@@ -262,6 +262,21 @@
       li.classList.add('out');
       setTimeout(() => { swap(); const n = list.children[slot]; n.classList.add('in'); requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('in'))); }, 380);
     }
+    // the list can be put away; the choice is remembered on this device
+    const closed = () => { try { return !!localStorage.getItem('happy:feed-closed'); } catch (_) { return false; } };
+    const reopen = $('feed-open');
+    function setClosed(v) {
+      try { if (v) localStorage.setItem('happy:feed-closed', '1'); else localStorage.removeItem('happy:feed-closed'); } catch (_) { /* 이번 방문에만 */ }
+      sync();
+      (v ? reopen : $('feed-close')).focus({ preventScroll: true });
+    }
+    function sync() {
+      const has = shownIds.length > 0;
+      box.hidden = !has || closed();
+      reopen.hidden = !has || !closed();
+    }
+    $('feed-close').addEventListener('click', () => setClosed(true));
+    reopen.addEventListener('click', () => setClosed(false));
     box.addEventListener('pointerenter', () => { paused = true; });
     box.addEventListener('pointerleave', () => { paused = false; });
     box.addEventListener('focusin', () => { paused = true; });
@@ -278,7 +293,7 @@
         shownIds.unshift(id);
         list.prepend(item(r));
         while (shownIds.length > size()) { shownIds.pop(); list.lastElementChild.remove(); }
-        box.hidden = false;
+        sync();
       },
       drop(id) {
         const at = shownIds.indexOf(id);
@@ -286,7 +301,7 @@
         const r = pickNew();
         if (r) { shownIds[at] = r.id; list.children[at].replaceWith(item(r)); }
         else { shownIds.splice(at, 1); list.children[at].remove(); }
-        box.hidden = !shownIds.length;
+        sync();
       },
       mine() { for (const li of list.children) li.querySelector('.dot').classList.toggle('mine', !!user && records.get(li.dataset.id)?.user_id === user.id); },
     };
@@ -359,11 +374,12 @@
   }
 
   const navAuth = $('nav-auth');
+  let booted = false; // true once the field has loaded, so a later login can check "on this day"
   function setUser(u) {
     const changed = (user && user.id) !== (u && u.id);
     user = u;
     navAuth.textContent = user ? '로그아웃' : '로그인';
-    if (changed) { for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id }); feed.mine(); }
+    if (changed) { for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id }); feed.mine(); if (user && booted) onThisDay(); }
   }
   navAuth.addEventListener('click', async () => {
     if (!user) { takePending(); openLogin('로그인하면 행복을 적고, 내가 쓴 기록을 고치거나 지울 수 있어요.'); return; }
@@ -678,18 +694,30 @@
         h('button', { type: 'button', class: 'btn primary', onclick: close }, '들판으로')),
     ]);
   }
-  // 들판의 시간: 평소엔 시계를 따르고, 원하면 하나로 고정할 수 있어요
-  function skyPicker() {
-    const opts = [['auto', '시계 따라'], ['dawn', '새벽'], ['day', '낮'], ['dusk', '해 질 녘'], ['night', '밤']];
-    const now = window.Sky ? window.Sky.choice() : 'auto';
-    const group = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '들판의 시간' },
+  // 들판의 시간·계절·날씨: 평소엔 시계와 달력과 날씨를 따르고, 원하면 하나로 고정할 수 있어요
+  function seg(kind, label, opts) {
+    const now = window.Sky.choice(kind);
+    const group = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': label },
       opts.map(([v, t]) => h('button', { type: 'button', role: 'radio', 'aria-checked': String(v === now), onclick(e) {
-        window.Sky && window.Sky.set(v);
+        window.Sky.set(kind, v);
         for (const b of group.children) b.setAttribute('aria-checked', String(b === e.currentTarget));
       } }, t)));
-    return h('div', { class: 'f' }, h('span', { class: 'lab' }, '들판의 시간'), group);
+    return h('div', { class: 'f' }, h('span', { class: 'lab' }, label), group);
   }
-  if (window.Sky) { window.Sky.mount($('flies')); window.Sky.onChange(phase => field.setLight(phase)); }
+  function skyPicker() {
+    if (!window.Sky) return null;
+    const geo = h('input', { type: 'checkbox', id: 'f-geo', checked: window.Sky.choice('geo') === 'on' });
+    geo.addEventListener('change', () => window.Sky.set('geo', geo.checked ? 'on' : 'auto'));
+    return h('details', { class: 'more' },
+      h('summary', null, '들판 꾸미기 (시간 · 계절 · 날씨)'),
+      h('div', { class: 'form', style: 'gap:14px' },
+        seg('time', '시간', [['auto', '시계 따라'], ['dawn', '새벽'], ['day', '낮'], ['dusk', '해 질 녘'], ['night', '밤']]),
+        seg('season', '계절', [['auto', '달력 따라'], ['spring', '봄'], ['summer', '여름'], ['autumn', '가을'], ['winter', '겨울']]),
+        seg('weather', '날씨', [['auto', '실제 날씨'], ['clear', '맑음'], ['cloud', '흐림'], ['rain', '비'], ['snow', '눈'], ['fog', '안개']]),
+        h('label', { class: 'check', for: 'f-geo' }, geo,
+          h('span', null, '실제 날씨를 내 위치로 보기', h('br'), h('small', null, '끄면 서울 날씨예요. 켜면 브라우저가 위치를 물어보고, 대략적인 위치(약 10km 단위)만 날씨 서비스(Open-Meteo)에 보내요. 저장하지 않아요.')))));
+  }
+  if (window.Sky) { window.Sky.mount($('flies')); window.Sky.onChange(st => field.setAtmosphere(st)); }
   $('help-btn').addEventListener('click', openHelp);
   const intro = $('intro');
   try { if (localStorage.getItem('happy:intro-closed')) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }
@@ -697,6 +725,27 @@
     intro.hidden = true;
     try { localStorage.setItem('happy:intro-closed', '1'); } catch (_) { /* 괜찮아요 */ }
   });
+
+  /* ---------- on this day: a line you planted on today's date in an earlier year ---------- */
+  async function onThisDay() {
+    if (!user) return;
+    const t = today(), seen = 'happy:anniv:' + user.id + ':' + t;
+    try { if (localStorage.getItem(seen)) return; } catch (_) { return; }
+    let mine = [];
+    try { mine = await api.mine(); } catch (_) { return; }
+    const r = mine.find(x => x.happy_on && x.happy_on.slice(5) === t.slice(5) && x.happy_on < t);
+    if (!r) return;
+    try { localStorage.setItem(seen, '1'); } catch (_) { /* 괜찮아요 */ }
+    const years = Number(t.slice(0, 4)) - Number(r.happy_on.slice(0, 4));
+    if (sheet.open) return; // 다른 창을 쓰는 중이면 방해하지 않아요
+    open([
+      head(`${years}년 전 오늘`, r.line),
+      h('p', { class: 'note' }, [dot(r.happy_on), r.place].filter(Boolean).join(' · '), h('br'), '그날 심어 둔 세잎이 아직 들판에 있어요.'),
+      h('div', { class: 'row end' },
+        h('button', { type: 'button', class: 'btn quiet', onclick: close }, '닫기'),
+        h('button', { type: 'button', class: 'btn primary', onclick: () => { close(); field.reveal(r.id, () => openRead(r.id)); } }, '들판에서 보기')),
+    ]);
+  }
 
   /* ---------- start ---------- */
   (async function start() {
@@ -712,5 +761,7 @@
     }
     await load();
     resume();
+    booted = true;
+    onThisDay();
   })();
 })();
