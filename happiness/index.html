@@ -12,7 +12,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- 파일을 고칠 때마다 아래 ?v= 숫자를 올리면, 방문자 브라우저가 예전 파일 대신 새 파일을 바로 받아요 -->
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=7">
+<!-- 시간대(새벽·낮·해 질 녘·밤)를 화면이 그려지기 전에 정해 둬요 -->
+<script src="js/sky.js?v=7"></script>
 </head>
 <body class="app">
 
@@ -28,6 +30,8 @@
 <main class="field" id="field">
   <canvas role="img" aria-label="화면보다 넓은 네잎클로버 들판. 그 아래 사람들이 적어 둔 세잎클로버와 빈 세잎클로버가 숨어 있습니다. 화살표 키로 둘러보고, 하나 보여 주기 버튼으로도 찾을 수 있습니다."></canvas>
   <noscript><p>이 들판은 스크립트가 켜져 있을 때 헤집을 수 있어요.</p></noscript>
+  <!-- 시간대에 따라 들판 위에 비치는 빛: 색을 입히는 층, 빛을 더하는 층, 밤의 반딧불이 -->
+  <div class="sky" aria-hidden="true"><div class="tint"></div><div class="light"></div><canvas class="flies" id="flies"></canvas></div>
 
   <header class="top">
     <a class="wordmark" href="./"><svg viewBox="0 0 20 20" aria-hidden="true"><use href="#mark"/></svg>세잎 들판</a>
@@ -39,15 +43,22 @@
   </header>
 
   <aside class="intro" id="intro" aria-labelledby="intro-title">
-    <h1 id="intro-title">행운을 찾다 지나친 행복을 같이 적어 둡니다</h1>
-    <p>들판은 온통 네잎클로버예요. 흰 꽃이 핀 곳엔 누군가 적어 둔 행복이 있고, 꽃이 없는 곳 아래엔 빈 세잎이 숨어 있어요. 헤집어서 찾아 내 행복을 심어 주세요.</p>
+    <h1 id="intro-title">행운을 찾다 지나친 행복을 <br>같이 적어 둡니다</h1>
+    <p>들판은 온통 네잎클로버예요.<br>
+      흰 꽃이 핀 곳엔 누군가 적어 둔 행복이 있고,<br>
+      꽃이 없는 곳 아래엔 빈 세잎이 숨어 있어요.<br>
+      헤집어 찾아서 내 행복을 심어 주세요.</p>
     <button type="button" class="btn small" id="intro-close">들판 둘러보기</button>
   </aside>
 
   <section class="feed" id="feed" aria-labelledby="feed-title" hidden>
-    <h2 class="feed-title" id="feed-title">들판에 적힌 행복</h2>
+    <div class="feed-head">
+      <h2 class="feed-title" id="feed-title">들판에 적힌 행복</h2>
+      <button class="feed-x" id="feed-close" type="button" aria-label="목록 닫기">×</button>
+    </div>
     <ul class="feed-list" id="feed-list"></ul>
   </section>
+  <button class="feed-open" id="feed-open" type="button" hidden>들판에 적힌 행복</button>
 
   <p class="demo-note" id="demo-note" hidden>미리보기예요 · <code>config.js</code>를 채우면 실제로 저장돼요</p>
 
@@ -70,9 +81,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="config.js?v=5"></script>
-<script src="js/field.js?v=5"></script>
-<script src="js/photo.js?v=5"></script>
-<script src="js/app.js?v=5"></script>
+<script src="config.js?v=7"></script>
+<script src="js/field.js?v=7"></script>
+<script src="js/photo.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
 </body>
 </html>

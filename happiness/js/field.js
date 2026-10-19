@@ -35,7 +35,8 @@
     let raf = 0, shownNow = null;
     const cam = { x: 0, y: 0 };
     let camAnim = null;
-    const pointer = { x: -999, y: -999, sx: -999, sy: -999, active: false, vx: 0, vy: 0 };
+    // the hand (x, y) glides after where the finger or cursor really is (tx, ty), so digging feels smooth even when input events are uneven
+    const pointer = { x: -999, y: -999, tx: -999, ty: -999, sx: -999, sy: -999, active: false, vx: 0, vy: 0 };
     const moving = new Set();             // leaves still swinging; everything else is at rest and costs nothing
 
     // one label for the whole field: the lit clover nearest the hand
@@ -210,7 +211,9 @@
 
     function leafAt(x, y, z, tier, grass, s) {
       return { hx: x, hy: y, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0, z, tier, grass, s, order: 0,
-        v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0 };
+        v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0,
+        // a few leaves carry something of the season: a fallen leaf, a petal, snow or a drop of dew
+        deco: Math.random(), dv: (Math.random() * 4) | 0, da: Math.random() * Math.PI * 2, dd: 0.25 + Math.random() * 0.45 };
     }
     function buildItems() {
       items = [];
@@ -272,7 +275,7 @@
       const ox = cam.x, oy = cam.y;
       cam.x = x; cam.y = y; clampCam();
       if (cam.x === ox && cam.y === oy) return;
-      if (!sweeping) { pointer.x = pointer.sx + cam.x; pointer.y = pointer.sy + cam.y; }
+      if (!sweeping) { pointer.x = pointer.tx = pointer.sx + cam.x; pointer.y = pointer.ty = pointer.sy + cam.y; }
       full = true; camMoved = true;
       if (shownNow) placeTag(shownNow);
       wake();
@@ -298,11 +301,12 @@
       const first = !VW;
       const midX = cam.x + VW / 2, midY = cam.y + VH / 2; // keep the same spot in the middle
       VW = r.width; VH = r.height;
-      const nd = Math.min(window.devicePixelRatio || 1, 2);
+      // 1.5x is sharp enough for leaves and paints far fewer pixels each frame than 2x or 3x
+      const nd = Math.min(window.devicePixelRatio || 1, 1.5);
       const rebuild = !cloverSprites.length || nd !== dpr;
       dpr = nd;
       canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
-      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); }
+      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; if (airKey) { const [p, se, w] = airKey.split(','); airKey = ''; api.setAtmosphere({ phase: p, season: se, weather: w }); } }
       chunkMax = Math.max(24, Math.ceil(VW / CHUNK + 2) * Math.ceil(VH / CHUNK + 2) * 2);
       if (!items.length) { buildItems(); bury(hidden); index(); }
       if (first) { cam.x = (WW - VW) / 2; cam.y = (WH - VH) / 2; }
@@ -314,7 +318,7 @@
       return first;
     }
 
-    const R = 66; // how far a fingertip parts the leaves
+    const R = 84; // how far a fingertip parts the leaves
 
     // is the hidden clover in the open? test its centre and its three leaflets against nearer leaves only
     function exposed(h) {
@@ -345,6 +349,12 @@
       last = now;
       let energy = 0;
       const p = pointer;
+      if (p.active && !sweeping) {
+        const f = 1 - Math.pow(0.45, k), nx = p.x + (p.tx - p.x) * f, ny = p.y + (p.ty - p.y) * f;
+        p.vx = (nx - p.x) * 0.9; p.vy = (ny - p.y) * 0.9;
+        p.x = nx; p.y = ny;
+        if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) > 0.3) energy += 1;
+      }
       // only leaves under the hand join in; the rest of the meadow sleeps
       if (p.active) {
         for (const c of near(p.x - R - 90, p.y - R - 90, p.x + R + 90, p.y + R + 90)) {
@@ -368,8 +378,8 @@
             c.ry += (ty - c.ry) * 0.03 * f * k;
           }
         }
-        c.vx += (tx - c.ox) * 0.09 * k; c.vy += (ty - c.oy) * 0.09 * k;
-        const damp = Math.pow(0.76, k);
+        c.vx += (tx - c.ox) * 0.075 * k; c.vy += (ty - c.oy) * 0.075 * k;
+        const damp = Math.pow(0.78, k);
         c.vx *= damp; c.vy *= damp;
         mark(c.hx + c.ox, c.hy + c.oy, reach(c));
         c.ox += c.vx * k; c.oy += c.vy * k;
@@ -469,6 +479,11 @@
         const [x, y, rot] = at(l), r = reach(l);
         if (x + r < x0 || x - r > x1 || y + r < y0 || y - r > y1) return;
         blit(c, l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v], x, y, rot, l.s, ox, oy);
+        if (decor && l.tier === 2 && !l.grass && l.deco < decor.rate) {
+          const img = decor.sprites[l.dv], d = SPRITE * l.s * l.dd * 0.5, k = img.width / dpr / 2;
+          c.setTransform(1, 0, 0, 1, 0, 0);
+          c.drawImage(img, Math.round((x + Math.cos(l.da + rot) * d - k - ox) * dpr), Math.round((y + Math.sin(l.da + rot) * d - k - oy) * dpr));
+        }
       };
       let i = 0;
       for (; i < list.length && list[i].z < HIDDEN_Z; i++) leaf(list[i]);
@@ -484,26 +499,108 @@
         }
       }
       for (; i < list.length; i++) leaf(list[i]);
+      // the light of the hour, painted into the picture itself (no extra layers for the browser to blend every frame)
+      if (light.length) {
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        for (const [op, color] of light) { c.globalCompositeOperation = op; c.fillStyle = color; c.fillRect(px, py, pw, ph); }
+        c.globalCompositeOperation = 'source-over';
+      }
       // a written clover carries a small white blossom above the leaves, so you can tell from afar that someone wrote there
       for (const h of hidden) {
         if (h.kind !== 'happy' || (!rest && h.found && h.lit)) continue;
-        if (h.x + 12 < x0 || h.x - 12 > x1 || h.y + 12 < y0 || h.y - 12 > y1) continue;
+        if (h.x + 20 < x0 || h.x - 20 > x1 || h.y + 20 < y0 || h.y - 20 > y1) continue;
         blossom(c, h, ox, oy);
       }
       c.restore();
     }
 
+    // a white clover flower seen from above: a round head of small florets, a pale ring of petals around a creamy middle
+    let blossoms = {};
+    function makeBlossom(mine) {
+      const S = 36, out = document.createElement('canvas');
+      out.width = out.height = Math.round(S * dpr);
+      const c = out.getContext('2d');
+      c.scale(dpr, dpr); c.translate(S / 2, S / 2 - 2);
+      const glow = c.createRadialGradient(0, 0, 0, 0, 0, 16);
+      glow.addColorStop(0, mine ? 'rgba(240,206,110,0.4)' : 'rgba(250,248,232,0.32)');
+      glow.addColorStop(1, 'rgba(250,248,232,0)');
+      c.fillStyle = glow; c.beginPath(); c.arc(0, 0, 16, 0, Math.PI * 2); c.fill();
+      // a short stalk leaning down and to the right, and the head's shadow on the leaves
+      c.strokeStyle = '#4c7a3e'; c.lineWidth = 1.4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(1, 4); c.quadraticCurveTo(4, 9, 3.5, 13); c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.32)'; c.beginPath(); c.ellipse(1.4, 2.2, 7, 6.4, 0, 0, Math.PI * 2); c.fill();
+      // the head: rings of small florets, the older ones near the bottom blushed pink (gold on your own)
+      const white = mine ? '#f7e2a0' : '#fdfbf2', blush = mine ? '#e6bd55' : '#efd9d2', mid = mine ? '#eccf7a' : '#f1ecdc';
+      const rings = [[16, 5.2, 2.4], [11, 3.4, 2.1], [6, 1.6, 1.8]];
+      for (const [n, rad, len] of rings) {
+        for (let i = 0; i < n; i++) {
+          const a = (Math.PI * 2 / n) * i + rad * 0.37;
+          const low = Math.sin(a) > 0.35 && rad > 4;
+          c.save(); c.rotate(a); c.translate(rad, 0);
+          c.fillStyle = low ? blush : (i % 2 ? white : mid);
+          c.beginPath(); c.ellipse(len / 2 - 0.4, 0, len / 2 + 0.5, 0.95, 0, 0, Math.PI * 2); c.fill();
+          c.restore();
+        }
+      }
+      c.fillStyle = mine ? '#d6aa3a' : '#e3dcc0';
+      c.beginPath(); c.arc(0, 0, 1.2, 0, Math.PI * 2); c.fill();
+      return out;
+    }
     function blossom(c, h, ox, oy) {
-      const x = (h.x - ox) * dpr, y = (h.y - oy - 2) * dpr, r = 3.2 * dpr;
+      if (!blossoms.plain) blossoms = { plain: makeBlossom(false), mine: makeBlossom(true) };
+      const img = h.mine ? blossoms.mine : blossoms.plain;
       c.setTransform(1, 0, 0, 1, 0, 0);
-      const glow = c.createRadialGradient(x, y, 0, x, y, r * 3.2);
-      glow.addColorStop(0, h.mine ? 'rgba(240,206,110,0.55)' : 'rgba(246,244,226,0.5)');
-      glow.addColorStop(1, 'rgba(246,244,226,0)');
-      c.fillStyle = glow; c.beginPath(); c.arc(x, y, r * 3.2, 0, Math.PI * 2); c.fill();
-      c.fillStyle = h.mine ? '#f0ce6e' : '#f4f1e0';
-      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-      c.fillStyle = h.mine ? '#b58a1e' : '#c9c39a';
-      c.beginPath(); c.arc(x, y, r * 0.38, 0, Math.PI * 2); c.fill();
+      c.drawImage(img, Math.round((h.x - ox - 18) * dpr), Math.round((h.y - oy - 20) * dpr));
+    }
+
+    /* ---------- the hour, the season and the weather ---------- */
+    let light = [], decor = null, airKey = '';
+    const M = 'multiply', S = 'screen', O = 'source-over';
+    const HOURS = {
+      dawn: [[M, 'rgb(214,208,238)'], [S, 'rgba(255,214,206,0.07)']],
+      day: [[S, 'rgba(255,250,222,0.17)']],
+      dusk: [[M, 'rgb(250,200,172)'], [S, 'rgba(255,160,100,0.05)']],
+      night: [[M, 'rgb(116,136,186)']],
+    };
+    const SEASONS = {
+      spring: [[M, 'rgb(252,250,246)'], [S, 'rgba(255,236,242,0.04)']],
+      summer: [[S, 'rgba(210,255,170,0.05)']],
+      autumn: [[M, 'rgb(255,234,198)']],
+      winter: [[M, 'rgb(228,236,246)'], [S, 'rgba(235,242,255,0.05)']],
+    };
+    const WEATHER = {
+      clear: [],
+      cloud: [[M, 'rgb(220,224,228)']],
+      rain: [[M, 'rgb(192,204,218)']],
+      snow: [[M, 'rgb(234,240,248)'], [S, 'rgba(255,255,255,0.07)']],
+      fog: [[O, 'rgba(214,222,226,0.22)']],
+    };
+    // the things that rest on the leaves, drawn once as tiny pictures
+    function makeDecor(season, phase, weather) {
+      const tiny = (w, draw) => {
+        const out = document.createElement('canvas'); out.width = out.height = Math.ceil(w * dpr);
+        const c = out.getContext('2d'); c.scale(dpr, dpr); c.translate(w / 2, w / 2); draw(c); return out;
+      };
+      const wet = weather === 'rain' || phase === 'dawn';
+      if (wet) return { rate: weather === 'rain' ? 0.32 : 0.2, sprites: [0, 1, 2, 3].map(i => tiny(8, c => {
+        const r = 1.1 + i * 0.25;
+        c.fillStyle = 'rgba(210,235,255,0.35)'; c.beginPath(); c.arc(0, 0, r + 0.8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(-r * 0.3, -r * 0.3, r * 0.5, 0, Math.PI * 2); c.fill();
+      })) };
+      if (season === 'autumn') return { rate: 0.12, sprites: ['#d9822b', '#b8432f', '#e0b23a', '#8a5a2b'].map((col, i) => tiny(14, c => {
+        c.rotate(i * 1.3); c.fillStyle = col;
+        c.beginPath(); c.ellipse(0, 0, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = 'rgba(60,30,10,0.45)'; c.lineWidth = 0.6; c.beginPath(); c.moveTo(-5, 0); c.lineTo(5, 0); c.stroke();
+      })) };
+      if (season === 'winter' || weather === 'snow') return { rate: weather === 'snow' ? 0.4 : 0.18, sprites: [0, 1, 2, 3].map(i => tiny(14, c => {
+        c.fillStyle = 'rgba(250,252,255,0.9)';
+        for (let k = 0; k < 3 + i; k++) { c.beginPath(); c.arc(Math.cos(k * 2.1 + i) * 3, Math.sin(k * 2.1 + i) * 2.4, 1.2 + (k % 2) * 0.6, 0, Math.PI * 2); c.fill(); }
+      })) };
+      if (season === 'spring') return { rate: 0.06, sprites: ['#f6cfdc', '#f2bccd', '#fae0e8', '#efc2d2'].map((col, i) => tiny(10, c => {
+        c.rotate(i * 1.6); c.fillStyle = col;
+        c.beginPath(); c.moveTo(0, 3); c.bezierCurveTo(-3.4, 0.6, -2.4, -3, 0, -1.6); c.bezierCurveTo(2.4, -3, 3.4, 0.6, 0, 3); c.fill();
+      })) };
+      return null;
     }
 
     // the sleeping meadow is kept as picture tiles, so moving the view only copies pictures;
@@ -569,12 +666,13 @@
       if (!w) return;
       mctx.setTransform(1, 0, 0, 1, 0, 0);
       mctx.clearRect(0, 0, w, hgt);
+      const css = getComputedStyle(mini);
       for (const h of hidden) {
         if (!h.found && h.kind !== 'happy') continue;
-        mctx.fillStyle = h.kind === 'empty' ? 'rgba(190,214,176,0.55)' : h.mine ? '#e0b84a' : '#7fcf95';
+        mctx.fillStyle = h.kind === 'empty' ? css.getPropertyValue('--map-empty') : h.mine ? css.getPropertyValue('--gold') : css.getPropertyValue('--map-dot');
         mctx.beginPath(); mctx.arc(h.x * k, h.y * k, 1.8 * dpr, 0, Math.PI * 2); mctx.fill();
       }
-      mctx.strokeStyle = 'rgba(231,236,229,0.9)'; mctx.lineWidth = 1.25 * dpr;
+      mctx.strokeStyle = css.color; mctx.lineWidth = 1.25 * dpr;
       const vx = Math.max(0, cam.x * k), vy = Math.max(0, cam.y * k);
       mctx.strokeRect(vx + 0.5, vy + 0.5, Math.min(w - 1, VW * k) - 1, Math.min(hgt - 1, VH * k) - 1);
     }
@@ -614,8 +712,9 @@
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
     function dig(q) {
-      if (pointer.active) { pointer.vx = q.x - pointer.sx; pointer.vy = q.y - pointer.sy; }
-      pointer.sx = q.x; pointer.sy = q.y; pointer.x = q.x + cam.x; pointer.y = q.y + cam.y; pointer.active = true;
+      pointer.sx = q.x; pointer.sy = q.y; pointer.tx = q.x + cam.x; pointer.ty = q.y + cam.y;
+      if (!pointer.active) { pointer.x = pointer.tx; pointer.y = pointer.ty; pointer.vx = pointer.vy = 0; }
+      pointer.active = true;
       wake();
     }
     function release() { clearTimeout(releaseTimer); if (!sweeping) pointer.active = false; }
@@ -686,6 +785,8 @@
       let dx = e.deltaX * unit, dy = e.deltaY * unit;
       if (e.shiftKey && !dx) { dx = dy; dy = 0; }
       camAnim = null;
+      // scrolling lifts the hand; it digs again as soon as the mouse moves
+      if (!sweeping) pointer.active = false;
       moveCam(cam.x + dx, cam.y + dy);
     }, { passive: false });
     // the keyboard moves the view too, and Enter opens the clover whose label is showing
@@ -724,7 +825,7 @@
       const sx = h.x + (h.x - cam.x < VW / 2 ? 140 : -140), sy = h.y + 60;
       const put = (x, y) => {
         pointer.vx = x - pointer.x; pointer.vy = y - pointer.y;
-        pointer.x = x; pointer.y = y; pointer.sx = x - cam.x; pointer.sy = y - cam.y; pointer.active = true;
+        pointer.x = pointer.tx = x; pointer.y = pointer.ty = y; pointer.sx = x - cam.x; pointer.sy = y - cam.y; pointer.active = true;
       };
       const move = now => {
         const k = Math.min(1, (now - t0) / dur);
@@ -765,7 +866,7 @@
     }
 
     const byKey = key => hidden.find(h => h.key === key);
-    return {
+    const api = {
       world: { width: WW, height: WH },
       set(list) {
         hidden = list.map(makeHidden);
@@ -798,6 +899,15 @@
         full = true; wake(); drawMini();
         opts.onFound && opts.onFound(found(), hidden.length, null);
       },
+      // the time of day ('dawn' | 'day' | 'dusk' | 'night'), the season and the weather
+      setAtmosphere({ phase, season, weather }) {
+        const key = [phase, season, weather, dpr].join();
+        if (key === airKey) return;
+        airKey = key;
+        light = [...(HOURS[phase] || []), ...(SEASONS[season] || []), ...(WEATHER[weather] || [])];
+        decor = makeDecor(season, phase, weather);
+        chunks.clear(); full = true; wake(); requestAnimationFrame(drawMini);
+      },
       reveal(key, done) { reveal(byKey(key), done); },
       // show one nearby: the hidden clover closest to the middle of the screen
       hint(kind) {
@@ -811,5 +921,6 @@
       },
       left: () => hidden.length - found(),
     };
+    return api;
   };
 })();
