@@ -508,7 +508,7 @@
       // a written clover carries a small white blossom above the leaves, so you can tell from afar that someone wrote there
       for (const h of hidden) {
         if (h.kind !== 'happy' || (!rest && h.found && h.lit)) continue;
-        if (h.x + 20 < x0 || h.x - 20 > x1 || h.y + 20 < y0 || h.y - 20 > y1) continue;
+        if (h.x + 28 < x0 || h.x - 28 > x1 || h.y + 28 < y0 || h.y - 28 > y1) continue;
         blossom(c, h, ox, oy);
       }
       c.restore();
@@ -517,10 +517,11 @@
     // a white clover flower seen from above: a round head of small florets, a pale ring of petals around a creamy middle
     let blossoms = {};
     function makeBlossom(mine) {
-      const S = 36, out = document.createElement('canvas');
+      const K = 1.4; // drawn 1.4x the size it was first designed at
+      const S = Math.ceil(36 * K), out = document.createElement('canvas');
       out.width = out.height = Math.round(S * dpr);
       const c = out.getContext('2d');
-      c.scale(dpr, dpr); c.translate(S / 2, S / 2 - 2);
+      c.scale(dpr, dpr); c.translate(S / 2, S / 2 - 2 * K); c.scale(K, K);
       const glow = c.createRadialGradient(0, 0, 0, 0, 0, 16);
       glow.addColorStop(0, mine ? 'rgba(240,206,110,0.4)' : 'rgba(250,248,232,0.32)');
       glow.addColorStop(1, 'rgba(250,248,232,0)');
@@ -550,7 +551,8 @@
       if (!blossoms.plain) blossoms = { plain: makeBlossom(false), mine: makeBlossom(true) };
       const img = h.mine ? blossoms.mine : blossoms.plain;
       c.setTransform(1, 0, 0, 1, 0, 0);
-      c.drawImage(img, Math.round((h.x - ox - 18) * dpr), Math.round((h.y - oy - 20) * dpr));
+      const half = img.width / dpr / 2;
+      c.drawImage(img, Math.round((h.x - ox - half) * dpr), Math.round((h.y - oy - half - 2) * dpr));
     }
 
     /* ---------- the hour, the season and the weather ---------- */

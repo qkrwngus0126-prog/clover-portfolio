@@ -24,5 +24,5 @@ window.HAPPY_CONFIG = {
   fieldHeight: 2400,
 
   // 들판에 함께 숨겨 둘 빈 세잎 개수
-  emptyClovers: 30,
+  emptyClovers: 80,
 };

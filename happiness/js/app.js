@@ -218,7 +218,7 @@
     records.clear();
     list.forEach(r => records.set(r.id, r));
     empties = [];
-    const n = Math.max(1, cfg.emptyClovers ?? 30);
+    const n = Math.max(1, cfg.emptyClovers ?? 80);
     for (let i = 0; i < n; i++) newEmpty();
     field.set([...list.map(asClover), ...empties]);
     feed.reset();
@@ -678,16 +678,21 @@
 
   /* ---------- help, and the card shown on a first visit ---------- */
   function openHelp() {
+    // one sentence to a line, so the help reads in short, even steps
     const steps = [
-      ['헤집기', coarse ? '한 손가락으로 네잎을 헤치면 아래 숨은 세잎이 드러나요.' : '마우스를 들판 위에서 움직이면 네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.'],
-      ['둘러보기', coarse ? '들판은 화면보다 훨씬 넓어요. 두 손가락으로 끌어서 옮겨 다니세요.' : '들판은 화면보다 훨씬 넓어요. 끌거나 스크롤해서 옮겨 다니세요.'],
-      ['읽기', '누군가 적어 둔 세잎 위에는 작은 흰 꽃이 피어 있어요. 꽃을 누르면 바로 읽을 수 있어요. 옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요. 로그인은 필요 없어요.'],
-      ['심기', '꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요. 헤집어서 찾으면 내 행복을 적을 수 있고, 그 자리에 꽃이 피어 다음 사람을 기다립니다. 내가 심은 곳의 꽃은 금색이에요.'],
+      ['헤집기', coarse
+        ? ['한 손가락으로 네잎을 헤치면', '아래 숨은 세잎이 드러나요.']
+        : ['마우스를 들판 위에서 움직이면', '네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.']],
+      ['둘러보기', coarse
+        ? ['들판은 화면보다 훨씬 넓어요.', '두 손가락으로 끌어서 옮겨 다니세요.']
+        : ['들판은 화면보다 훨씬 넓어요.', '끌거나 스크롤해서 옮겨 다니세요.']],
+      ['읽기', ['누군가 적은 세잎 위엔 흰 꽃이 피어 있어요.', '꽃을 누르면 로그인 없이 바로 읽을 수 있어요.', '옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요.']],
+      ['심기', ['꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요.', '헤집어서 찾으면 내 행복을 적을 수 있고,', '그 자리에 꽃이 피어 다음 사람을 기다려요.', '내가 심은 곳의 꽃은 금색이에요.']],
     ];
     open([
       head(null, '이렇게 써요'),
-      h('ol', { class: 'steps' }, steps.map(([b, t]) => h('li', null, h('b', null, b), h('span', null, t)))),
-      h('p', { class: 'note' }, '오른쪽 위 작은 지도는 들판 전체예요. 누르면 그곳으로 옮겨 가요.'),
+      h('ol', { class: 'steps' }, steps.map(([b, lines]) => h('li', null, h('b', null, b), h('span', null, lines.flatMap((l, i) => i ? [h('br'), l] : [l]))))),
+      h('p', { class: 'note' }, coarse ? '오른쪽 위 작은 지도는 들판 전체예요.' : '오른쪽 위 작은 지도는 들판 전체예요.', h('br'), '누르면 그곳으로 옮겨 가요.'),
       skyPicker(),
       h('div', { class: 'row split' },
         h('a', { href: 'privacy.html', class: 'btn quiet' }, '개인정보처리방침'),
