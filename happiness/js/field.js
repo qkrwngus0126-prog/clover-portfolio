@@ -193,7 +193,7 @@
 
     function makeHidden(c) {
       return {
-        key: c.key, kind: c.kind, mine: !!c.mine, fx: c.fx, fy: c.fy, x: c.fx * W, y: c.fy * H,
+        key: c.key, kind: c.kind, mine: !!c.mine, text: c.text || '', fx: c.fx, fy: c.fy, x: c.fx * W, y: c.fy * H,
         rk: (Math.random() * ROTS) | 0, s: 0.6, found: false, t: 0, seen: 0, lit: false,
       };
     }
@@ -339,13 +339,15 @@
       return energy;
     }
 
+    // a written clover shows its one line right away; an empty one invites writing
     function label(h) {
       if (h.kind === 'empty') return '빈 세잎 · 눌러서 적기';
+      if (h.text) return h.text;
       return h.mine ? '내가 심은 세잎 · 눌러서 읽기' : '누군가의 행복 · 눌러서 읽기';
     }
     function show(h) {
       shownNow = h;
-      if (h) { tag.textContent = label(h); tag.classList.toggle('is-empty', h.kind === 'empty'); placeTag(h); }
+      if (h) { tag.textContent = label(h); tag.classList.toggle('is-empty', h.kind === 'empty'); tag.classList.toggle('is-mine', h.kind === 'happy' && h.mine); placeTag(h); }
       tag.classList.toggle('is-hidden', !h);
       opts.onShow && opts.onShow(h ? public_(h) : null);
     }
