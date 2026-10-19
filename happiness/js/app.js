@@ -672,11 +672,24 @@
       head(null, '이렇게 써요'),
       h('ol', { class: 'steps' }, steps.map(([b, t]) => h('li', null, h('b', null, b), h('span', null, t)))),
       h('p', { class: 'note' }, '오른쪽 위 작은 지도는 들판 전체예요. 누르면 그곳으로 옮겨 가요.'),
+      skyPicker(),
       h('div', { class: 'row split' },
         h('a', { href: 'privacy.html', class: 'btn quiet' }, '개인정보처리방침'),
         h('button', { type: 'button', class: 'btn primary', onclick: close }, '들판으로')),
     ]);
   }
+  // 들판의 시간: 평소엔 시계를 따르고, 원하면 하나로 고정할 수 있어요
+  function skyPicker() {
+    const opts = [['auto', '시계 따라'], ['dawn', '새벽'], ['day', '낮'], ['dusk', '해 질 녘'], ['night', '밤']];
+    const now = window.Sky ? window.Sky.choice() : 'auto';
+    const group = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '들판의 시간' },
+      opts.map(([v, t]) => h('button', { type: 'button', role: 'radio', 'aria-checked': String(v === now), onclick(e) {
+        window.Sky && window.Sky.set(v);
+        for (const b of group.children) b.setAttribute('aria-checked', String(b === e.currentTarget));
+      } }, t)));
+    return h('div', { class: 'f' }, h('span', { class: 'lab' }, '들판의 시간'), group);
+  }
+  if (window.Sky) { window.Sky.mount($('flies')); window.Sky.onChange(phase => field.setLight(phase)); }
   $('help-btn').addEventListener('click', openHelp);
   const intro = $('intro');
   try { if (localStorage.getItem('happy:intro-closed')) intro.hidden = true; } catch (_) { /* 저장소를 못 쓰면 매번 보여 줘요 */ }

@@ -35,7 +35,8 @@
     let raf = 0, shownNow = null;
     const cam = { x: 0, y: 0 };
     let camAnim = null;
-    const pointer = { x: -999, y: -999, sx: -999, sy: -999, active: false, vx: 0, vy: 0 };
+    // the hand (x, y) glides after where the finger or cursor really is (tx, ty), so digging feels smooth even when input events are uneven
+    const pointer = { x: -999, y: -999, tx: -999, ty: -999, sx: -999, sy: -999, active: false, vx: 0, vy: 0 };
     const moving = new Set();             // leaves still swinging; everything else is at rest and costs nothing
 
     // one label for the whole field: the lit clover nearest the hand
@@ -272,7 +273,7 @@
       const ox = cam.x, oy = cam.y;
       cam.x = x; cam.y = y; clampCam();
       if (cam.x === ox && cam.y === oy) return;
-      if (!sweeping) { pointer.x = pointer.sx + cam.x; pointer.y = pointer.sy + cam.y; }
+      if (!sweeping) { pointer.x = pointer.tx = pointer.sx + cam.x; pointer.y = pointer.ty = pointer.sy + cam.y; }
       full = true; camMoved = true;
       if (shownNow) placeTag(shownNow);
       wake();
@@ -298,11 +299,12 @@
       const first = !VW;
       const midX = cam.x + VW / 2, midY = cam.y + VH / 2; // keep the same spot in the middle
       VW = r.width; VH = r.height;
-      const nd = Math.min(window.devicePixelRatio || 1, 2);
+      // 1.5x is sharp enough for leaves and paints far fewer pixels each frame than 2x or 3x
+      const nd = Math.min(window.devicePixelRatio || 1, 1.5);
       const rebuild = !cloverSprites.length || nd !== dpr;
       dpr = nd;
       canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
-      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); }
+      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); blossoms = {}; }
       chunkMax = Math.max(24, Math.ceil(VW / CHUNK + 2) * Math.ceil(VH / CHUNK + 2) * 2);
       if (!items.length) { buildItems(); bury(hidden); index(); }
       if (first) { cam.x = (WW - VW) / 2; cam.y = (WH - VH) / 2; }
@@ -314,7 +316,7 @@
       return first;
     }
 
-    const R = 66; // how far a fingertip parts the leaves
+    const R = 84; // how far a fingertip parts the leaves
 
     // is the hidden clover in the open? test its centre and its three leaflets against nearer leaves only
     function exposed(h) {
@@ -345,6 +347,12 @@
       last = now;
       let energy = 0;
       const p = pointer;
+      if (p.active && !sweeping) {
+        const f = 1 - Math.pow(0.45, k), nx = p.x + (p.tx - p.x) * f, ny = p.y + (p.ty - p.y) * f;
+        p.vx = (nx - p.x) * 0.9; p.vy = (ny - p.y) * 0.9;
+        p.x = nx; p.y = ny;
+        if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) > 0.3) energy += 1;
+      }
       // only leaves under the hand join in; the rest of the meadow sleeps
       if (p.active) {
         for (const c of near(p.x - R - 90, p.y - R - 90, p.x + R + 90, p.y + R + 90)) {
@@ -368,8 +376,8 @@
             c.ry += (ty - c.ry) * 0.03 * f * k;
           }
         }
-        c.vx += (tx - c.ox) * 0.09 * k; c.vy += (ty - c.oy) * 0.09 * k;
-        const damp = Math.pow(0.76, k);
+        c.vx += (tx - c.ox) * 0.075 * k; c.vy += (ty - c.oy) * 0.075 * k;
+        const damp = Math.pow(0.78, k);
         c.vx *= damp; c.vy *= damp;
         mark(c.hx + c.ox, c.hy + c.oy, reach(c));
         c.ox += c.vx * k; c.oy += c.vy * k;
@@ -484,27 +492,68 @@
         }
       }
       for (; i < list.length; i++) leaf(list[i]);
+      // the light of the hour, painted into the picture itself (no extra layers for the browser to blend every frame)
+      if (light) {
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        if (light.mul) { c.globalCompositeOperation = 'multiply'; c.fillStyle = light.mul; c.fillRect(px, py, pw, ph); }
+        if (light.add) { c.globalCompositeOperation = 'screen'; c.fillStyle = light.add; c.fillRect(px, py, pw, ph); }
+        c.globalCompositeOperation = 'source-over';
+      }
       // a written clover carries a small white blossom above the leaves, so you can tell from afar that someone wrote there
       for (const h of hidden) {
         if (h.kind !== 'happy' || (!rest && h.found && h.lit)) continue;
-        if (h.x + 12 < x0 || h.x - 12 > x1 || h.y + 12 < y0 || h.y - 12 > y1) continue;
+        if (h.x + 20 < x0 || h.x - 20 > x1 || h.y + 20 < y0 || h.y - 20 > y1) continue;
         blossom(c, h, ox, oy);
       }
       c.restore();
     }
 
-    function blossom(c, h, ox, oy) {
-      const x = (h.x - ox) * dpr, y = (h.y - oy - 2) * dpr, r = 3.2 * dpr;
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      const glow = c.createRadialGradient(x, y, 0, x, y, r * 3.2);
-      glow.addColorStop(0, h.mine ? 'rgba(240,206,110,0.55)' : 'rgba(246,244,226,0.5)');
-      glow.addColorStop(1, 'rgba(246,244,226,0)');
-      c.fillStyle = glow; c.beginPath(); c.arc(x, y, r * 3.2, 0, Math.PI * 2); c.fill();
-      c.fillStyle = h.mine ? '#f0ce6e' : '#f4f1e0';
-      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-      c.fillStyle = h.mine ? '#b58a1e' : '#c9c39a';
-      c.beginPath(); c.arc(x, y, r * 0.38, 0, Math.PI * 2); c.fill();
+    // a white clover flower seen from above: a round head of small florets, a pale ring of petals around a creamy middle
+    let blossoms = {};
+    function makeBlossom(mine) {
+      const S = 36, out = document.createElement('canvas');
+      out.width = out.height = Math.round(S * dpr);
+      const c = out.getContext('2d');
+      c.scale(dpr, dpr); c.translate(S / 2, S / 2 - 2);
+      const glow = c.createRadialGradient(0, 0, 0, 0, 0, 16);
+      glow.addColorStop(0, mine ? 'rgba(240,206,110,0.4)' : 'rgba(250,248,232,0.32)');
+      glow.addColorStop(1, 'rgba(250,248,232,0)');
+      c.fillStyle = glow; c.beginPath(); c.arc(0, 0, 16, 0, Math.PI * 2); c.fill();
+      // a short stalk leaning down and to the right, and the head's shadow on the leaves
+      c.strokeStyle = '#4c7a3e'; c.lineWidth = 1.4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(1, 4); c.quadraticCurveTo(4, 9, 3.5, 13); c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.32)'; c.beginPath(); c.ellipse(1.4, 2.2, 7, 6.4, 0, 0, Math.PI * 2); c.fill();
+      // the head: rings of small florets, the older ones near the bottom blushed pink (gold on your own)
+      const white = mine ? '#f7e2a0' : '#fdfbf2', blush = mine ? '#e6bd55' : '#efd9d2', mid = mine ? '#eccf7a' : '#f1ecdc';
+      const rings = [[16, 5.2, 2.4], [11, 3.4, 2.1], [6, 1.6, 1.8]];
+      for (const [n, rad, len] of rings) {
+        for (let i = 0; i < n; i++) {
+          const a = (Math.PI * 2 / n) * i + rad * 0.37;
+          const low = Math.sin(a) > 0.35 && rad > 4;
+          c.save(); c.rotate(a); c.translate(rad, 0);
+          c.fillStyle = low ? blush : (i % 2 ? white : mid);
+          c.beginPath(); c.ellipse(len / 2 - 0.4, 0, len / 2 + 0.5, 0.95, 0, 0, Math.PI * 2); c.fill();
+          c.restore();
+        }
+      }
+      c.fillStyle = mine ? '#d6aa3a' : '#e3dcc0';
+      c.beginPath(); c.arc(0, 0, 1.2, 0, Math.PI * 2); c.fill();
+      return out;
     }
+    function blossom(c, h, ox, oy) {
+      if (!blossoms.plain) blossoms = { plain: makeBlossom(false), mine: makeBlossom(true) };
+      const img = h.mine ? blossoms.mine : blossoms.plain;
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.drawImage(img, Math.round((h.x - ox - 18) * dpr), Math.round((h.y - oy - 20) * dpr));
+    }
+
+    let light = null;
+    const LIGHTS = {
+      dawn: { mul: 'rgb(214,208,238)', add: 'rgba(255,214,206,0.07)' },
+      day: { add: 'rgba(255,250,222,0.17)' },
+      dusk: { mul: 'rgb(250,200,172)', add: 'rgba(255,160,100,0.05)' },
+      night: { mul: 'rgb(116,136,186)' },
+    };
 
     // the sleeping meadow is kept as picture tiles, so moving the view only copies pictures;
     // whatever is moving right now is painted fresh on top
@@ -569,12 +618,13 @@
       if (!w) return;
       mctx.setTransform(1, 0, 0, 1, 0, 0);
       mctx.clearRect(0, 0, w, hgt);
+      const css = getComputedStyle(mini);
       for (const h of hidden) {
         if (!h.found && h.kind !== 'happy') continue;
-        mctx.fillStyle = h.kind === 'empty' ? 'rgba(190,214,176,0.55)' : h.mine ? '#e0b84a' : '#7fcf95';
+        mctx.fillStyle = h.kind === 'empty' ? css.getPropertyValue('--map-empty') : h.mine ? css.getPropertyValue('--gold') : css.getPropertyValue('--map-dot');
         mctx.beginPath(); mctx.arc(h.x * k, h.y * k, 1.8 * dpr, 0, Math.PI * 2); mctx.fill();
       }
-      mctx.strokeStyle = 'rgba(231,236,229,0.9)'; mctx.lineWidth = 1.25 * dpr;
+      mctx.strokeStyle = css.color; mctx.lineWidth = 1.25 * dpr;
       const vx = Math.max(0, cam.x * k), vy = Math.max(0, cam.y * k);
       mctx.strokeRect(vx + 0.5, vy + 0.5, Math.min(w - 1, VW * k) - 1, Math.min(hgt - 1, VH * k) - 1);
     }
@@ -614,8 +664,9 @@
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
     function dig(q) {
-      if (pointer.active) { pointer.vx = q.x - pointer.sx; pointer.vy = q.y - pointer.sy; }
-      pointer.sx = q.x; pointer.sy = q.y; pointer.x = q.x + cam.x; pointer.y = q.y + cam.y; pointer.active = true;
+      pointer.sx = q.x; pointer.sy = q.y; pointer.tx = q.x + cam.x; pointer.ty = q.y + cam.y;
+      if (!pointer.active) { pointer.x = pointer.tx; pointer.y = pointer.ty; pointer.vx = pointer.vy = 0; }
+      pointer.active = true;
       wake();
     }
     function release() { clearTimeout(releaseTimer); if (!sweeping) pointer.active = false; }
@@ -686,6 +737,8 @@
       let dx = e.deltaX * unit, dy = e.deltaY * unit;
       if (e.shiftKey && !dx) { dx = dy; dy = 0; }
       camAnim = null;
+      // scrolling lifts the hand; it digs again as soon as the mouse moves
+      if (!sweeping) pointer.active = false;
       moveCam(cam.x + dx, cam.y + dy);
     }, { passive: false });
     // the keyboard moves the view too, and Enter opens the clover whose label is showing
@@ -724,7 +777,7 @@
       const sx = h.x + (h.x - cam.x < VW / 2 ? 140 : -140), sy = h.y + 60;
       const put = (x, y) => {
         pointer.vx = x - pointer.x; pointer.vy = y - pointer.y;
-        pointer.x = x; pointer.y = y; pointer.sx = x - cam.x; pointer.sy = y - cam.y; pointer.active = true;
+        pointer.x = pointer.tx = x; pointer.y = pointer.ty = y; pointer.sx = x - cam.x; pointer.sy = y - cam.y; pointer.active = true;
       };
       const move = now => {
         const k = Math.min(1, (now - t0) / dur);
@@ -797,6 +850,12 @@
         if (shownNow && shownNow.key === key) show(null);
         full = true; wake(); drawMini();
         opts.onFound && opts.onFound(found(), hidden.length, null);
+      },
+      // the time of day: 'dawn' | 'day' | 'dusk' | 'night'
+      setLight(phase) {
+        const next = LIGHTS[phase] || null;
+        if (next === light) return;
+        light = next; chunks.clear(); full = true; wake(); requestAnimationFrame(drawMini);
       },
       reveal(key, done) { reveal(byKey(key), done); },
       // show one nearby: the hidden clover closest to the middle of the screen
