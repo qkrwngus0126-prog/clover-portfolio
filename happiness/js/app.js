@@ -41,6 +41,7 @@
     const m = (e && (e.message || e.error_description)) || String(e);
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return tr('errNet');
     if (/JWT|token/i.test(m)) return tr('errAuth');
+    if (/daily_limit/.test(m)) return tr('errDaily');
     return tr('errRetry', { m });
   }
 
@@ -79,11 +80,13 @@
   const BUCKET = cfg.photoBucket || 'happy-photos';
   let user = null;
 
+  // the columns anyone may read; who wrote a clover is never sent, only "is it mine" through my_happy_ids
+  const COLS = 'id,happy_on,place,line,more,photo_path,fx,fy,created_at,updated_at,hidden';
   const server = {
     async list() {
       const out = [];
       for (let from = 0; from < 10000; from += 1000) {
-        const { data, error } = await sb.from('happies').select('id,fx,fy,user_id,line').order('created_at').range(from, from + 999);
+        const { data, error } = await sb.from('happies').select('id,fx,fy,line').order('created_at').range(from, from + 999);
         if (error) throw error;
         out.push(...data);
         if (data.length < 1000) break;
@@ -91,22 +94,27 @@
       return out;
     },
     async get(id) {
-      const { data, error } = await sb.from('happies').select('*').eq('id', id).maybeSingle();
+      const { data, error } = await sb.from('happies').select(COLS).eq('id', id).maybeSingle();
       if (error) throw error;
       return data;
     },
     async mine() {
-      const { data, error } = await sb.from('happies').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      const { data, error } = await sb.rpc('my_happies');
       if (error) throw error;
       return data;
     },
+    async myIds() {
+      const { data, error } = await sb.rpc('my_happy_ids');
+      if (error) throw error;
+      return data.map(x => typeof x === 'string' ? x : x.my_happy_ids || x.id);
+    },
     async create(row) {
-      const { data, error } = await sb.from('happies').insert(row).select().single();
+      const { data, error } = await sb.from('happies').insert(row).select(COLS).single();
       if (error) throw error;
       return data;
     },
     async update(id, row) {
-      const { data, error } = await sb.from('happies').update(row).eq('id', id).select().single();
+      const { data, error } = await sb.from('happies').update(row).eq('id', id).select(COLS).single();
       if (error) throw error;
       return data;
     },
@@ -142,7 +150,8 @@
   const demoPhotos = new Map();
   const memory = {
     rows: DEMO.slice(),
-    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, user_id: r.user_id, line: r.line })); },
+    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, line: r.line })); },
+    async myIds() { return this.rows.filter(r => r.user_id === user.id).map(r => r.id); },
     async get(id) { return this.rows.find(r => r.id === id) || null; },
     async mine() { return this.rows.filter(r => r.user_id === user.id).reverse(); },
     async create(row) {
@@ -189,7 +198,9 @@
   hintBtn.addEventListener('click', () => field.hint('empty'));
   openBtn.addEventListener('click', () => { if (shown) pick(shown); });
 
-  const records = new Map(); // id -> { id, fx, fy, user_id }
+  const records = new Map(); // id -> { id, fx, fy, line }
+  let myIds = new Set();      // the clovers the signed-in person planted
+  const isMine = id => !!user && myIds.has(id);
   let empties = [];
   let emptySeq = 0;
 
@@ -235,7 +246,7 @@
     occupy(e);
     return e;
   }
-  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: !!user && r.user_id === user.id });
+  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: isMine(r.id) });
 
   async function load() {
     let list = [];
@@ -273,7 +284,7 @@
     function item(r) {
       return h('li', { 'data-id': r.id },
         h('button', { type: 'button', title: tr('showInField'), onclick: () => field.reveal(r.id, () => openRead(r.id)) },
-          h('span', { class: 'dot' + (user && r.user_id === user.id ? ' mine' : '') }), h('span', { class: 't' }, r.line)));
+          h('span', { class: 'dot' + (isMine(r.id) ? ' mine' : '') }), h('span', { class: 't' }, r.line)));
     }
     function reset() {
       shownIds = [];
@@ -337,7 +348,7 @@
         else { shownIds.splice(at, 1); list.children[at].remove(); }
         sync();
       },
-      mine() { for (const li of list.children) li.querySelector('.dot').classList.toggle('mine', !!user && records.get(li.dataset.id)?.user_id === user.id); },
+      mine() { for (const li of list.children) li.querySelector('.dot').classList.toggle('mine', isMine(li.dataset.id)); },
     };
   })();
 
@@ -403,17 +414,27 @@
           if (error) { leaving = false; btn.disabled = false; toast(tr('loginFail') + ' ' + errMsg(error)); }
         },
       }, tr('provider_' + p.id) === 'provider_' + p.id ? p.label : tr('provider_' + p.id)))),
+      h('p', { class: 'note small' }, tr('loginAge'), ' ', h('a', { href: tr('privacyHref'), target: '_blank', rel: 'noopener' }, tr('privacy'))),
       demo ? h('p', { class: 'note' }, tr('loginDemo')) : null,
     ], () => { if (!leaving) takePending(); }); // 그냥 닫으면 하던 일도 잊습니다
   }
 
   const navAuth = $('nav-auth');
   let booted = false; // true once the field has loaded, so a later login can check "on this day"
+  // ask which clovers are mine, then mark them in the field and the list
+  async function refreshMine() {
+    let ids = [];
+    if (user) { try { ids = await api.myIds(); } catch (_) { /* 표시만 늦어져요 */ } }
+    myIds = new Set(ids);
+    for (const r of records.values()) field.update(r.id, { mine: isMine(r.id) });
+    feed.mine();
+  }
   function setUser(u) {
     const changed = (user && user.id) !== (u && u.id);
     user = u;
     navAuth.textContent = user ? tr('logout') : tr('login');
-    if (changed) { for (const r of records.values()) field.update(r.id, { mine: !!user && r.user_id === user.id }); feed.mine(); if (user && booted) onThisDay(); }
+    if (!changed) return Promise.resolve();
+    return refreshMine().then(() => { if (user && booted) onThisDay(); });
   }
   navAuth.addEventListener('click', async () => {
     if (!user) { takePending(); openLogin(tr('loginWhyHeader')); return; }
@@ -471,7 +492,7 @@
       records.delete(id); field.remove(id); feed.drop(id);
       return;
     }
-    const mine = !!user && r.user_id === user.id;
+    const mine = isMine(r.id);
     const moreText = h('p', { class: 'read-more', id: 'read-more', hidden: true }, r.more || '');
     const moreBtn = r.more ? h('button', {
       type: 'button', class: 'btn link', 'aria-expanded': 'false', 'aria-controls': 'read-more',
@@ -494,10 +515,28 @@
         h('span', { class: 'eyebrow' }, tr('plantedOn', { d: localDay(r.created_at) }) + (r.updated_at ? ' · ' + tr('edited') : '')),
         mine
           ? h('div', { class: 'row' },
+              shareBtn(r),
               h('button', { type: 'button', class: 'btn', onclick: () => openWrite({ record: r }) }, tr('edit')),
               h('button', { type: 'button', class: 'btn danger', onclick: () => openDelete(r) }, tr('del')))
-          : h('button', { type: 'button', class: 'btn quiet', onclick: () => { if (requireLogin({ type: 'report', id: r.id }, tr('loginWhyReport'))) openReport(r.id); } }, tr('report'))),
+          : h('div', { class: 'row' },
+              shareBtn(r),
+              h('button', { type: 'button', class: 'btn quiet', onclick: () => { if (requireLogin({ type: 'report', id: r.id }, tr('loginWhyReport'))) openReport(r.id); } }, tr('report')))),
     ]);
+  }
+
+  // a link straight to one clover: whoever opens it lands on it, already open
+  const linkTo = id => location.origin + location.pathname + '?c=' + encodeURIComponent(id);
+  function shareBtn(r) {
+    return h('button', { type: 'button', class: 'btn', async onclick() {
+      const url = linkTo(r.id);
+      // phones offer their own share sheet (KakaoTalk, messages…); elsewhere the link is copied
+      if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+        try { await navigator.share({ title: tr('brand'), text: `${tr('shareText')}: “${r.line}”`, url }); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      try { await navigator.clipboard.writeText(url); toast(tr('linkCopied')); }
+      catch (_) { window.prompt(tr('shareLink'), url); }
+    } }, tr('shareLink'));
   }
 
   /* ---------- writing and editing ---------- */
@@ -505,7 +544,7 @@
     loading();
     try {
       const r = await api.get(id);
-      if (r && r.user_id === user.id) openWrite({ record: r }); else close();
+      if (r && isMine(r.id)) openWrite({ record: r }); else close();
     } catch (e) { toast(errMsg(e)); close(); }
   }
 
@@ -609,7 +648,8 @@
         // 바꾸거나 뺀 예전 사진은 지웁니다
         if (record && record.photo_path && record.photo_path !== photo_path) api.unlink(record.photo_path).catch(() => {});
         if (photo.url) URL.revokeObjectURL(photo.url);
-        records.set(saved.id, { id: saved.id, fx: saved.fx, fy: saved.fy, user_id: saved.user_id, line: saved.line });
+        records.set(saved.id, { id: saved.id, fx: saved.fx, fy: saved.fy, line: saved.line });
+        myIds.add(saved.id);
         feed.put(saved.id);
 
         if (editing) {
@@ -798,7 +838,7 @@
     if (sb) {
       // 구글에서 돌아온 직후라면 여기서 로그인이 마무리됩니다
       const { data } = await sb.auth.getSession();
-      setUser(data.session ? data.session.user : null);
+      await setUser(data.session ? data.session.user : null);
       const q = new URLSearchParams(location.search), hash = new URLSearchParams(location.hash.slice(1));
       const failed = q.get('error_description') || hash.get('error_description');
       if (q.has('code') || q.has('error') || hash.has('access_token') || hash.has('error')) history.replaceState(null, '', location.pathname);
@@ -806,6 +846,12 @@
       sb.auth.onAuthStateChange((_event, session) => setUser(session ? session.user : null));
     }
     await load();
+    $('loading').classList.add('done');
+    // opened from a shared link (?c=…): fly to that clover and open it, unless the visitor is back from logging in mid-task
+    const shared = new URLSearchParams(location.search).get('c');
+    let busy = false;
+    try { busy = !!sessionStorage.getItem(PENDING); } catch (_) { /* 없다고 봐요 */ }
+    if (shared && !busy) { if (records.has(shared)) field.reveal(shared, () => openRead(shared)); else openRead(shared); }
     resume();
     booted = true;
     onThisDay();

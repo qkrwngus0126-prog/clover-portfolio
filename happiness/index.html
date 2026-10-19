@@ -7,15 +7,29 @@
 <title>세잎 들판</title>
 <meta name="description" content="사람들은 행운(네잎)을 찾느라 행복(세잎)을 지나칩니다. 네잎클로버 들판을 헤집어 다른 사람이 숨겨 둔 행복을 읽고, 내 행복도 하나 심어 두세요.">
 <meta name="theme-color" content="#0e1410">
+<!-- 링크를 카카오톡·메신저·SNS에 붙였을 때 보이는 미리보기 카드 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="세잎 들판 · Three-Leaf Meadow">
+<meta property="og:title" content="세잎 들판 · 행운을 찾다 지나친 행복을 같이 적어 둡니다">
+<meta property="og:description" content="네잎클로버 들판을 헤집어 누군가 숨겨 둔 행복을 읽고, 내 행복도 하나 심어 두세요. · Dig through a meadow of four-leaf clovers and read the happiness others left.">
+<meta property="og:url" content="https://qkrwngus0126-prog.github.io/clover-portfolio/happiness/">
+<meta property="og:image" content="https://qkrwngus0126-prog.github.io/clover-portfolio/happiness/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="네잎클로버 들판 사이로 흰 토끼풀 꽃이 피어 있는 그림">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='5' fill='%230e1410'/%3E%3Cg fill='%237fcf95'%3E%3Ccircle cx='10' cy='6.2' r='2.6'/%3E%3Ccircle cx='5.9' cy='13.3' r='2.6'/%3E%3Ccircle cx='14.1' cy='13.3' r='2.6'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- 파일을 고칠 때마다 아래 ?v= 숫자를 올리면, 방문자 브라우저가 예전 파일 대신 새 파일을 바로 받아요 -->
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 <!-- 시간대(새벽·낮·해 질 녘·밤)를 화면이 그려지기 전에 정해 둬요 -->
-<script src="js/i18n.js?v=12"></script>
-<script src="js/sky.js?v=12"></script>
+<script src="js/i18n.js?v=13"></script>
+<script src="js/sky.js?v=13"></script>
 </head>
 <body class="app">
 
@@ -66,6 +80,8 @@
   </section>
   <button class="feed-open" id="feed-open" type="button" data-i18n="feedTitle" hidden>들판에 적힌 행복</button>
 
+  <p class="loading" id="loading" role="status" data-i18n="spreading">들판을 펼치는 중…</p>
+
   <p class="demo-note" id="demo-note" data-i18n="demoNote" hidden>미리보기예요 · config.js를 채우면 실제로 저장돼요</p>
 
   <div class="field-bar">
@@ -87,9 +103,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="config.js?v=12"></script>
-<script src="js/field.js?v=12"></script>
-<script src="js/photo.js?v=12"></script>
-<script src="js/app.js?v=12"></script>
+<script src="config.js?v=13"></script>
+<script src="js/field.js?v=13"></script>
+<script src="js/photo.js?v=13"></script>
+<script src="js/app.js?v=13"></script>
 </body>
 </html>
