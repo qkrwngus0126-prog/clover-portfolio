@@ -139,8 +139,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .intro h1 { font-size: 1.25rem; }
 .intro p { color: var(--muted); font-size: 0.9375rem; line-height: 1.7; text-wrap: pretty; }
-.intro-actions { justify-content: space-between; margin-top: 4px; }
-.intro-langs { display: inline-flex; gap: 12px; }
+.intro-actions { gap: 6px 16px; margin-top: 4px; }
+.intro-snooze { color: var(--muted) !important; font-size: 0.8125rem; min-height: 32px; }
+.intro-langs { display: inline-flex; gap: 12px; justify-self: end; margin-top: -4px; }
 .intro-langs .btn.link { color: var(--muted); font-size: 0.8125rem; min-height: 28px; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 

@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- 파일을 고칠 때마다 아래 ?v= 숫자를 올리면, 방문자 브라우저가 예전 파일 대신 새 파일을 바로 받아요 -->
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <!-- 시간대(새벽·낮·해 질 녘·밤)를 화면이 그려지기 전에 정해 둬요 -->
-<script src="js/i18n.js?v=11"></script>
-<script src="js/sky.js?v=11"></script>
+<script src="js/i18n.js?v=12"></script>
+<script src="js/sky.js?v=12"></script>
 </head>
 <body class="app">
 
@@ -51,9 +51,10 @@
       꽃이 없는 곳 아래엔 빈 세잎이 숨어 있어요.<br>
       헤집어 찾아서 내 행복을 심어 주세요.</p>
     <div class="row intro-actions">
-      <button type="button" class="btn small" id="intro-close" data-i18n="introGo">들판 둘러보기</button>
-      <span class="intro-langs" id="intro-langs"></span>
+      <button type="button" class="btn small primary" id="intro-close" data-i18n="introGo">세잎클로버 찾아보기</button>
+      <button type="button" class="btn link intro-snooze" id="intro-snooze" data-i18n="introSnooze">하루 동안 보지 않기</button>
     </div>
+    <span class="intro-langs" id="intro-langs"></span>
   </aside>
 
   <section class="feed" id="feed" aria-labelledby="feed-title" hidden>
@@ -86,9 +87,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="config.js?v=11"></script>
-<script src="js/field.js?v=11"></script>
-<script src="js/photo.js?v=11"></script>
-<script src="js/app.js?v=11"></script>
+<script src="config.js?v=12"></script>
+<script src="js/field.js?v=12"></script>
+<script src="js/photo.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
 </body>
 </html>
