@@ -190,15 +190,36 @@
   let emptySeq = 0;
 
   // 빈 세잎 자리: 들판 어디든, 기존 세잎과 너무 가깝지 않은 곳을 무작위로 고릅니다
+  // where clovers already are, filed in a grid so finding a free spot stays quick however many there are
+  const GAP = 100; // no two clovers closer than this (px)
+  let occ = new Map(), occW = 0, occH = 0;
+  const cellKey = (x, y) => Math.floor(x / GAP) + ',' + Math.floor(y / GAP);
+  function occupy(p) {
+    const x = p.fx * occW, y = p.fy * occH, k = cellKey(x, y);
+    if (!occ.has(k)) occ.set(k, []);
+    occ.get(k).push([x, y]);
+  }
+  function resetOcc() {
+    const { width, height } = field.world;
+    occ = new Map(); occW = width; occH = height;
+    for (const r of records.values()) occupy(r);
+    for (const e of empties) occupy(e);
+  }
+  function nearest(x, y) {
+    const cx = Math.floor(x / GAP), cy = Math.floor(y / GAP);
+    let d = Infinity;
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++)
+      for (const [px, py] of occ.get((cx + i) + ',' + (cy + j)) || []) d = Math.min(d, Math.hypot(px - x, py - y));
+    return d;
+  }
   function freeSpot() {
-    const taken = [...records.values(), ...empties];
     const { width: W, height: H } = field.world;
+    if (W !== occW || H !== occH) resetOcc();
     let pick = null, far = -1;
     for (let t = 0; t < 300; t++) {
-      const fx = 0.03 + Math.random() * 0.94, fy = 0.03 + Math.random() * 0.94;
-      let d = Infinity;
-      for (const p of taken) d = Math.min(d, Math.hypot((p.fx - fx) * W, (p.fy - fy) * H));
-      if (d > 130) return { fx, fy };
+      const fx = 0.02 + Math.random() * 0.96, fy = 0.02 + Math.random() * 0.96;
+      const d = nearest(fx * W, fy * H);
+      if (d >= GAP) return { fx, fy };
       if (d > far) { far = d; pick = { fx, fy }; }
     }
     return pick;
@@ -207,6 +228,7 @@
     const spot = freeSpot();
     const e = { key: 'empty-' + (++emptySeq), kind: 'empty', fx: spot.fx, fy: spot.fy };
     empties.push(e);
+    occupy(e);
     return e;
   }
   const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: !!user && r.user_id === user.id });
@@ -217,8 +239,16 @@
     catch (e) { toast('기록을 불러오지 못했어요. ' + errMsg(e)); }
     records.clear();
     list.forEach(r => records.set(r.id, r));
+    // the meadow grows with the number of records, so there is always room to hide empty clovers;
+    // the number of empty clovers grows with it, so they stay just as easy to find
+    const base = { w: cfg.fieldWidth || 3600, h: cfg.fieldHeight || 2400, empty: Math.max(1, cfg.emptyClovers ?? 80) };
+    // the base field holds about 400 records with room to spare; past that it widens and lengthens together
+    const roomy = base.empty + 400;
+    const grow = Math.min(cfg.fieldMaxGrow ?? 3, Math.max(1, Math.sqrt((list.length + base.empty) / roomy)));
+    field.setWorld(base.w * grow, base.h * grow);
     empties = [];
-    const n = Math.max(1, cfg.emptyClovers ?? 30);
+    resetOcc();
+    const n = Math.round(base.empty * grow * grow);
     for (let i = 0; i < n; i++) newEmpty();
     field.set([...list.map(asClover), ...empties]);
     feed.reset();
@@ -678,16 +708,21 @@
 
   /* ---------- help, and the card shown on a first visit ---------- */
   function openHelp() {
+    // one sentence to a line, so the help reads in short, even steps
     const steps = [
-      ['헤집기', coarse ? '한 손가락으로 네잎을 헤치면 아래 숨은 세잎이 드러나요.' : '마우스를 들판 위에서 움직이면 네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.'],
-      ['둘러보기', coarse ? '들판은 화면보다 훨씬 넓어요. 두 손가락으로 끌어서 옮겨 다니세요.' : '들판은 화면보다 훨씬 넓어요. 끌거나 스크롤해서 옮겨 다니세요.'],
-      ['읽기', '누군가 적어 둔 세잎 위에는 작은 흰 꽃이 피어 있어요. 꽃을 누르면 바로 읽을 수 있어요. 옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요. 로그인은 필요 없어요.'],
-      ['심기', '꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요. 헤집어서 찾으면 내 행복을 적을 수 있고, 그 자리에 꽃이 피어 다음 사람을 기다립니다. 내가 심은 곳의 꽃은 금색이에요.'],
+      ['헤집기', coarse
+        ? ['한 손가락으로 네잎을 헤치면', '아래 숨은 세잎이 드러나요.']
+        : ['마우스를 들판 위에서 움직이면', '네잎이 헤쳐지고 아래 숨은 세잎이 드러나요.']],
+      ['둘러보기', coarse
+        ? ['들판은 화면보다 훨씬 넓어요.', '두 손가락으로 끌어서 옮겨 다니세요.']
+        : ['들판은 화면보다 훨씬 넓어요.', '끌거나 스크롤해서 옮겨 다니세요.']],
+      ['읽기', ['누군가 적은 세잎 위엔 흰 꽃이 피어 있어요.', '꽃을 누르면 로그인 없이 바로 읽을 수 있어요.', '옆 목록의 문장을 눌러도 그 세잎으로 데려가 줘요.']],
+      ['심기', ['꽃이 없는 곳 아래에는 빈 세잎이 숨어 있어요.', '헤집어서 찾으면 내 행복을 적을 수 있고,', '그 자리에 꽃이 피어 다음 사람을 기다려요.', '내가 심은 곳의 꽃은 금색이에요.']],
     ];
     open([
       head(null, '이렇게 써요'),
-      h('ol', { class: 'steps' }, steps.map(([b, t]) => h('li', null, h('b', null, b), h('span', null, t)))),
-      h('p', { class: 'note' }, '오른쪽 위 작은 지도는 들판 전체예요. 누르면 그곳으로 옮겨 가요.'),
+      h('ol', { class: 'steps' }, steps.map(([b, lines]) => h('li', null, h('b', null, b), h('span', null, lines.flatMap((l, i) => i ? [h('br'), l] : [l]))))),
+      h('p', { class: 'note' }, coarse ? '오른쪽 위 작은 지도는 들판 전체예요.' : '오른쪽 위 작은 지도는 들판 전체예요.', h('br'), '누르면 그곳으로 옮겨 가요.'),
       skyPicker(),
       h('div', { class: 'row split' },
         h('a', { href: 'privacy.html', class: 'btn quiet' }, '개인정보처리방침'),

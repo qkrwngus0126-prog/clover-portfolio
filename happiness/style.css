@@ -264,7 +264,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .steps li { display: grid; grid-template-columns: 28px 1fr; column-gap: 8px; counter-increment: n; }
 .steps li::before { content: "0" counter(n); grid-row: span 2; color: var(--accent); font-size: var(--step-small); font-variant-numeric: tabular-nums; padding-top: 2px; }
 .steps b { font-weight: 500; }
-.steps span { color: var(--muted); font-size: 0.9375rem; }
+.steps span { color: var(--muted); font-size: 0.9375rem; line-height: 1.7; }
 
 /* time of day picker */
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
