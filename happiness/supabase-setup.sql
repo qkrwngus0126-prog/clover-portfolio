@@ -111,6 +111,10 @@ begin
   return new;
 end $$;
 
+-- 트리거 함수는 바깥(API)에서 직접 부를 수 없게 막아 둡니다.
+revoke execute on function public.reports_count() from public, anon, authenticated;
+revoke execute on function public.happies_touch() from public, anon, authenticated;
+
 drop trigger if exists reports_count on public.reports;
 create trigger reports_count after insert on public.reports
   for each row execute function public.reports_count();

@@ -6,8 +6,8 @@
 
    둘 다 비워 두면 저장 없이 예시 기록으로만 움직이는 미리보기 모드로 열립니다. */
 window.HAPPY_CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: '',
+  supabaseUrl: 'https://kddwszxlmdlkgskxmwgg.supabase.co',
+  supabaseKey: 'sb_publishable_UD4h3VkCUPhEbG8D5zLbxA_Qq18y5BY',
 
   // 사진을 넣을 Storage 버킷 이름 (supabase-setup.sql과 같아야 해요)
   photoBucket: 'happy-photos',

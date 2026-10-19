@@ -5,6 +5,10 @@
 > 이 안내의 사이트 주소는 `https://qkrwngus0126-prog.github.io/clover-portfolio/happiness/` 기준입니다.
 > 다른 저장소로 옮기면 주소가 바뀌니, 아래에서 이 주소를 쓰는 곳(3단계, 4단계)을 새 주소로 바꿔 주세요.
 
+> **현재 상태 (2026-10-19)**: 1, 2, 5단계는 이미 끝났어요. Supabase 프로젝트 `clover-happiness`
+> (주소 `https://kddwszxlmdlkgskxmwgg.supabase.co`, 서울)를 만들고, SQL을 실행하고, 공개용 키를 `config.js`에 넣어 두었어요.
+> 남은 일은 **3단계, 4단계, 6단계**입니다. 아래 안내의 `abcdefgh.supabase.co`는 `kddwszxlmdlkgskxmwgg.supabase.co`로 읽으세요.
+
 ```
 1. Supabase 프로젝트 만들기
 2. SQL 한 번에 실행하기 (테이블, RLS, 사진 저장소)
