@@ -27,7 +27,7 @@
     const TIER_RES = [0.68, 0.64, 0.72];  // sprites are rendered at the largest size each layer is drawn
 
     // the whole meadow, in CSS pixels; the canvas is a window onto part of it
-    const WW = opts.width || 3600, WH = opts.height || 2400;
+    let WW = opts.width || 3600, WH = opts.height || 2400; // the meadow can grow later (setWorld)
     const CELL = 96;                      // spatial grid, so only leaves near the hand or the view are touched
     const TILE = 512;                     // the soil repeats in tiles this size
     let VW = 0, VH = 0, dpr = 1, items = [], hidden = [], grid = [], gcols = 0, grows = 0, soilTile = null;
@@ -869,7 +869,17 @@
 
     const byKey = key => hidden.find(h => h.key === key);
     const api = {
-      world: { width: WW, height: WH },
+      get world() { return { width: WW, height: WH }; },
+      // make the meadow a new size; clovers keep their place as a share of the width and height
+      setWorld(w, hgt) {
+        w = Math.round(w); hgt = Math.round(hgt);
+        if (w === WW && hgt === WH) return;
+        const mx = (cam.x + VW / 2) / WW, my = (cam.y + VH / 2) / WH;
+        WW = w; WH = hgt;
+        hidden.forEach(h => { h.x = h.fx * WW; h.y = h.fy * WH; });
+        cam.x = mx * WW - VW / 2; cam.y = my * WH - VH / 2; clampCam();
+        items = []; chunks.clear(); sizeMini();
+      },
       set(list) {
         hidden = list.map(makeHidden);
         buildItems(); bury(hidden); index(); chunks.clear();

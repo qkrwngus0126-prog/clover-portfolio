@@ -190,15 +190,36 @@
   let emptySeq = 0;
 
   // 빈 세잎 자리: 들판 어디든, 기존 세잎과 너무 가깝지 않은 곳을 무작위로 고릅니다
+  // where clovers already are, filed in a grid so finding a free spot stays quick however many there are
+  const GAP = 100; // no two clovers closer than this (px)
+  let occ = new Map(), occW = 0, occH = 0;
+  const cellKey = (x, y) => Math.floor(x / GAP) + ',' + Math.floor(y / GAP);
+  function occupy(p) {
+    const x = p.fx * occW, y = p.fy * occH, k = cellKey(x, y);
+    if (!occ.has(k)) occ.set(k, []);
+    occ.get(k).push([x, y]);
+  }
+  function resetOcc() {
+    const { width, height } = field.world;
+    occ = new Map(); occW = width; occH = height;
+    for (const r of records.values()) occupy(r);
+    for (const e of empties) occupy(e);
+  }
+  function nearest(x, y) {
+    const cx = Math.floor(x / GAP), cy = Math.floor(y / GAP);
+    let d = Infinity;
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++)
+      for (const [px, py] of occ.get((cx + i) + ',' + (cy + j)) || []) d = Math.min(d, Math.hypot(px - x, py - y));
+    return d;
+  }
   function freeSpot() {
-    const taken = [...records.values(), ...empties];
     const { width: W, height: H } = field.world;
+    if (W !== occW || H !== occH) resetOcc();
     let pick = null, far = -1;
     for (let t = 0; t < 300; t++) {
-      const fx = 0.03 + Math.random() * 0.94, fy = 0.03 + Math.random() * 0.94;
-      let d = Infinity;
-      for (const p of taken) d = Math.min(d, Math.hypot((p.fx - fx) * W, (p.fy - fy) * H));
-      if (d > 130) return { fx, fy };
+      const fx = 0.02 + Math.random() * 0.96, fy = 0.02 + Math.random() * 0.96;
+      const d = nearest(fx * W, fy * H);
+      if (d >= GAP) return { fx, fy };
       if (d > far) { far = d; pick = { fx, fy }; }
     }
     return pick;
@@ -207,6 +228,7 @@
     const spot = freeSpot();
     const e = { key: 'empty-' + (++emptySeq), kind: 'empty', fx: spot.fx, fy: spot.fy };
     empties.push(e);
+    occupy(e);
     return e;
   }
   const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: !!user && r.user_id === user.id });
@@ -217,8 +239,16 @@
     catch (e) { toast('기록을 불러오지 못했어요. ' + errMsg(e)); }
     records.clear();
     list.forEach(r => records.set(r.id, r));
+    // the meadow grows with the number of records, so there is always room to hide empty clovers;
+    // the number of empty clovers grows with it, so they stay just as easy to find
+    const base = { w: cfg.fieldWidth || 3600, h: cfg.fieldHeight || 2400, empty: Math.max(1, cfg.emptyClovers ?? 80) };
+    // the base field holds about 400 records with room to spare; past that it widens and lengthens together
+    const roomy = base.empty + 400;
+    const grow = Math.min(cfg.fieldMaxGrow ?? 3, Math.max(1, Math.sqrt((list.length + base.empty) / roomy)));
+    field.setWorld(base.w * grow, base.h * grow);
     empties = [];
-    const n = Math.max(1, cfg.emptyClovers ?? 80);
+    resetOcc();
+    const n = Math.round(base.empty * grow * grow);
     for (let i = 0; i < n; i++) newEmpty();
     field.set([...list.map(asClover), ...empties]);
     feed.reset();
