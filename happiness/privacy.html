@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <style>
-  .doc { max-width: 720px; padding-block: 64px 120px; display: grid; gap: 40px; }
+  .doc { max-width: 720px; padding: 48px max(20px, env(safe-area-inset-left, 0px)) 120px; display: grid; gap: 40px; }
   .doc h1 { font-size: var(--step-title); }
   .doc h2 { font-size: 1.25rem; font-weight: 400; margin-bottom: 10px; }
   .doc section { display: grid; gap: 8px; }
@@ -22,11 +22,11 @@
 </head>
 <body>
 
-<header class="wrap top">
-  <a class="wordmark" href="./">세잎 들판</a>
+<header class="page-top">
+  <a class="wordmark" href="./"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.2" r="2.6"/><circle cx="5.9" cy="13.3" r="2.6"/><circle cx="14.1" cy="13.3" r="2.6"/></svg>세잎 들판</a>
 </header>
 
-<main class="wrap doc">
+<main class="doc">
   <h1>개인정보처리방침</h1>
   <p class="eyebrow">시행일 2026년 10월 19일</p>
 

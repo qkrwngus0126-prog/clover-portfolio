@@ -1,13 +1,15 @@
 /* 네잎클로버 들판.
-   clover-portfolio의 index.html에 있던 들판을 그대로 옮기고, 숨은 세잎을 바깥에서 넣고 뺄 수 있게 바꿨습니다.
+   clover-portfolio의 들판을 옮겨 와서, 화면보다 몇 배 넓은 들판을 둘러볼 수 있게 키웠습니다.
+   화면에는 들판의 한 부분만 보이고, 끌거나 스크롤해서(휴대폰은 두 손가락으로) 다른 곳으로 옮겨 다닙니다.
 
    const field = CloverField(document.getElementById('field'), {
-     onPick(clover)   // 찾은 세잎을 눌렀을 때
-     onShow(clover)   // 지금 라벨이 떠 있는 세잎이 바뀔 때 (없으면 null)
-     onFound(n, all)  // 세잎을 하나 찾을 때마다
+     width, height     // 들판 전체 크기 (px)
+     onPick(clover)    // 찾은 세잎을 눌렀을 때
+     onShow(clover)    // 지금 이름표가 떠 있는 세잎이 바뀔 때 (없으면 null)
+     onFound(n, all)   // 세잎을 하나 찾을 때마다
    });
-   field.set([{ key, kind: 'happy' | 'empty', fx, fy, mine }])   // fx, fy는 들판 안의 0~1 좌표
-   field.update(key, patch) / field.remove(key) / field.reveal(key) / field.hint() */
+   field.set([{ key, kind: 'happy' | 'empty', fx, fy, mine, text }])   // fx, fy는 들판 전체 안의 0~1 좌표
+   field.update(key, patch) / field.remove(key) / field.reveal(key, done) / field.hint() */
 (function () {
   window.CloverField = function (field, opts) {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -24,16 +26,30 @@
     const HIDDEN_Z = 0.3;
     const TIER_RES = [0.68, 0.64, 0.72];  // sprites are rendered at the largest size each layer is drawn
 
-    let W = 0, H = 0, dpr = 1, items = [], split = 0, hidden = [], soil = null;
+    // the whole meadow, in CSS pixels; the canvas is a window onto part of it
+    const WW = opts.width || 3600, WH = opts.height || 2400;
+    const CELL = 96;                      // spatial grid, so only leaves near the hand or the view are touched
+    const TILE = 512;                     // the soil repeats in tiles this size
+    let VW = 0, VH = 0, dpr = 1, items = [], hidden = [], grid = [], gcols = 0, grows = 0, soilTile = null;
     let cloverSprites = [], grassSprites = [], threeSprites = [], litSprites = { happy: [], empty: [] };
     let raf = 0, shownNow = null;
-    const pointer = { x: -999, y: -999, active: false, vx: 0, vy: 0 };
+    const cam = { x: 0, y: 0 };
+    let camAnim = null;
+    const pointer = { x: -999, y: -999, sx: -999, sy: -999, active: false, vx: 0, vy: 0 };
+    const moving = new Set();             // leaves still swinging; everything else is at rest and costs nothing
 
     // one label for the whole field: the lit clover nearest the hand
     const tag = document.createElement('span');
     tag.className = 'find-tag is-hidden';
     tag.setAttribute('aria-hidden', 'true');
     field.appendChild(tag);
+
+    // a small map of the whole meadow: where you are, and the clovers you have found
+    const mini = document.createElement('canvas');
+    mini.className = 'minimap';
+    mini.setAttribute('aria-label', '들판 지도. 누르면 그곳으로 옮겨 갑니다.');
+    field.appendChild(mini);
+    const mctx = mini.getContext('2d');
 
     function rgb(hex) { const n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
     function shade(col, k) {
@@ -159,87 +175,143 @@
       };
     }
 
+    // one soil tile, repeated across the meadow; anything near an edge is drawn on the far side too, so tiles meet without a seam
     function buildSoil() {
-      soil = document.createElement('canvas');
-      soil.width = Math.round(W * dpr); soil.height = Math.round(H * dpr);
-      const c = soil.getContext('2d');
-      c.fillStyle = '#0e1410'; c.fillRect(0, 0, soil.width, soil.height);
-      const dots = Math.round(W * H / 60);
+      soilTile = document.createElement('canvas');
+      soilTile.width = soilTile.height = Math.round(TILE * dpr);
+      const c = soilTile.getContext('2d');
+      c.fillStyle = '#0e1410'; c.fillRect(0, 0, soilTile.width, soilTile.height);
+      c.scale(dpr, dpr);
+      const around = fn => { for (const dx of [-TILE, 0, TILE]) for (const dy of [-TILE, 0, TILE]) fn(dx, dy); };
+      const dots = Math.round(TILE * TILE / 60);
       for (let i = 0; i < dots; i++) {
         const a = Math.random() * 0.12 + 0.03;
         c.fillStyle = Math.random() < 0.65 ? `rgba(110,86,60,${a})` : `rgba(60,90,55,${a})`;
-        const r = (Math.random() * 1.6 + 0.4) * dpr;
-        c.fillRect(Math.random() * soil.width, Math.random() * soil.height, r, r);
+        const r = Math.random() * 1.6 + 0.4, x = Math.random() * TILE, y = Math.random() * TILE;
+        c.fillRect(x, y, r, r);
       }
       // leaf litter and runners: what you see when you dig down to the ground
-      c.scale(dpr, dpr);
-      const litter = Math.round(W * H / 700);
+      const litter = Math.round(TILE * TILE / 700);
       for (let i = 0; i < litter; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        c.save(); c.translate(x, y); c.rotate(Math.random() * Math.PI * 2);
-        if (Math.random() < 0.55) {
-          const l = 3 + Math.random() * 5;
-          c.fillStyle = `rgba(${70 + Math.random() * 40},${60 + Math.random() * 30},${35 + Math.random() * 15},${0.35 + Math.random() * 0.3})`;
-          c.beginPath(); c.ellipse(0, 0, l, l * 0.55, 0, 0, Math.PI * 2); c.fill();
-        } else {
-          c.strokeStyle = `rgba(${45 + Math.random() * 25},${70 + Math.random() * 30},${40 + Math.random() * 15},0.5)`;
-          c.lineWidth = 0.8 + Math.random() * 0.8; c.lineCap = 'round';
-          const l = 10 + Math.random() * 18;
-          c.beginPath(); c.moveTo(-l / 2, 0); c.quadraticCurveTo(0, (Math.random() - 0.5) * 8, l / 2, 0); c.stroke();
-        }
-        c.restore();
+        const x = Math.random() * TILE, y = Math.random() * TILE, rot = Math.random() * Math.PI * 2;
+        const leaf = Math.random() < 0.55;
+        const l = leaf ? 3 + Math.random() * 5 : 10 + Math.random() * 18, bend = (Math.random() - 0.5) * 8, w = 0.8 + Math.random() * 0.8;
+        const col = leaf
+          ? `rgba(${70 + Math.random() * 40},${60 + Math.random() * 30},${35 + Math.random() * 15},${0.35 + Math.random() * 0.3})`
+          : `rgba(${45 + Math.random() * 25},${70 + Math.random() * 30},${40 + Math.random() * 15},0.5)`;
+        around((dx, dy) => {
+          c.save(); c.translate(x + dx, y + dy); c.rotate(rot);
+          if (leaf) { c.fillStyle = col; c.beginPath(); c.ellipse(0, 0, l, l * 0.55, 0, 0, Math.PI * 2); c.fill(); }
+          else { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(-l / 2, 0); c.quadraticCurveTo(0, bend, l / 2, 0); c.stroke(); }
+          c.restore();
+        });
       }
+    }
+
+    function leafAt(x, y, z, tier, grass, s) {
+      return { hx: x, hy: y, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0, z, tier, grass, s, order: 0,
+        v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0 };
+    }
+    function buildItems() {
+      items = [];
+      moving.clear();
+      const step = 18.3; // about 20% more leaves than a 20px grid
+      for (let y = -step; y < WH + step; y += step * 0.86) {
+        for (let x = -step; x < WW + step; x += step) {
+          const z = Math.random();
+          const tier = z < 0.33 ? 0 : z < 0.66 ? 1 : 2;
+          const grass = Math.random() < 0.16;
+          // the bottom layer is drawn larger so no bare soil shows until you dig
+          const s = (grass ? 0.5 : 0.44) + z * 0.2 + Math.random() * 0.06 + (tier === 0 && !grass ? 0.1 : 0);
+          items.push(leafAt(x + (Math.random() - 0.5) * step * 0.95, y + (Math.random() - 0.5) * step * 0.95, z, tier, grass, s));
+        }
+      }
+    }
+    // make sure every hidden clover starts properly buried under a few nearer leaves
+    function bury(list) {
+      for (const h of list) {
+        for (let k = 0; k < 4; k++) {
+          const a = Math.random() * Math.PI * 2, d = 4 + Math.random() * 8;
+          items.push(leafAt(h.x + Math.cos(a) * d, h.y + Math.sin(a) * d, 0.7 + Math.random() * 0.3, 2, false, 0.6 + Math.random() * 0.08));
+        }
+      }
+    }
+    // back to front, so nearer leaves overlap farther ones; then file every leaf in the grid cell of its home
+    function index() {
+      items.sort((a, b) => a.z - b.z);
+      gcols = Math.ceil(WW / CELL) + 3; grows = Math.ceil(WH / CELL) + 3;
+      grid = Array.from({ length: gcols * grows }, () => []);
+      items.forEach((c, i) => { c.order = i; grid[cellY(c.hy) * gcols + cellX(c.hx)].push(c); });
+    }
+    const cellX = x => Math.max(0, Math.min(gcols - 1, Math.floor(x / CELL) + 1));
+    const cellY = y => Math.max(0, Math.min(grows - 1, Math.floor(y / CELL) + 1));
+    function near(x0, y0, x1, y1) {
+      const out = [];
+      for (let gy = cellY(y0), gy1 = cellY(y1); gy <= gy1; gy++)
+        for (let gx = cellX(x0), gx1 = cellX(x1); gx <= gx1; gx++)
+          for (const c of grid[gy * gcols + gx]) out.push(c);
+      return out;
     }
 
     function makeHidden(c) {
       return {
-        key: c.key, kind: c.kind, mine: !!c.mine, text: c.text || '', fx: c.fx, fy: c.fy, x: c.fx * W, y: c.fy * H,
+        key: c.key, kind: c.kind, mine: !!c.mine, text: c.text || '', fx: c.fx, fy: c.fy, x: c.fx * WW, y: c.fy * WH,
         rk: (Math.random() * ROTS) | 0, s: 0.6, found: false, t: 0, seen: 0, lit: false,
       };
     }
 
-    function buildItems() {
-      items = [];
-      const step = 18.3; // about 20% more leaves than a 20px grid
-      for (let y = -step; y < H + step; y += step * 0.86) {
-        for (let x = -step; x < W + step; x += step) {
-          const z = Math.random();
-          const tier = z < 0.33 ? 0 : z < 0.66 ? 1 : 2;
-          const grass = Math.random() < 0.16;
-          items.push({
-            hx: x + (Math.random() - 0.5) * step * 0.95,
-            hy: y + (Math.random() - 0.5) * step * 0.95,
-            rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0,
-            z, tier, grass,
-            // the bottom layer is drawn larger so no bare soil shows until you dig
-            s: (grass ? 0.5 : 0.44) + z * 0.2 + Math.random() * 0.06 + (tier === 0 && !grass ? 0.1 : 0),
-            v: grass ? (Math.random() * 3) | 0 : (Math.random() * GREENS.length * ROTS) | 0,
-          });
-        }
-      }
-      sortItems();
+    /* ---------- the camera: which part of the meadow is on screen ---------- */
+    let camMoved = false;
+    function clampCam() {
+      cam.x = VW >= WW ? (WW - VW) / 2 : Math.max(0, Math.min(WW - VW, cam.x));
+      cam.y = VH >= WH ? (WH - VH) / 2 : Math.max(0, Math.min(WH - VH, cam.y));
+      // whole device pixels, so the picture tiles and fresh paint line up exactly
+      cam.x = Math.round(cam.x * dpr) / dpr; cam.y = Math.round(cam.y * dpr) / dpr;
     }
-    // back to front, so nearer leaves overlap farther ones
-    function sortItems() {
-      items.sort((a, b) => a.z - b.z);
-      split = items.findIndex(c => c.z >= HIDDEN_Z);
+    function moveCam(x, y) {
+      const ox = cam.x, oy = cam.y;
+      cam.x = x; cam.y = y; clampCam();
+      if (cam.x === ox && cam.y === oy) return;
+      if (!sweeping) { pointer.x = pointer.sx + cam.x; pointer.y = pointer.sy + cam.y; }
+      full = true; camMoved = true;
+      if (shownNow) placeTag(shownNow);
+      wake();
     }
+    // glide so that a point of the meadow ends up in the middle of the screen
+    function flyTo(x, y, done) {
+      const tx = x - VW / 2, ty = y - VH / 2;
+      const fx = cam.x, fy = cam.y;
+      cam.x = tx; cam.y = ty; clampCam();
+      const ex = cam.x, ey = cam.y;
+      cam.x = fx; cam.y = fy;
+      const far = Math.hypot(ex - fx, ey - fy);
+      if (reduce || far < 2) { moveCam(ex, ey); if (done) done(); return; }
+      camAnim = { fx, fy, ex, ey, t0: performance.now(), dur: Math.min(1100, 380 + far * 0.35), done };
+      wake();
+    }
+    const inView = (x, y, m) => x > cam.x + m && x < cam.x + VW - m && y > cam.y + m && y < cam.y + VH - m;
 
     function resize() {
       const r = field.getBoundingClientRect();
       if (!r.width || !r.height) return;
-      if (r.width === W && r.height === H) return;
-      W = r.width; H = r.height;
+      if (r.width === VW && r.height === VH) return;
+      const first = !VW;
+      const midX = cam.x + VW / 2, midY = cam.y + VH / 2; // keep the same spot in the middle
+      VW = r.width; VH = r.height;
       const nd = Math.min(window.devicePixelRatio || 1, 2);
       const rebuild = !cloverSprites.length || nd !== dpr;
       dpr = nd;
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-      if (rebuild) buildSprites();
-      buildSoil(); buildItems();
-      hidden.forEach(h => { h.x = h.fx * W; h.y = h.fy * H; });
-      bury(hidden);
+      canvas.width = Math.round(VW * dpr); canvas.height = Math.round(VH * dpr);
+      if (rebuild) { buildSprites(); buildSoil(); chunks.clear(); }
+      chunkMax = Math.max(24, Math.ceil(VW / CHUNK + 2) * Math.ceil(VH / CHUNK + 2) * 2);
+      if (!items.length) { buildItems(); bury(hidden); index(); }
+      if (first) { cam.x = (WW - VW) / 2; cam.y = (WH - VH) / 2; }
+      else { cam.x = midX - VW / 2; cam.y = midY - VH / 2; }
+      clampCam();
+      sizeMini();
+      full = true; draw();
       if (shownNow) placeTag(shownNow);
-      draw(true);
+      return first;
     }
 
     const R = 66; // how far a fingertip parts the leaves
@@ -252,30 +324,18 @@
         const a = (Math.PI * 2 / ROTS) * h.rk + (Math.PI * 2 / 3) * i - Math.PI / 2;
         pts.push([h.x + Math.cos(a) * L * 0.55, h.y + Math.sin(a) * L * 0.55]);
       }
+      const list = near(h.x - R - 60, h.y - R - 60, h.x + R + 60, h.y + R + 60);
       let open = 0;
       for (const [x, y] of pts) {
         let covered = false;
-        for (let i = split; i < items.length && !covered; i++) {
-          const c = items[i], r = SPRITE * c.s * 0.25;
-          const dx = c.hx + c.ox - x, dy = c.hy + c.oy - y;
-          if (dx * dx + dy * dy < r * r) covered = true;
+        for (const c of list) {
+          if (c.z < HIDDEN_Z) continue;
+          const r = SPRITE * c.s * 0.25, dx = c.hx + c.ox - x, dy = c.hy + c.oy - y;
+          if (dx * dx + dy * dy < r * r) { covered = true; break; }
         }
         if (!covered) open++;
       }
       return open >= 3;
-    }
-
-    // make sure every hidden clover starts properly buried under a few nearer leaves
-    function bury(list) {
-      if (!W) return;
-      for (const h of list) {
-        for (let k = 0; k < 4; k++) {
-          const a = Math.random() * Math.PI * 2, d = 4 + Math.random() * 8, z = 0.7 + Math.random() * 0.3;
-          items.push({ hx: h.x + Math.cos(a) * d, hy: h.y + Math.sin(a) * d, rx: 0, ry: 0, ox: 0, oy: 0, vx: 0, vy: 0, rot: 0,
-            z, tier: 2, grass: false, s: 0.6 + Math.random() * 0.08, v: (Math.random() * GREENS.length * ROTS) | 0 });
-        }
-      }
-      sortItems();
     }
 
     let last = 0;
@@ -285,7 +345,14 @@
       last = now;
       let energy = 0;
       const p = pointer;
-      for (const c of items) {
+      // only leaves under the hand join in; the rest of the meadow sleeps
+      if (p.active) {
+        for (const c of near(p.x - R - 90, p.y - R - 90, p.x + R + 90, p.y + R + 90)) {
+          const dx = c.hx + c.rx - p.x, dy = c.hy + c.ry - p.y;
+          if (dx * dx + dy * dy < R * R) moving.add(c);
+        }
+      }
+      for (const c of moving) {
         let tx = c.rx, ty = c.ry;
         if (p.active) {
           const bx = c.hx + c.rx, by = c.hy + c.ry;
@@ -304,19 +371,22 @@
         c.vx += (tx - c.ox) * 0.09 * k; c.vy += (ty - c.oy) * 0.09 * k;
         const damp = Math.pow(0.76, k);
         c.vx *= damp; c.vy *= damp;
-        const mv = Math.abs(c.vx) + Math.abs(c.vy);
-        if (mv > 0.02) mark(c.hx + c.ox, c.hy + c.oy, reach(c));
+        mark(c.hx + c.ox, c.hy + c.oy, reach(c));
         c.ox += c.vx * k; c.oy += c.vy * k;
-        if (mv > 0.02) mark(c.hx + c.ox, c.hy + c.oy, reach(c));
+        mark(c.hx + c.ox, c.hy + c.oy, reach(c));
         const settle = Math.pow(0.965, k);
         c.rx *= settle; c.ry *= settle;
         c.rot = c.ox * 0.008;
-        energy += Math.abs(c.vx) + Math.abs(c.vy) + Math.abs(c.rx) * 0.05;
+        const e = Math.abs(c.vx) + Math.abs(c.vy) + Math.abs(c.rx) * 0.05;
+        if (e < 0.01 && Math.abs(c.ox) + Math.abs(c.oy) < 0.05 && Math.abs(c.rx) + Math.abs(c.ry) < 0.05) {
+          c.ox = c.oy = c.vx = c.vy = c.rx = c.ry = c.rot = 0;
+          moving.delete(c);
+        } else energy += e;
       }
       for (const h of hidden) {
-        const near = p.active && Math.hypot(p.x - h.x, p.y - h.y) < R * 1.2;
+        const near_ = p.active && Math.abs(p.x - h.x) < R * 1.2 && Math.abs(p.y - h.y) < R * 1.2 && Math.hypot(p.x - h.x, p.y - h.y) < R * 1.2;
         // a found clover far from the hand only needs checking while it is still lit
-        const open = near || (h.found && h.lit) ? exposed(h) : false;
+        const open = near_ || (h.found && h.lit) ? exposed(h) : false;
         if (open) h.seen = Math.max(h.seen, now);
         if (!h.found && open && p.active) find(h);
         if (h.found) {
@@ -347,72 +417,164 @@
     }
     function show(h) {
       shownNow = h;
-      if (h) { tag.textContent = label(h); tag.classList.toggle('is-empty', h.kind === 'empty'); tag.classList.toggle('is-mine', h.kind === 'happy' && h.mine); placeTag(h); }
+      if (h) {
+        tag.textContent = label(h);
+        tag.classList.toggle('is-empty', h.kind === 'empty');
+        tag.classList.toggle('is-mine', h.kind === 'happy' && h.mine);
+        placeTag(h);
+      }
       tag.classList.toggle('is-hidden', !h);
       opts.onShow && opts.onShow(h ? public_(h) : null);
     }
     function placeTag(h) {
       // keep the whole label inside the field, whatever its length
       const half = (tag.offsetWidth || 160) / 2 + 8;
-      tag.style.left = Math.max(half, Math.min(W - half, h.x)) + 'px';
-      tag.style.top = h.y + 'px';
+      const x = h.x - cam.x, y = h.y - cam.y;
+      tag.style.left = Math.max(half, Math.min(VW - half, x)) + 'px';
+      tag.style.top = y + 'px';
+      tag.classList.toggle('is-off', y < 0 || y > VH || x < 0 || x > VW);
     }
 
-    function blit(img, x, y, rot, s) {
-      const cs = Math.cos(rot) * s * dpr, sn = Math.sin(rot) * s * dpr;
-      ctx.setTransform(cs, sn, -sn, cs, x * dpr, y * dpr);
-      ctx.drawImage(img, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
-    }
-
-    function drawItem(c) {
-      const img = c.grass ? grassSprites[c.tier][c.v] : cloverSprites[c.tier][c.v];
-      blit(img, c.hx + c.ox, c.hy + c.oy, c.rot, c.s);
-    }
-
-    // only the part of the field that moved is painted again each frame
-    let dirty = null;
+    // only the part of the view that moved is painted again each frame
+    let dirty = null, full = true;
     function mark(x, y, r) {
       if (!dirty) dirty = { x0: x - r, y0: y - r, x1: x + r, y1: y + r };
       else { dirty.x0 = Math.min(dirty.x0, x - r); dirty.y0 = Math.min(dirty.y0, y - r); dirty.x1 = Math.max(dirty.x1, x + r); dirty.y1 = Math.max(dirty.y1, y + r); }
     }
     const reach = c => SPRITE * c.s * 0.5 + 6;
 
-    function draw(full) {
-      if (!W) return;
-      let x0 = 0, y0 = 0, x1 = W, y1 = H;
-      if (!full) {
-        if (!dirty) return;
-        x0 = Math.max(0, Math.floor(dirty.x0)); y0 = Math.max(0, Math.floor(dirty.y0));
-        x1 = Math.min(W, Math.ceil(dirty.x1)); y1 = Math.min(H, Math.ceil(dirty.y1));
-        if (x1 <= x0 || y1 <= y0) { dirty = null; return; }
-      }
-      dirty = null;
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      const px = Math.floor(x0 * dpr), py = Math.floor(y0 * dpr), pw = Math.ceil((x1 - x0) * dpr) + 1, ph = Math.ceil((y1 - y0) * dpr) + 1;
-      ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
-      ctx.drawImage(soil, px, py, pw, ph, px, py, pw, ph);
-      const hit = c => { const x = c.hx + c.ox, y = c.hy + c.oy, r = reach(c); return x + r > x0 && x - r < x1 && y + r > y0 && y - r < y1; };
-      for (let i = 0; i < split; i++) if (hit(items[i])) drawItem(items[i]);
+    function blit(c, img, x, y, rot, s, ox, oy) {
+      const cs = Math.cos(rot) * s * dpr, sn = Math.sin(rot) * s * dpr;
+      c.setTransform(cs, sn, -sn, cs, (x - ox) * dpr, (y - oy) * dpr);
+      c.drawImage(img, -SPRITE / 2, -SPRITE / 2, SPRITE, SPRITE);
+    }
+
+    // paint one rectangle of the meadow onto a canvas whose top-left pixel is world point (ox, oy).
+    // "rest" paints every leaf where it sleeps; otherwise where it is right now
+    function paint(c, ox, oy, x0, y0, x1, y1, rest) {
+      c.save();
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      const px = Math.floor((x0 - ox) * dpr), py = Math.floor((y0 - oy) * dpr);
+      const pw = Math.ceil((x1 - x0) * dpr) + 1, ph = Math.ceil((y1 - y0) * dpr) + 1;
+      c.beginPath(); c.rect(px, py, pw, ph); c.clip();
+      c.fillStyle = '#0e1410'; c.fillRect(px, py, pw, ph);
+      const T = Math.round(TILE * dpr);
+      for (let ty = Math.floor(Math.max(0, y0) / TILE) * TILE; ty < Math.min(y1, WH); ty += TILE)
+        for (let tx = Math.floor(Math.max(0, x0) / TILE) * TILE; tx < Math.min(x1, WW); tx += TILE)
+          c.drawImage(soilTile, Math.round((tx - ox) * dpr), Math.round((ty - oy) * dpr), T, T);
+      const m = rest ? 56 : 140;
+      const list = near(x0 - m, y0 - m, x1 + m, y1 + m).sort((a, b) => a.order - b.order);
+      const at = l => rest ? [l.hx, l.hy, 0] : [l.hx + l.ox, l.hy + l.oy, l.rot];
+      const leaf = l => {
+        const [x, y, rot] = at(l), r = reach(l);
+        if (x + r < x0 || x - r > x1 || y + r < y0 || y - r > y1) return;
+        blit(c, l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v], x, y, rot, l.s, ox, oy);
+      };
+      let i = 0;
+      for (; i < list.length && list[i].z < HIDDEN_Z; i++) leaf(list[i]);
       for (const h of hidden) {
         const r = SPRITE * h.s * 0.7;
         if (h.x + r < x0 || h.x - r > x1 || h.y + r < y0 || h.y - r > y1) continue;
-        const pop = h.found ? 1 + Math.sin(Math.min(h.t, 1) * Math.PI) * 0.18 : 1;
-        blit(threeSprites[h.rk], h.x, h.y, 0, h.s * pop);
-        if (h.found && h.lit) {
-          ctx.globalAlpha = 0.85;
-          blit(litSprites[h.kind][h.rk], h.x, h.y, 0, h.s * pop);
-          ctx.globalAlpha = 1;
+        const pop = !rest && h.found ? 1 + Math.sin(Math.min(h.t, 1) * Math.PI) * 0.18 : 1;
+        blit(c, threeSprites[h.rk], h.x, h.y, 0, h.s * pop, ox, oy);
+        if (!rest && h.found && h.lit) {
+          c.globalAlpha = 0.85;
+          blit(c, litSprites[h.kind][h.rk], h.x, h.y, 0, h.s * pop, ox, oy);
+          c.globalAlpha = 1;
         }
       }
-      for (let i = split; i < items.length; i++) if (hit(items[i])) drawItem(items[i]);
-      ctx.restore();
+      for (; i < list.length; i++) leaf(list[i]);
+      c.restore();
     }
 
+    // the sleeping meadow is kept as picture tiles, so moving the view only copies pictures;
+    // whatever is moving right now is painted fresh on top
+    const CHUNK = 256;
+    const chunks = new Map();
+    let chunkMax = 40;
+    function chunk(i, j) {
+      const key = i + ',' + j;
+      let img = chunks.get(key);
+      if (img) { chunks.delete(key); chunks.set(key, img); return img; }
+      img = document.createElement('canvas');
+      img.width = img.height = Math.round(CHUNK * dpr);
+      paint(img.getContext('2d'), i * CHUNK, j * CHUNK, i * CHUNK, j * CHUNK, (i + 1) * CHUNK, (j + 1) * CHUNK, true);
+      chunks.set(key, img);
+      if (chunks.size > chunkMax) chunks.delete(chunks.keys().next().value);
+      return img;
+    }
+    function forget(x0, y0, x1, y1) {
+      for (let j = Math.floor((y0 - 60) / CHUNK); j <= Math.floor((y1 + 60) / CHUNK); j++)
+        for (let i = Math.floor((x0 - 60) / CHUNK); i <= Math.floor((x1 + 60) / CHUNK); i++) chunks.delete(i + ',' + j);
+    }
+    function liveBounds() {
+      let b = null;
+      const add = (x, y, r) => {
+        if (!b) b = { x0: x - r, y0: y - r, x1: x + r, y1: y + r };
+        else { b.x0 = Math.min(b.x0, x - r); b.y0 = Math.min(b.y0, y - r); b.x1 = Math.max(b.x1, x + r); b.y1 = Math.max(b.y1, y + r); }
+      };
+      for (const c of moving) add(c.hx + c.ox, c.hy + c.oy, reach(c) + 2);
+      for (const h of hidden) if (h.lit || (h.found && h.t < 0.999)) add(h.x, h.y, SPRITE * h.s * 0.75);
+      return b;
+    }
+
+    function draw() {
+      if (!VW || !soilTile) return;
+      if (full) {
+        full = false;
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = '#0e1410'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let j = Math.max(0, Math.floor(cam.y / CHUNK)); j * CHUNK < Math.min(WH, cam.y + VH); j++)
+          for (let i = Math.max(0, Math.floor(cam.x / CHUNK)); i * CHUNK < Math.min(WW, cam.x + VW); i++)
+            ctx.drawImage(chunk(i, j), Math.round((i * CHUNK - cam.x) * dpr), Math.round((j * CHUNK - cam.y) * dpr));
+        ctx.restore();
+        dirty = liveBounds();
+      }
+      if (!dirty) return;
+      const x0 = Math.max(cam.x, Math.floor(dirty.x0)), y0 = Math.max(cam.y, Math.floor(dirty.y0));
+      const x1 = Math.min(cam.x + VW, Math.ceil(dirty.x1)), y1 = Math.min(cam.y + VH, Math.ceil(dirty.y1));
+      dirty = null;
+      if (x1 > x0 && y1 > y0) paint(ctx, cam.x, cam.y, x0, y0, x1, y1, false);
+    }
+
+    /* ---------- the map in the corner ---------- */
+    function sizeMini() {
+      const w = VW < 640 ? 92 : 148, hgt = Math.round(w * WH / WW);
+      mini.style.width = w + 'px'; mini.style.height = hgt + 'px';
+      mini.width = Math.round(w * dpr); mini.height = Math.round(hgt * dpr);
+      drawMini();
+    }
+    function drawMini() {
+      const w = mini.width, hgt = mini.height, k = w / WW;
+      if (!w) return;
+      mctx.setTransform(1, 0, 0, 1, 0, 0);
+      mctx.clearRect(0, 0, w, hgt);
+      for (const h of hidden) {
+        if (!h.found) continue;
+        mctx.fillStyle = h.kind === 'empty' ? 'rgba(190,214,176,0.55)' : h.mine ? '#e0b84a' : '#7fcf95';
+        mctx.beginPath(); mctx.arc(h.x * k, h.y * k, 1.8 * dpr, 0, Math.PI * 2); mctx.fill();
+      }
+      mctx.strokeStyle = 'rgba(231,236,229,0.9)'; mctx.lineWidth = 1.25 * dpr;
+      const vx = Math.max(0, cam.x * k), vy = Math.max(0, cam.y * k);
+      mctx.strokeRect(vx + 0.5, vy + 0.5, Math.min(w - 1, VW * k) - 1, Math.min(hgt - 1, VH * k) - 1);
+    }
+    mini.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      const r = mini.getBoundingClientRect();
+      flyTo((e.clientX - r.left) / r.width * WW, (e.clientY - r.top) / r.height * WH);
+    });
+
     function tick(now) {
+      if (camAnim) {
+        const a = camAnim, t = Math.min(1, (now - a.t0) / a.dur), e = 1 - Math.pow(1 - t, 3);
+        moveCam(a.fx + (a.ex - a.fx) * e, a.fy + (a.ey - a.fy) * e);
+        if (t >= 1) { camAnim = null; if (a.done) a.done(); }
+      }
       const e = step(now);
-      draw(false);
-      raf = (e > 0.4 || pointer.active || sweeping) ? requestAnimationFrame(tick) : (last = 0);
+      draw();
+      if (camMoved) { camMoved = false; drawMini(); }
+      raf = (e > 0.4 || pointer.active || sweeping || camAnim || moving.size) ? requestAnimationFrame(tick) : (last = 0);
     }
     function wake() { if (!raf) raf = requestAnimationFrame(tick); }
 
@@ -420,43 +582,100 @@
     function find(h) {
       h.found = true; h.t = 0;
       opts.onFound && opts.onFound(found(), hidden.length, public_(h));
+      drawMini();
       wake();
     }
     const public_ = h => ({ key: h.key, kind: h.kind, mine: h.mine, fx: h.fx, fy: h.fy });
 
-    /* pointer: dragging digs, a short tap on a found clover (or its label) opens it */
-    let releaseTimer = 0, down = null;
+    /* ---------- hands: hover or one finger digs, a drag (or two fingers, or the wheel) moves around, a tap opens ---------- */
+    const fingers = new Map();
+    let gesture = null, releaseTimer = 0;
     function local(e) {
       const r = canvas.getBoundingClientRect();
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
-    function release() { clearTimeout(releaseTimer); if (!sweeping) pointer.active = false; }
-    canvas.addEventListener('pointermove', e => {
-      clearTimeout(releaseTimer);
-      const q = local(e);
-      if (pointer.active) { pointer.vx = q.x - pointer.x; pointer.vy = q.y - pointer.y; }
-      pointer.x = q.x; pointer.y = q.y; pointer.active = true;
-      if (down) down.moved = Math.max(down.moved, Math.hypot(q.x - down.x, q.y - down.y));
+    function dig(q) {
+      if (pointer.active) { pointer.vx = q.x - pointer.sx; pointer.vy = q.y - pointer.sy; }
+      pointer.sx = q.x; pointer.sy = q.y; pointer.x = q.x + cam.x; pointer.y = q.y + cam.y; pointer.active = true;
       wake();
-    });
+    }
+    function release() { clearTimeout(releaseTimer); if (!sweeping) pointer.active = false; }
+    const midpoint = () => { let x = 0, y = 0; for (const q of fingers.values()) { x += q.x; y += q.y; } return { x: x / fingers.size, y: y / fingers.size }; };
+
     canvas.addEventListener('pointerdown', e => {
       clearTimeout(releaseTimer);
-      const q = local(e); pointer.x = q.x; pointer.y = q.y; pointer.active = true;
-      down = { x: q.x, y: q.y, t: performance.now(), moved: 0 };
-      canvas.setPointerCapture?.(e.pointerId); wake();
+      camAnim = null;
+      const q = local(e);
+      canvas.setPointerCapture?.(e.pointerId);
+      if (e.pointerType === 'mouse') {
+        if (e.button !== 0) return;
+        gesture = { kind: 'mouse', sx: q.x, sy: q.y, cx: cam.x, cy: cam.y, t: performance.now(), moved: 0, panning: false };
+        dig(q);
+        return;
+      }
+      fingers.set(e.pointerId, q);
+      if (fingers.size === 1) {
+        gesture = { kind: 'finger', sx: q.x, sy: q.y, t: performance.now(), moved: 0 };
+        dig(q);
+      } else {
+        // a second finger: stop digging and move around instead
+        gesture = { kind: 'pan', mid: midpoint(), cx: cam.x, cy: cam.y };
+        pointer.active = false;
+        canvas.classList.add('is-panning');
+      }
     });
-    canvas.addEventListener('pointerleave', e => {
-      if (e.pointerType === 'mouse') release();
+    canvas.addEventListener('pointermove', e => {
+      const q = local(e);
+      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, q);
+      const g = gesture;
+      if (g && g.kind === 'pan') {
+        if (fingers.size >= 2) { const m = midpoint(); moveCam(g.cx - (m.x - g.mid.x), g.cy - (m.y - g.mid.y)); }
+        return;
+      }
+      if (g && g.kind === 'mouse' && (e.buttons & 1)) {
+        g.moved = Math.max(g.moved, Math.hypot(q.x - g.sx, q.y - g.sy));
+        if (g.panning || g.moved > 6) {
+          if (!g.panning) { g.panning = true; pointer.active = false; canvas.classList.add('is-panning'); }
+          moveCam(g.cx - (q.x - g.sx), g.cy - (q.y - g.sy));
+          return;
+        }
+      }
+      if (g && g.kind === 'finger') g.moved = Math.max(g.moved, Math.hypot(q.x - g.sx, q.y - g.sy));
+      clearTimeout(releaseTimer);
+      dig(q);
     });
     canvas.addEventListener('pointerup', e => {
-      const q = local(e);
-      if (down && down.moved < 12 && performance.now() - down.t < 700) tap(q);
-      down = null;
-      if (e.pointerType === 'mouse') return;
+      const q = local(e), g = gesture;
+      fingers.delete(e.pointerId);
+      if (g && g.kind === 'pan') {
+        // lifting the fingers ends the move; the hand digs again only after a fresh touch
+        if (!fingers.size) { gesture = null; canvas.classList.remove('is-panning'); }
+        return;
+      }
+      if (g && !g.panning && g.moved < 12 && performance.now() - g.t < 700) tap(q);
+      gesture = null;
+      canvas.classList.remove('is-panning');
+      if (e.pointerType === 'mouse') { dig(q); return; }
       // a lifted finger leaves the hole open long enough to tap the clover
       clearTimeout(releaseTimer); releaseTimer = setTimeout(release, 1500);
     });
-    canvas.addEventListener('pointercancel', () => { down = null; release(); });
+    canvas.addEventListener('pointercancel', e => { fingers.delete(e.pointerId); gesture = null; canvas.classList.remove('is-panning'); release(); });
+    canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !gesture) release(); });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? VH : 1;
+      let dx = e.deltaX * unit, dy = e.deltaY * unit;
+      if (e.shiftKey && !dx) { dx = dy; dy = 0; }
+      camAnim = null;
+      moveCam(cam.x + dx, cam.y + dy);
+    }, { passive: false });
+    // the keyboard moves the view too, and Enter opens the clover whose label is showing
+    canvas.tabIndex = 0;
+    canvas.addEventListener('keydown', e => {
+      const d = 180, moves = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] };
+      if (moves[e.key]) { e.preventDefault(); flyTo(cam.x + VW / 2 + moves[e.key][0], cam.y + VH / 2 + moves[e.key][1]); }
+      else if ((e.key === 'Enter' || e.key === ' ') && shownNow && opts.onPick) { e.preventDefault(); opts.onPick(public_(shownNow)); }
+    });
 
     function tap(q) {
       let pick = null;
@@ -466,37 +685,41 @@
         if (x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 6 && y <= r.bottom + 6) pick = shownNow;
       }
       if (!pick) {
+        const wx = q.x + cam.x, wy = q.y + cam.y;
         let bestD = 34;
         for (const h of hidden) {
           if (!h.found) continue;
-          const d = Math.hypot(h.x - q.x, h.y - q.y);
+          const d = Math.hypot(h.x - wx, h.y - wy);
           if (d < bestD) { bestD = d; pick = h; }
         }
       }
       if (pick && opts.onPick) opts.onPick(public_(pick));
     }
 
-    /* the hint: a hand sweeps the leaves aside over one hidden clover, holds, then lets go */
+    /* the hint: the view glides over, a hand sweeps the leaves aside over one hidden clover, holds, then lets go */
     let sweeping = false;
-    function sweep(h) {
-      if (!h || sweeping || !W) return;
+    function sweep(h, done) {
+      if (!h || sweeping || !VW) return;
       sweeping = true;
       const t0 = performance.now(), dur = reduce ? 1 : 900;
-      const sx = h.x + (h.x < W / 2 ? 140 : -140), sy = h.y + 60;
+      const sx = h.x + (h.x - cam.x < VW / 2 ? 140 : -140), sy = h.y + 60;
+      const put = (x, y) => {
+        pointer.vx = x - pointer.x; pointer.vy = y - pointer.y;
+        pointer.x = x; pointer.y = y; pointer.sx = x - cam.x; pointer.sy = y - cam.y; pointer.active = true;
+      };
       const move = now => {
         const k = Math.min(1, (now - t0) / dur);
         const e = 1 - Math.pow(1 - k, 3);
         const wob = Math.sin(k * Math.PI * 4) * 18 * (1 - k);
-        const nx = sx + (h.x - sx) * e + wob, ny = sy + (h.y - sy) * e - wob * 0.5;
-        pointer.vx = nx - pointer.x; pointer.vy = ny - pointer.y;
-        pointer.x = nx; pointer.y = ny; pointer.active = true;
+        put(sx + (h.x - sx) * e + wob, sy + (h.y - sy) * e - wob * 0.5);
         wake();
         if (k < 1) requestAnimationFrame(move);
         else {
+          if (done) done();
           // hold the leaves open while it is found, then let the field close again
           const hold = performance.now();
           const keep = t => {
-            pointer.vx = 0; pointer.vy = 0; pointer.x = h.x + 6; pointer.y = h.y + 4;
+            put(h.x + 6, h.y + 4); pointer.vx = 0; pointer.vy = 0;
             if (t - hold < 2200) requestAnimationFrame(keep);
             else { sweeping = false; pointer.active = false; }
           };
@@ -505,30 +728,38 @@
       };
       requestAnimationFrame(move);
     }
+    function reveal(h, done) {
+      if (!h) return;
+      if (inView(h.x, h.y, 90)) sweep(h, done);
+      else flyTo(h.x, h.y, () => sweep(h, done));
+    }
 
     new ResizeObserver(() => { resize(); }).observe(field);
-    resize();
+    const first = resize();
 
-    // a small gust when the page opens, so the field reads as alive
-    if (!reduce) {
-      for (const c of items) { c.vx = (Math.random() - 0.3) * 3; c.vy = (Math.random() - 0.5) * 2; }
+    // a small gust over the first view when the page opens, so the field reads as alive
+    if (first && !reduce) {
+      for (const c of near(cam.x, cam.y, cam.x + VW, cam.y + VH)) {
+        c.vx = (Math.random() - 0.3) * 3; c.vy = (Math.random() - 0.5) * 2; moving.add(c);
+      }
       wake();
     }
 
     const byKey = key => hidden.find(h => h.key === key);
     return {
+      world: { width: WW, height: WH },
       set(list) {
         hidden = list.map(makeHidden);
-        if (W) { buildItems(); bury(hidden); }
+        buildItems(); bury(hidden); index(); chunks.clear();
         show(null);
-        draw(true);
+        full = true; draw(); drawMini();
         opts.onFound && opts.onFound(0, hidden.length, null);
       },
       add(c) {
         const h = makeHidden(c);
         hidden.push(h);
-        bury([h]);
-        draw(true);
+        bury([h]); index(); forget(h.x - 80, h.y - 80, h.x + 80, h.y + 80);
+        full = true; wake(); drawMini();
         opts.onFound && opts.onFound(found(), hidden.length, null);
         return h;
       },
@@ -537,23 +768,26 @@
         if (!h) return;
         Object.assign(h, patch);
         if (shownNow === h) show(h);
-        mark(h.x, h.y, SPRITE); wake();
+        mark(h.x, h.y, SPRITE); wake(); drawMini();
       },
       remove(key) {
+        const gone = byKey(key);
+        if (gone) forget(gone.x - 80, gone.y - 80, gone.x + 80, gone.y + 80);
         hidden = hidden.filter(h => h.key !== key);
         if (shownNow && shownNow.key === key) show(null);
-        draw(true);
+        full = true; wake(); drawMini();
         opts.onFound && opts.onFound(found(), hidden.length, null);
       },
-      reveal(key) {
-        const h = byKey(key);
-        if (h) sweep(h);
-      },
+      reveal(key, done) { reveal(byKey(key), done); },
+      // show one nearby: the hidden clover closest to the middle of the screen
       hint(kind) {
-        const left = hidden.filter(x => !x.found && (!kind || x.kind === kind));
-        const pool = left.length ? left : hidden.filter(x => !x.found);
-        sweep(pool[(Math.random() * pool.length) | 0]);
-        return pool.length > 0;
+        const mx = cam.x + VW / 2, my = cam.y + VH / 2;
+        let pool = hidden.filter(x => !x.found && (!kind || x.kind === kind));
+        if (!pool.length) pool = hidden.filter(x => !x.found);
+        if (!pool.length) return false;
+        pool.sort((a, b) => Math.hypot(a.x - mx, a.y - my) - Math.hypot(b.x - mx, b.y - my));
+        reveal(pool[0]);
+        return true;
       },
       left: () => hidden.length - found(),
     };
