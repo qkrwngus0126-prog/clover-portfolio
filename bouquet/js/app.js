@@ -62,27 +62,37 @@
   const currentSig = () => signature(state.stems.map(s => s.f + ':' + s.c));
   function today() {
     const d = new Date();
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
   }
 
   /* ---------- names ---------- */
   document.title = `${D.serviceName} — 나만의 꽃다발 만들기`;
   $$('[data-name]').forEach(el => { el.textContent = D.serviceName; });
   $$('[data-tagline]').forEach(el => { el.textContent = D.tagline; });
+  const enName = fl => fl.id.replace(/-/g, ' ').toUpperCase();
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  // the big editorial line above the stage, one per step
+  const TITLES = {
+    flowers: 'ONE STEM.<br>AT A TIME.',
+    wrap: 'WRAP IT<br>YOUR WAY.',
+    real: 'SEE IT<br>FOR REAL.',
+    card: 'SAY IT WITH<br>FLOWERS.',
+    done: 'YOUR OWN<br>BLOOM.'
+  };
 
   /* ---------- the live bouquet ---------- */
   const view = new BouquetView($('#stage'));
   const layout = $('.layout');
   const hoverable = window.matchMedia('(hover: hover)').matches;
-  $('.stage-hint').textContent = hoverable ? '마우스를 움직여 보세요' : '꽃다발을 손가락으로 살짝 밀어 보세요';
+  $('.stage-hint').textContent = hoverable ? 'MOVE YOUR CURSOR' : 'SWIPE THE BOUQUET';
   $('#stage').addEventListener('pointermove', () => layout.classList.add('has-moved'), { once: true });
-  if (!hoverable) $('.stage-empty').innerHTML = '아래 목록에서 꽃을 골라<br>한 송이씩 담아 보세요';
+  if (!hoverable) $('.stage-empty p').innerHTML = '아래 목록에서 꽃을 골라<br>한 송이씩 담아 보세요';
 
   function refresh(opts = {}) {
     view.update(state.stems, state.wrap, state.ribbon);
     const n = state.stems.length;
     layout.classList.toggle('is-empty', n === 0);
-    $('.stage-count').textContent = n ? `${n}송이` : '';
+    $('.stage-count').textContent = n ? `${pad(n)} STEMS` : '';
     renderPicked();
     if (!opts.keepList) renderFlowerList();
     if (!state.edited) state.message = composeMessage();
@@ -95,6 +105,7 @@
     if (!STEPS.includes(step)) step = 'flowers';
     state.step = step;
     layout.dataset.step = step;
+    $('.stage-title').innerHTML = TITLES[step];
     const empty = state.stems.length === 0 && step !== 'flowers';
     $$('[data-pane]').forEach(p => { p.hidden = empty || p.dataset.pane !== step; });
     $('.pane-empty').hidden = !empty;
@@ -115,8 +126,8 @@
     }
     updateFoot();
     $('.panel').scrollTop = 0;
-    if (window.matchMedia('(max-width: 899px)').matches && step !== 'flowers') {
-      document.querySelector('.layout').scrollIntoView({ block: 'start' });
+    if (window.matchMedia('(max-width: 899px)').matches && step !== 'flowers' && document.body.dataset.view === 'app') {
+      window.scrollTo({ top: 0 });
     }
     save();
   }
@@ -175,7 +186,7 @@
     $('.flower-list').innerHTML = list.map(fl => {
       const cid = ui.color[fl.id];
       return `<li class="fcard" data-id="${fl.id}">` +
-        `<button type="button" class="fcard-art" data-add aria-label="${esc(fl.name)} 한 송이 담기">${artHTML(fl, cid)}</button>` +
+        `<button type="button" class="fcard-art" data-add aria-label="${esc(fl.name)} 한 송이 담기"><span class="mono fcard-no">No.${pad(D.flowers.indexOf(fl) + 1)}</span>${artHTML(fl, cid)}<span class="mono fcard-en">${enName(fl)}</span></button>` +
         `<div class="fcard-body">` +
           `<h3 class="fcard-name">${esc(fl.name)}</h3>` +
           `<p class="fcard-meaning">${esc(meaningOf(fl.id, cid))}</p>` +
@@ -194,7 +205,7 @@
     $('.fcard-act', li).innerHTML = cardAction(fl);
     $('.fcard-meaning', li).textContent = meaningOf(fid, cid);
     $('.fcard-color', li).textContent = colorName(cid);
-    $('.fcard-art', li).innerHTML = artHTML(fl, cid);
+    $('.fcard-art .art', li).outerHTML = artHTML(fl, cid);
     $$('[data-color]', li).forEach(b => b.setAttribute('aria-checked', b.dataset.color === cid));
   }
 
@@ -225,7 +236,7 @@
   function renderPicked() {
     const list = bunches();
     $('.picked').hidden = list.length === 0;
-    $('.picked-total').innerHTML = `담은 꽃 <b>${state.stems.length}</b>송이`;
+    $('.picked-total').innerHTML = `<b>${pad(state.stems.length)}</b> STEMS`;
     $('.picked-list').innerHTML = list.map(b => {
       const fl = flowersById[b.f];
       return `<li><span class="chip-dot" style="--dot:${colorHex(b.c)}"></span>${esc(fl.name)}` +
@@ -361,7 +372,7 @@
   sheet.addEventListener('close', () => { ui.recViews.forEach(v => v.destroy()); ui.recViews = []; });
   function renderRecMoods() {
     $('#rec-moods').innerHTML = D.moods.map(m =>
-      `<button type="button" class="chip" aria-pressed="${ui.recMood === m.id}" data-mood="${m.id}">${esc(m.name)}<small>${esc(m.desc)}</small></button>`).join('');
+      `<button type="button" class="mood" aria-pressed="${ui.recMood === m.id}" data-mood="${m.id}"><span class="mono">${esc(m.en || '')}</span><b>${esc(m.name)}</b><small>${esc(m.desc)}</small></button>`).join('');
   }
   function renderRecList() {
     ui.recViews.forEach(v => v.destroy()); ui.recViews = [];
@@ -392,6 +403,7 @@
     const b = e.target.closest('[data-pick]');
     if (!b) return;
     sheet.close();
+    enterApp();
     go('flowers');
     loadRecipe(b.dataset.pick, ui.recMood);
   });
@@ -426,7 +438,7 @@
     // a faint watercolour wash in the colours of the flowers themselves
     const hues = list.filter(b => flowersById[b.f].group !== 'leaf').slice(0, 3).map(b => colorHex(b.c));
     const spots = ['12% 18%', '88% 86%', '78% 12%'];
-    $('.postcard-wash').style.backgroundImage = hues.map((h, i) => `radial-gradient(circle at ${spots[i]}, ${h}2a, transparent 46%)`).join(',') || 'none';
+    $('.postcard-wash').style.backgroundImage = hues.map((h, i) => `radial-gradient(circle at ${spots[i]}, ${h}1f, transparent 46%)`).join(',') || 'none';
     $('#card-moods').innerHTML = D.moods.map(m =>
       `<button type="button" class="chip" aria-pressed="${state.mood === m.id}" data-mood="${m.id}">${esc(m.name)}</button>`).join('');
     autosize();
@@ -464,13 +476,14 @@
     if (!finalView) finalView = new BouquetView($('#final-bouquet'), { static: true });
     finalView.update(state.stems, state.wrap, state.ribbon);
     $('.final-date').textContent = today();
-    const parts = [`${state.stems.length}송이`];
+    $('.final-no').textContent = 'No.' + pad(state.seq, 4);
+    const parts = [`${pad(state.stems.length)} STEMS`];
     if (state.wrap) parts.push(wrapsById[state.wrap].name + ' 포장');
     if (state.ribbon) parts.push(ribbonsById[state.ribbon].name);
     $('.final-sum').textContent = parts.join(' · ');
-    $('.final-flowers').innerHTML = bunches().map(b => {
+    $('.final-flowers').innerHTML = bunches().map((b, i) => {
       const fl = flowersById[b.f];
-      return `<li><span class="chip-dot" style="--dot:${colorHex(b.c)}"></span><span class="ff-name">${esc(fl.name)}${fl.colors.length > 1 ? ' <small>' + esc(colorName(b.c)) + '</small>' : ''} <small>× ${b.n}</small></span><span class="ff-meaning">${esc(meaningOf(b.f, b.c))}</span></li>`;
+      return `<li><span class="mono ff-no">${pad(i + 1)}</span><span class="chip-dot" style="--dot:${colorHex(b.c)}"></span><span class="ff-name">${esc(fl.name)}${fl.colors.length > 1 ? ' <small>' + esc(colorName(b.c)) + '</small>' : ''} <small>× ${b.n}</small></span><span class="ff-meaning">${esc(meaningOf(b.f, b.c))}</span></li>`;
     }).join('');
     $('.final-to').textContent = `To. ${state.to || D.postcard.defaultTo}`;
     $('.final-message').textContent = state.message;
@@ -503,8 +516,51 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, action ? 6000 : 3200);
   }
 
+  /* ---------- intro: a slow ring of flower cards around the name ---------- */
+  const CARD_TINTS = ['#DCE7F6', '#F6E3A6', '#F3D3DC', '#CFE6DC', '#E4DAF4', '#F7D9C6', '#C9E0E6', '#EDEFE0', '#F0C9C2', '#D7DCF2'];
+  function buildRing() {
+    const picks = [];
+    const pool = D.flowers.filter(fl => fl.group !== 'leaf');
+    for (let i = 0; i < 24; i++) {
+      const fl = pool[(i * 7) % pool.length];
+      picks.push({ fl, c: fl.colors[i % fl.colors.length].id });
+    }
+    $('.ring-spin').innerHTML = picks.map((p, i) => {
+      const a = (360 / picks.length) * i;
+      return `<button type="button" class="ring-card" tabindex="-1" data-f="${p.fl.id}" data-c="${p.c}" style="--a:${a}deg;--i:${i};--tint:${CARD_TINTS[i % CARD_TINTS.length]}" aria-label="${esc(p.fl.name)}로 시작하기"><span class="ring-face">${artHTML(p.fl, p.c)}</span></button>`;
+    }).join('');
+    $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
+  }
+  function enterApp() {
+    document.body.dataset.view = 'app';
+    $('.app').removeAttribute('aria-hidden');
+    $('.intro').setAttribute('aria-hidden', 'true');
+    window.scrollTo({ top: 0 });
+  }
+  function showIntro() {
+    document.body.dataset.view = 'intro';
+    $('.app').setAttribute('aria-hidden', 'true');
+    $('.intro').removeAttribute('aria-hidden');
+    $('[data-start] .mono').textContent = state.stems.length ? 'CONTINUE' : 'START';
+  }
+  $('[data-start]').addEventListener('click', enterApp);
+  $('[data-home]').addEventListener('click', showIntro);
+  // a card on the ring starts the bouquet with that very flower
+  $('.ring-spin').addEventListener('click', (e) => {
+    const b = e.target.closest('.ring-card');
+    if (!b) return;
+    enterApp();
+    go('flowers');
+    ui.group = flowersById[b.dataset.f].group;
+    ui.color[b.dataset.f] = b.dataset.c;
+    renderSegment();
+    setTimeout(() => addStem(b.dataset.f, b.dataset.c), 260);
+  });
+
   /* ---------- start ---------- */
+  buildRing();
   renderSegment();
   refresh();
   go(state.step);
+  showIntro();
 })();

@@ -1,4 +1,4 @@
-# 한 송이 (임시 이름)
+# Fl.own
 
 꽃을 한 송이씩 골라 나만의 꽃다발을 만들고, 꽃말을 모은 엽서까지 준비해 보는 시연용 사이트입니다.
 실제 주문·결제·꽃집 연결은 없습니다.
@@ -11,6 +11,8 @@
   `https://qkrwngus0126-prog.github.io/clover-portfolio/bouquet/` 로 열립니다.
 
 ## 사용 흐름
+
+처음에는 꽃 카드가 둥글게 도는 첫 화면이 나와요. **START**를 누르거나 카드 하나를 누르면 그 꽃으로 시작해요. 왼쪽 위 로고를 누르면 첫 화면으로 돌아가요.
 
 1. **꽃 고르기** — 메인 꽃 / 채움 꽃 / 잎 소재로 나뉜 목록에서 색을 고르고 담기. 꽃말이 같이 보여요.
 2. **포장** — 포장지와 리본을 고르면 바로 꽃다발에 입혀져요.
@@ -29,6 +31,7 @@
 | 꽃 그림 | `images/flowers/` 폴더에 PNG 넣기 → 규칙은 [images/flowers/README.md](images/flowers/README.md) |
 | AI 실사 이미지 | `images/real/` 폴더에 JPG 넣기 → 규칙은 [images/real/README.md](images/real/README.md) |
 | 색·글씨·여백 같은 디자인 | `css/style.css` 맨 위 `:root` 부분 |
+| 꽃다발 위 큰 영문 제목 (ONE STEM. AT A TIME. 등) | `js/app.js`의 `TITLES` |
 
 `js/` 폴더는 움직임과 화면을 만드는 코드라 평소에는 건드리지 않아도 됩니다.
 

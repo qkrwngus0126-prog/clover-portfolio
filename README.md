@@ -15,7 +15,7 @@
 - 설정 방법(Supabase, 구글 로그인, GitHub Pages, 신고 관리)은 [`happiness/SETUP.md`](happiness/SETUP.md)에 있습니다.
 - `happiness/config.js`가 비어 있으면 저장 없이 예시 기록으로만 움직이는 미리보기로 열립니다.
 
-## 한 송이 (`bouquet/`)
+## Fl.own (`bouquet/`)
 
 꽃을 한 송이씩 골라 꽃다발을 만들고 꽃말 엽서까지 준비해 보는 시연용 사이트입니다. `bouquet/index.html`을 브라우저로 열면 됩니다.
 
