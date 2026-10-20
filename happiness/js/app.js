@@ -1,4 +1,4 @@
-/* 세잎 들판: 로그인, 읽기, 적기, 고치기, 지우기, 신고.
+/* saeip: 로그인, 읽기, 적기, 고치기, 지우기, 신고.
    데이터는 Supabase에 있고, config.js가 비어 있으면 예시 기록으로만 움직이는 미리보기로 열립니다. */
 (function () {
   const cfg = window.HAPPY_CONFIG || {};
