@@ -37,6 +37,11 @@
     el.textContent = msg; el.classList.add('on');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), 3400);
   }
+  // 예상 못 한 오류는 한 번만 짧게 보여 줘요. 캡처해서 알려 주면 고치기 쉬워요
+  let shownError = false;
+  const showError = e => { if (shownError || /ResizeObserver|^Script error/i.test(errMsg(e))) return; shownError = true; toast(tr('oops') + ' ' + errMsg(e)); };
+  window.addEventListener('error', ev => showError(ev.error || ev.message));
+  window.addEventListener('unhandledrejection', ev => showError(ev.reason));
   function errMsg(e) {
     const m = (e && (e.message || e.error_description)) || String(e);
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return tr('errNet');
@@ -887,17 +892,22 @@
   /* ---------- start ---------- */
   (async function start() {
     if (sb) {
-      // 구글에서 돌아온 직후라면 여기서 로그인이 마무리됩니다
-      const { data } = await sb.auth.getSession();
-      await setUser(data.session ? data.session.user : null);
+      // 구글에서 돌아온 직후라면 여기서 로그인이 마무리됩니다.
+      // 일부 앱 안 브라우저에서 이 단계가 멈추는 일이 있어, 8초가 지나면 로그인 없이 들판부터 펼쳐요
+      const late = new Promise(res => setTimeout(() => res({ data: { session: null }, late: true }), 8000));
+      const { data, late: wasLate } = await Promise.race([sb.auth.getSession(), late]).catch(() => ({ data: { session: null } }));
+      if (wasLate) console.warn('getSession timed out');
+      await setUser(data.session ? data.session.user : null).catch(() => {});
       const q = new URLSearchParams(location.search), hash = new URLSearchParams(location.hash.slice(1));
       const failed = q.get('error_description') || hash.get('error_description');
       if (q.has('code') || q.has('error') || hash.has('access_token') || hash.has('error')) history.replaceState(null, '', location.pathname);
       if (failed) { toast(tr('loginFailed') + ' ' + failed); takePending(); }
       sb.auth.onAuthStateChange((_event, session) => setUser(session ? session.user : null));
     }
-    await load();
-    $('loading').classList.add('done');
+    // 들판을 펼치다 문제가 생겨도 '펼치는 중'에 멈춰 있지 않고, 무슨 문제인지 알려 줘요
+    try { await load(); }
+    catch (e) { console.error(e); toast(tr('loadFail') + ' ' + errMsg(e)); }
+    finally { $('loading').classList.add('done'); }
     // opened from a shared link (?c=…): fly to that clover and open it, unless the visitor is back from logging in mid-task
     const shared = new URLSearchParams(location.search).get('c');
     let busy = false;

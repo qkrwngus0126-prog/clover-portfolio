@@ -470,6 +470,14 @@
     // each leaf picture is kept ready at the exact size it is drawn, so painting a leaf is a plain copy:
     // no scaling and no turning, which is what keeps digging smooth on slower phones
     let sizedCache = new Map();
+    // phones cap how much canvas memory a page may hold; when a new picture is refused,
+    // drop the cached pictures (they are redrawn on demand) and try once more
+    function ctx2d(cv) {
+      let c = cv.getContext('2d');
+      if (!c) { chunks.clear(); sizedCache = new Map(); c = cv.getContext('2d'); }
+      if (!c) throw new Error('canvas memory is full');
+      return c;
+    }
     function sized(l) {
       const key = (l.grass ? 'g' : 'c') + l.tier + ':' + l.v + ':' + l.s;
       let img = sizedCache.get(key);
@@ -477,7 +485,7 @@
       const src = l.grass ? grassSprites[l.tier][l.v] : cloverSprites[l.tier][l.v];
       const n = Math.max(2, Math.round(SPRITE * l.s * dpr));
       img = document.createElement('canvas'); img.width = img.height = n;
-      const c = img.getContext('2d');
+      const c = ctx2d(img);
       c.imageSmoothingQuality = 'high';
       c.drawImage(src, 0, 0, n, n);
       sizedCache.set(key, img);
@@ -649,7 +657,7 @@
       if (img) { chunks.delete(key); chunks.set(key, img); return img; }
       img = document.createElement('canvas');
       img.width = img.height = Math.round(CHUNK * dpr);
-      paint(img.getContext('2d'), i * CHUNK, j * CHUNK, i * CHUNK, j * CHUNK, (i + 1) * CHUNK, (j + 1) * CHUNK, true);
+      paint(ctx2d(img), i * CHUNK, j * CHUNK, i * CHUNK, j * CHUNK, (i + 1) * CHUNK, (j + 1) * CHUNK, true);
       chunks.set(key, img);
       if (chunks.size > chunkMax) chunks.delete(chunks.keys().next().value);
       return img;
