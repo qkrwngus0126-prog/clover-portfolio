@@ -82,11 +82,12 @@
 
   // the columns anyone may read; who wrote a clover is never sent, only "is it mine" through my_happy_ids
   const COLS = 'id,happy_on,place,line,more,photo_path,fx,fy,created_at,updated_at,hidden';
+  const thumbOf = path => path.replace(/\.jpg$/, '.t.jpg');
   const server = {
     async list() {
       const out = [];
       for (let from = 0; from < 10000; from += 1000) {
-        const { data, error } = await sb.from('happies').select('id,fx,fy,line').order('created_at').range(from, from + 999);
+        const { data, error } = await sb.from('happies').select('id,fx,fy,line,photo_path').order('created_at').range(from, from + 999);
         if (error) throw error;
         out.push(...data);
         if (data.length < 1000) break;
@@ -129,12 +130,17 @@
     },
     async upload(blob) {
       const path = `${user.id}/${crypto.randomUUID()}.jpg`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+      const opt = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
+      const { error } = await sb.storage.from(BUCKET).upload(path, blob, opt);
       if (error) throw error;
+      // 들판 이름표에 붙는 작은 사진도 같이 올려요. 실패해도 큰 사진으로 대신 보여 줘요
+      const small = await window.thumbPhoto(blob).catch(() => null);
+      if (small) await sb.storage.from(BUCKET).upload(thumbOf(path), small, opt).catch(() => {});
       return path;
     },
-    async unlink(path) { await sb.storage.from(BUCKET).remove([path]); },
+    async unlink(path) { await sb.storage.from(BUCKET).remove([path, thumbOf(path)]); },
     photoUrl(path) { return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; },
+    thumbUrl(path) { return this.photoUrl(thumbOf(path)); },
   };
 
   // 미리보기: 새로고침하면 처음으로 돌아가요
@@ -150,7 +156,7 @@
   const demoPhotos = new Map();
   const memory = {
     rows: DEMO.slice(),
-    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, line: r.line })); },
+    async list() { return this.rows.map(r => ({ id: r.id, fx: r.fx, fy: r.fy, line: r.line, photo_path: r.photo_path })); },
     async myIds() { return this.rows.filter(r => r.user_id === user.id).map(r => r.id); },
     async get(id) { return this.rows.find(r => r.id === id) || null; },
     async mine() { return this.rows.filter(r => r.user_id === user.id).reverse(); },
@@ -167,6 +173,7 @@
     async upload(blob) { const p = 'demo/' + Date.now(); demoPhotos.set(p, URL.createObjectURL(blob)); return p; },
     async unlink(p) { URL.revokeObjectURL(demoPhotos.get(p)); demoPhotos.delete(p); },
     photoUrl(p) { return demoPhotos.get(p) || ''; },
+    thumbUrl(p) { return demoPhotos.get(p) || ''; },
   };
   const api = demo ? memory : server;
 
@@ -247,7 +254,9 @@
     occupy(e);
     return e;
   }
-  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, mine: isMine(r.id) });
+  // 사진이 있으면 작은 사진을, 작은 사진이 없던 예전 기록은 큰 사진을 이름표에 붙여요
+  const photoOf = path => path ? [api.thumbUrl(path), api.photoUrl(path)] : null;
+  const asClover = r => ({ key: r.id, kind: 'happy', fx: r.fx, fy: r.fy, text: r.line, photo: photoOf(r.photo_path), mine: isMine(r.id) });
 
   async function load() {
     let list = [];
@@ -695,13 +704,13 @@
         feed.put(saved.id);
 
         if (editing) {
-          field.update(saved.id, { text: saved.line });
+          field.update(saved.id, { text: saved.line, photo: photoOf(saved.photo_path) });
           toast(tr('toastEdited'));
           openRead(saved.id);
         } else {
           // 빈 세잎이 내 세잎이 되고, 들판 어딘가에 새 빈 세잎이 하나 생깁니다
           empties = empties.filter(x => x.key !== spot.key);
-          field.update(spot.key, { key: saved.id, kind: 'happy', mine: true, text: saved.line });
+          field.update(spot.key, { key: saved.id, kind: 'happy', mine: true, text: saved.line, photo: photoOf(saved.photo_path) });
           field.add(newEmpty());
           close();
           field.reveal(saved.id);
