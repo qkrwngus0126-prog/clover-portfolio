@@ -9,7 +9,7 @@
 
   const T = {
     // site
-    brand: ['세잎 들판', 'Three-Leaf Meadow', '三つ葉の野原'],
+    brand: ['saeip', 'saeip', 'saeip'],
     desc: [
       '사람들은 행운(네잎)을 찾느라 행복(세잎)을 지나칩니다. 네잎클로버 들판을 헤집어 다른 사람이 숨겨 둔 행복을 읽고, 내 행복도 하나 심어 두세요.',
       'People pass by happiness (three leaves) while looking for luck (four leaves). Dig through a meadow of four-leaf clovers, read the happiness others left, and plant one of your own.',
@@ -103,7 +103,7 @@
     errDaily: ['오늘은 여기까지 심을 수 있어요. 내일 또 와 주세요.', "That's all you can plant today. Come back tomorrow.", '今日植えられるのはここまでです。また明日来てください。'],
     shareLink: ['링크 보내기', 'Share link', 'リンクを送る'],
     linkCopied: ['링크를 복사했어요. 이 링크로 들어오면 이 세잎으로 바로 와요.', 'Link copied. It opens right at this clover.', 'リンクをコピーしました。このリンクから来ると、この三つ葉がすぐに開きます。'],
-    shareText: ['세잎 들판에 심어 둔 행복 하나', 'A little happiness planted in the meadow', '野原に植えた小さな幸せ'],
+    shareText: ['saeip에 심어 둔 행복 하나', 'A little happiness planted in the meadow', '野原に植えた小さな幸せ'],
     spreading: ['들판을 펼치는 중…', 'Spreading out the meadow…', '野原を広げています…'],
 
     // an empty clover
