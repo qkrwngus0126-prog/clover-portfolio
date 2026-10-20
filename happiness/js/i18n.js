@@ -69,6 +69,7 @@
     errAuth: ['로그인이 풀렸어요. 다시 로그인해 주세요.', 'You were logged out. Please log in again.', 'ログインが切れました。もう一度ログインしてください。'],
     errRetry: ['잠시 후 다시 해 주세요. ({m})', 'Please try again in a moment. ({m})', '少し時間をおいて、もう一度お試しください。({m})'],
     loadFail: ['기록을 불러오지 못했어요.', "Couldn't load the clovers.", '記録を読み込めませんでした。'],
+    oops: ['문제가 생겼어요.', 'Something went wrong.', '問題が起きました。'],
     cantDelete: ['지울 수 없는 기록이에요.', "This one can't be deleted.", 'この記録は削除できません。'],
     loading: ['불러오는 중…', 'Loading…', '読み込み中…'],
     close: ['닫기', 'Close', '閉じる'],
