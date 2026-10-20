@@ -113,8 +113,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .top > * { pointer-events: auto; }
 .wordmark { display: inline-flex; align-items: center; gap: 9px; font-size: 1.0625rem; font-weight: 500; letter-spacing: -0.01em; text-decoration: none; padding: 8px 4px; }
-.wordmark svg { width: 18px; height: 18px; fill: var(--accent); transition: transform 400ms var(--ease-out); }
-.wordmark:hover svg { transform: rotate(60deg); }
+.wordmark svg { width: 26px; height: 26px; fill: var(--accent); stroke: var(--accent); transition: transform 400ms var(--ease-out); }
+.wordmark:hover svg { transform: rotate(-8deg) scale(1.06); }
 .menu { display: flex; gap: 4px; }
 .menu button {
   white-space: nowrap;
@@ -404,7 +404,7 @@ details.more[open] summary { margin-bottom: 8px; }
   /* on a phone the header keeps only the mark; the name is on the first card */
   .wordmark { font-size: 1rem; }
   .wordmark span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .wordmark svg { width: 22px; height: 22px; }
+  .wordmark svg { width: 28px; height: 28px; }
   .menu { gap: 2px; }
   .menu button { padding: 8px 9px; font-size: 0.875rem; }
   .menu .lang-btn { width: 34px; }
