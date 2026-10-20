@@ -527,7 +527,12 @@
     }
     $('.ring-spin').innerHTML = picks.map((p, i) => {
       const a = (360 / picks.length) * i;
-      return `<button type="button" class="ring-card" tabindex="-1" data-f="${p.fl.id}" data-c="${p.c}" style="--a:${a}deg;--i:${i};--tint:${CARD_TINTS[i % CARD_TINTS.length]}" aria-label="${esc(p.fl.name)}로 시작하기"><span class="ring-face">${artHTML(p.fl, p.c)}</span></button>`;
+      return `<button type="button" class="ring-card" tabindex="-1" data-f="${p.fl.id}" data-c="${p.c}" style="--a:${a}deg;--i:${i};--tint:${CARD_TINTS[i % CARD_TINTS.length]}" aria-label="${esc(p.fl.name)}, 꽃말 ${esc(meaningOf(p.fl.id, p.c))}. 이 꽃으로 시작하기">` +
+        `<span class="ring-pop"><span class="ring-flip">` +
+          `<span class="ring-front">${artHTML(p.fl, p.c)}</span>` +
+          `<span class="ring-back"><span class="mono">No.${pad(D.flowers.indexOf(p.fl) + 1)}<i style="--dot:${colorHex(p.c)}"></i></span>` +
+          `<span><b>${esc(p.fl.name)}</b><em>${esc(meaningOf(p.fl.id, p.c))}</em></span><small>PICK →</small></span>` +
+        `</span></span></button>`;
     }).join('');
     $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
   }
@@ -545,10 +550,32 @@
   }
   $('[data-start]').addEventListener('click', enterApp);
   $('[data-home]').addEventListener('click', showIntro);
+  function uprightCard(card) {
+    const m = new DOMMatrix(getComputedStyle($('.ring-spin')).transform);
+    const spin = Math.atan2(m.b, m.a) * 180 / Math.PI;
+    let up = -(parseFloat(card.style.getPropertyValue('--a')) + spin);
+    up = ((up % 360) + 540) % 360 - 180;   // shortest way round
+    card.style.setProperty('--up', up.toFixed(1) + 'deg');
+  }
+  $('.ring-spin').addEventListener('pointerover', (e) => {
+    const b = e.target.closest('.ring-card');
+    if (b && !b.contains(e.relatedTarget)) uprightCard(b);
+  });
+  $('.intro').addEventListener('click', (e) => {
+    if (!e.target.closest('.ring-card')) $$('.ring-card.is-flipped').forEach(x => x.classList.remove('is-flipped'));
+  });
   // a card on the ring starts the bouquet with that very flower
   $('.ring-spin').addEventListener('click', (e) => {
     const b = e.target.closest('.ring-card');
     if (!b) return;
+    // without hover, the first tap turns the card over to show its meaning; the second picks it
+    if (!hoverable && !b.classList.contains('is-flipped')) {
+      $$('.ring-card.is-flipped').forEach(x => x.classList.remove('is-flipped'));
+      uprightCard(b);
+      b.classList.add('is-flipped');
+      return;
+    }
+    b.classList.remove('is-flipped');
     enterApp();
     go('flowers');
     ui.group = flowersById[b.dataset.f].group;
