@@ -66,7 +66,7 @@
     function sheet(res) {
       const s = document.createElement('canvas');
       s.width = s.height = Math.round(SPRITE * res * dpr);
-      const c = s.getContext('2d');
+      const c = ctx2d(s);
       c.scale(res * dpr, res * dpr); c.translate(SPRITE / 2, SPRITE / 2);
       return [s, c];
     }
@@ -105,7 +105,7 @@
 
     // light from the top left, shadow cast down and to the right, the same for every sprite
     function finish(src, tier, res) {
-      const S = src.width, c = src.getContext('2d');
+      const S = src.width, c = ctx2d(src);
       c.setTransform(1, 0, 0, 1, 0, 0);
       c.globalCompositeOperation = 'source-atop';
       const g = c.createLinearGradient(S * 0.15, S * 0.15, S * 0.85, S * 0.85);
@@ -117,7 +117,7 @@
       c.globalCompositeOperation = 'source-over';
       const out = document.createElement('canvas');
       out.width = out.height = S;
-      const o = out.getContext('2d');
+      const o = ctx2d(out);
       o.shadowColor = 'rgba(0,0,0,0.6)'; o.shadowBlur = 6 * dpr * res; o.shadowOffsetX = 2 * dpr * res; o.shadowOffsetY = 4 * dpr * res;
       o.drawImage(src, 0, 0);
       return out;
@@ -181,7 +181,7 @@
     function buildSoil() {
       soilTile = document.createElement('canvas');
       soilTile.width = soilTile.height = Math.round(TILE * dpr);
-      const c = soilTile.getContext('2d');
+      const c = ctx2d(soilTile);
       c.fillStyle = '#0e1410'; c.fillRect(0, 0, soilTile.width, soilTile.height);
       c.scale(dpr, dpr);
       const around = fn => { for (const dx of [-TILE, 0, TILE]) for (const dy of [-TILE, 0, TILE]) fn(dx, dy); };
@@ -474,7 +474,7 @@
     // drop the cached pictures (they are redrawn on demand) and try once more
     function ctx2d(cv) {
       let c = cv.getContext('2d');
-      if (!c) { chunks.clear(); sizedCache = new Map(); c = cv.getContext('2d'); }
+      if (!c) { try { chunks.clear(); sizedCache = new Map(); } catch (_) { /* not set up yet */ } c = cv.getContext('2d'); }
       if (!c) throw new Error('canvas memory is full');
       return c;
     }
@@ -561,7 +561,7 @@
       const K = 1.4; // drawn 1.4x the size it was first designed at
       const S = Math.ceil(36 * K), out = document.createElement('canvas');
       out.width = out.height = Math.round(S * dpr);
-      const c = out.getContext('2d');
+      const c = ctx2d(out);
       c.scale(dpr, dpr); c.translate(S / 2, S / 2 - 2 * K); c.scale(K, K);
       const glow = c.createRadialGradient(0, 0, 0, 0, 0, 16);
       glow.addColorStop(0, mine ? 'rgba(240,206,110,0.4)' : 'rgba(250,248,232,0.32)');
@@ -622,7 +622,7 @@
     function makeDecor(season, phase, weather) {
       const tiny = (w, draw) => {
         const out = document.createElement('canvas'); out.width = out.height = Math.ceil(w * dpr);
-        const c = out.getContext('2d'); c.scale(dpr, dpr); c.translate(w / 2, w / 2); draw(c); return out;
+        const c = ctx2d(out); c.scale(dpr, dpr); c.translate(w / 2, w / 2); draw(c); return out;
       };
       const wet = weather === 'rain' || phase === 'dawn';
       if (wet) return { rate: weather === 'rain' ? 0.32 : 0.2, sprites: [0, 1, 2, 3].map(i => tiny(8, c => {

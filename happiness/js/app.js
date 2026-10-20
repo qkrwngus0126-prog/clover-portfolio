@@ -39,7 +39,7 @@
   }
   // 예상 못 한 오류는 한 번만 짧게 보여 줘요. 캡처해서 알려 주면 고치기 쉬워요
   let shownError = false;
-  const showError = e => { if (shownError || /ResizeObserver|^Script error/i.test(errMsg(e))) return; shownError = true; toast(tr('oops') + ' ' + errMsg(e)); };
+  const showError = e => { if (shownError || /ResizeObserver|^Script error/i.test(errMsg(e))) return; shownError = true; toast(tr('oops') + ' ' + errMsg(e)); const l = document.getElementById('loading'); if (l) l.classList.add('done'); };
   window.addEventListener('error', ev => showError(ev.error || ev.message));
   window.addEventListener('unhandledrejection', ev => showError(ev.reason));
   function errMsg(e) {
