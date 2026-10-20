@@ -33,4 +33,20 @@
       URL.revokeObjectURL(url);
     }
   };
+
+  // 들판 이름표용 작은 사진: 가운데를 정사각형으로 잘라 160px로 (보통 5~10KB)
+  window.thumbPhoto = async function (blob) {
+    const SIDE = 160;
+    const img = await createImageBitmap(blob);
+    const s = Math.min(img.width, img.height);
+    const c = document.createElement('canvas');
+    c.width = c.height = SIDE;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, SIDE, SIDE);
+    if (img.close) img.close();
+    const out = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+    if (!out) throw new Error('thumb');
+    return out;
+  };
 })();

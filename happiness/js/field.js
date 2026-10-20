@@ -260,7 +260,7 @@
 
     function makeHidden(c) {
       return {
-        key: c.key, kind: c.kind, mine: !!c.mine, text: c.text || '', fx: c.fx, fy: c.fy, x: c.fx * WW, y: c.fy * WH,
+        key: c.key, kind: c.kind, mine: !!c.mine, text: c.text || '', photo: c.photo || null, fx: c.fx, fy: c.fy, x: c.fx * WW, y: c.fy * WH,
         rk: (Math.random() * ROTS) | 0, s: 0.6, found: false, t: 0, seen: 0, lit: false,
       };
     }
@@ -431,7 +431,18 @@
     function show(h) {
       shownNow = h;
       if (h) {
-        tag.textContent = label(h);
+        const text = label(h), photo = h.kind === 'happy' && h.photo;
+        if (photo) {
+          // the photo sits small at the front of the label; an older photo without a small copy uses the big one
+          const img = document.createElement('img');
+          img.alt = ''; img.decoding = 'async';
+          img.onerror = () => { if (img.src !== photo[1]) img.src = photo[1]; else img.remove(); };
+          img.src = photo[0];
+          const span = document.createElement('span');
+          span.textContent = text;
+          tag.replaceChildren(img, span);
+        } else tag.textContent = text;
+        tag.classList.toggle('has-photo', !!photo);
         tag.classList.toggle('is-empty', h.kind === 'empty');
         tag.classList.toggle('is-mine', h.kind === 'happy' && h.mine);
         placeTag(h);
