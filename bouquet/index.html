@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한 송이</title>
+<meta name="description" content="꽃을 한 송이씩 골라 나만의 꽃다발을 만들고, 꽃말을 담은 엽서까지 함께 준비해 보세요.">
+<meta name="theme-color" content="#F6F1E8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span><span data-name>한 송이</span></a>
+  <p class="brand-tag" data-tagline></p>
+  <button class="pill pill-ghost pill-sm" type="button" data-open-recommend>
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5l1.8 4.6 4.7.4-3.6 3 1.1 4.8L10 12.8l-4 2.5 1.1-4.8-3.6-3 4.7-.4z"/></svg>
+    추천 받기
+  </button>
+</header>
+
+<main class="layout" data-step="flowers">
+
+  <!-- 왼쪽(폰은 위): 꽃다발 / 엽서 / 완성 카드가 단계에 따라 바뀌어 보이는 무대 -->
+  <section class="scene" aria-label="꽃다발 미리보기">
+    <div class="scene-bouquet">
+      <div class="stage" id="stage"></div>
+      <p class="stage-empty">목록에서 꽃을 골라<br>한 송이씩 담아 보세요</p>
+      <p class="stage-hint" aria-hidden="true">마우스를 움직여 보세요</p>
+      <p class="stage-count" aria-live="polite"></p>
+    </div>
+
+    <div class="scene-postcard" hidden>
+      <article class="postcard" aria-label="꽃말 엽서">
+        <div class="postcard-wash" aria-hidden="true"></div>
+        <div class="postcard-message">
+          <p class="postcard-to">To. <input type="text" id="card-to" maxlength="20" placeholder="받는 사람" aria-label="받는 사람"></p>
+          <textarea id="card-message" aria-label="엽서 문구" spellcheck="false"></textarea>
+          <p class="postcard-from"><input type="text" id="card-from" maxlength="20" placeholder="보내는 사람" aria-label="보내는 사람"> 드림</p>
+        </div>
+        <div class="postcard-side">
+          <div class="stamp"><div class="stamp-art" id="stamp"></div><span class="stamp-name" data-name>한 송이</span></div>
+          <div class="postmark" aria-hidden="true"><span class="postmark-date"></span></div>
+          <ul class="postcard-meanings" aria-label="담은 꽃의 꽃말"></ul>
+        </div>
+      </article>
+      <p class="postcard-tip">엽서 위 글자를 눌러 바로 고칠 수 있어요</p>
+    </div>
+
+    <div class="scene-final" hidden>
+      <article class="final-card" id="final-card">
+        <div class="final-bouquet" id="final-bouquet"></div>
+        <header class="final-head">
+          <p class="final-kicker"><span data-name>한 송이</span> · <span class="final-date"></span></p>
+          <h2 class="final-title">나의 꽃다발</h2>
+          <p class="final-sum"></p>
+        </header>
+        <ul class="final-flowers"></ul>
+        <div class="final-letter">
+          <p class="final-to"></p>
+          <p class="final-message"></p>
+          <p class="final-from"></p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 오른쪽(폰은 아래): 단계별 고르는 곳 -->
+  <aside class="panel">
+    <nav class="steps" role="tablist" aria-label="꽃다발 만들기 단계">
+      <button role="tab" data-go="flowers"><span>1</span>꽃 고르기</button>
+      <button role="tab" data-go="wrap"><span>2</span>포장</button>
+      <button role="tab" data-go="real"><span>3</span>실사 보기</button>
+      <button role="tab" data-go="card"><span>4</span>엽서</button>
+      <button role="tab" data-go="done"><span>5</span>완성</button>
+    </nav>
+
+    <!-- 1. 꽃 고르기 -->
+    <section class="pane" data-pane="flowers">
+      <div class="pane-head">
+        <h1 class="pane-title">꽃을 한 송이씩 골라 담아요</h1>
+        <p class="pane-sub">꽃말을 보며 고르고, 색과 송이 수를 정해 주세요.</p>
+      </div>
+      <div class="picked" hidden>
+        <div class="picked-head"><span class="picked-total"></span><button type="button" class="link" data-clear>모두 비우기</button></div>
+        <ul class="picked-list"></ul>
+      </div>
+      <div class="segment" role="tablist" aria-label="꽃 분류"></div>
+      <ul class="flower-list"></ul>
+    </section>
+
+    <!-- 2. 포장 -->
+    <section class="pane" data-pane="wrap" hidden>
+      <div class="pane-head">
+        <h1 class="pane-title">포장지와 리본으로 감싸요</h1>
+        <p class="pane-sub">고르는 즉시 꽃다발에 입혀져요.</p>
+      </div>
+      <h2 class="group-title">포장지</h2>
+      <ul class="swatch-grid" id="wrap-list"></ul>
+      <h2 class="group-title">리본</h2>
+      <ul class="swatch-grid" id="ribbon-list"></ul>
+    </section>
+
+    <!-- 3. 실사 미리보기 -->
+    <section class="pane" data-pane="real" hidden>
+      <div class="pane-head">
+        <h1 class="pane-title">실제로 만들면 이런 모습이에요</h1>
+        <p class="pane-sub">대표 조합은 AI로 만든 실사 이미지로 미리 볼 수 있어요.</p>
+      </div>
+      <div class="real-now"></div>
+      <h2 class="group-title">실사 미리보기가 있는 대표 조합</h2>
+      <ul class="real-list"></ul>
+    </section>
+
+    <!-- 4. 엽서 -->
+    <section class="pane" data-pane="card" hidden>
+      <div class="pane-head">
+        <h1 class="pane-title">꽃말을 모아 엽서를 써요</h1>
+        <p class="pane-sub">담은 꽃의 꽃말로 첫 문장을 만들어 두었어요. 엽서 위에서 자유롭게 고쳐 주세요.</p>
+      </div>
+      <h2 class="group-title">어떤 마음을 전할까요? <small>(선택)</small></h2>
+      <div class="chips" id="card-moods"></div>
+      <button type="button" class="pill pill-ghost" data-rewrite>꽃말로 다시 쓰기</button>
+      <p class="note">다시 쓰면 지금 고친 문구가 새 문구로 바뀌어요.</p>
+    </section>
+
+    <!-- 5. 완성 -->
+    <section class="pane" data-pane="done" hidden>
+      <div class="pane-head">
+        <h1 class="pane-title">꽃다발이 완성됐어요</h1>
+        <p class="pane-sub">꽃다발, 꽃말, 엽서를 한 장의 카드로 모았어요.</p>
+      </div>
+      <div class="done-actions">
+        <button type="button" class="pill pill-ghost" data-print>카드 인쇄 · PDF로 저장</button>
+        <button type="button" class="pill pill-ghost" data-go="card">엽서 다시 고치기</button>
+        <button type="button" class="pill pill-ghost" data-restart>새 꽃다발 만들기</button>
+      </div>
+    </section>
+
+    <div class="pane-empty" hidden>
+      <p>아직 담은 꽃이 없어요.<br>먼저 꽃을 한 송이 이상 담아 주세요.</p>
+      <button type="button" class="pill pill-ghost" data-go="flowers">꽃 고르러 가기</button>
+    </div>
+
+    <footer class="panel-foot">
+      <button type="button" class="pill pill-text" data-prev>이전</button>
+      <button type="button" class="pill pill-primary" data-next>다음</button>
+    </footer>
+  </aside>
+</main>
+
+<!-- 추천 받기 -->
+<dialog class="sheet" id="recommend" aria-labelledby="rec-title">
+  <div class="sheet-inner">
+    <header class="sheet-head">
+      <h2 id="rec-title" tabindex="-1" autofocus>어떤 마음을 전하고 싶나요?</h2>
+      <button type="button" class="icon-btn" data-close aria-label="닫기">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </header>
+    <p class="sheet-sub">마음을 고르면 꽃말이 어울리는 조합을 보여 드려요. 불러온 다음 마음대로 바꿀 수 있어요.</p>
+    <div class="chips chips-lg" id="rec-moods"></div>
+    <ul class="rec-list" id="rec-list"></ul>
+  </div>
+</dialog>
+
+<div class="toast" role="status" aria-live="polite" hidden><span class="toast-text"></span><button type="button" class="toast-action"></button></div>
+
+<script src="data.js"></script>
+<script src="js/art.js"></script>
+<script src="js/bouquet.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
