@@ -8,12 +8,10 @@
 - 기록 글 페이지는 `posts/` 폴더에, 글에 쓰는 사진은 `posts/images/`에 있습니다.
 - 첫 기록(도면이 있어 운이 좋았던 이사)만 실제 글이고, 나머지 5편과 연락처, 소개 편지 서명은 아직 예시 내용입니다.
 
-## 세잎 들판 (`happiness/`)
+## saeip (예전 세잎 들판, `happiness/`)
 
-같은 들판을 여러 사람이 함께 쓰는 사이트입니다. 다른 사람이 적어 둔 세잎을 찾아 읽고, 빈 세잎을 찾으면 구글로 로그인해 내 행복을 심습니다.
-
-- 설정 방법(Supabase, 구글 로그인, GitHub Pages, 신고 관리)은 [`happiness/SETUP.md`](happiness/SETUP.md)에 있습니다.
-- `happiness/config.js`가 비어 있으면 저장 없이 예시 기록으로만 움직이는 미리보기로 열립니다.
+- **saeip.com으로 이사했어요.** 코드는 [qkrwngus0126-prog/saeip](https://github.com/qkrwngus0126-prog/saeip) 저장소에 있어요.
+- `happiness/` 폴더에는 예전 주소로 들어온 사람(공유 링크 포함)을 saeip.com으로 넘겨 주는 안내 페이지만 남겨 뒀어요.
 
 ## Fl.own (`bouquet/`)
 
