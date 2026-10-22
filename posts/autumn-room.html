@@ -122,6 +122,23 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
 .legend b { color: var(--ink); font-weight: 400; }
 .tag { display: block; margin-top: 6px; color: var(--muted); font-size: var(--step-small); text-align: center; }
 
+/* drawn figures: thin clover-green lines, same weight as the type */
+.ico { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ico li { background: var(--thumb); padding: 28px 12px 20px; display: grid; justify-items: center; gap: 12px; text-align: center; font-size: var(--step-small); line-height: 1.5; }
+.ico svg { width: 72px; height: 72px; color: var(--accent); }
+.ico b { font-weight: 400; color: var(--ink); }
+
+.set { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.15fr); align-items: stretch; gap: 12px; }
+.set .box { align-content: center; }
+.set .op { align-self: center; }
+.set .box { border: 1px solid var(--rule); padding: 20px 16px; display: grid; gap: 6px; justify-items: center; text-align: center; font-size: var(--step-small); line-height: 1.5; }
+.set .box b { font-size: 1rem; font-weight: 400; color: var(--ink); }
+.set .box span { color: var(--muted); }
+.set .box svg { width: 100%; max-width: 120px; height: 40px; color: var(--accent); }
+.set .sum { background: var(--accent-soft); border-color: var(--accent); }
+.set .sum b { color: var(--accent); font-weight: 500; }
+.set .op { color: var(--accent); font-size: 1.5rem; font-weight: 300; text-align: center; }
+
 .conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
 .conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
 .conclusion p { font-size: 1.1875rem; line-height: 1.85; font-weight: 400; }
@@ -145,6 +162,9 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
   .steps > li { grid-template-columns: 1.75rem minmax(0, 1fr); gap: 4px 12px; }
   .steps > li::before { font-size: 1.75rem; }
   .conclusion p { font-size: 1.0625rem; }
+  .ico li { padding: 20px 6px 16px; }
+  .ico svg { width: 52px; height: 52px; }
+  .set { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   /* three tall pictures: swipe sideways instead of shrinking them to stamps */
   .row.swipe { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
   .row.swipe > * { flex: 0 0 72%; scroll-snap-align: start; }
@@ -226,6 +246,37 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
   <p>또 방 분위기를 바꾸는 방법은 공사도 있고 소품도 있어요. 둘은 서로 대신할 수 있는 대체재인데, 소품이 훨씬 싸고 간단해서 가을에는 소품 쪽으로 마음이 쏠려요.</p>
 
   <h2 class="sec">오늘부터 해볼 수 있는 3가지</h2>
+  <figure class="fig">
+    <ul class="ico">
+      <li>
+        <svg viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="10" y="38" width="52" height="12" rx="3"/>
+          <rect x="14" y="27" width="44" height="11" rx="3"/>
+          <rect x="18" y="17" width="36" height="10" rx="3"/>
+          <path d="M10 56h52M14 56v5M22 56v5M30 56v5M38 56v5M46 56v5M54 56v5M60 56v5"/>
+        </svg>
+        <span><b>직물 겹치기</b><br>러그·쿠션·블랭킷</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 24h28v26a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z"/>
+          <path d="M42 30h4a6 6 0 0 1 0 12h-4"/>
+          <path d="M18 34c3 3 6 3 9 0s6-3 9 0 4 2 6 1M18 42c3 3 6 3 9 0s6-3 9 0 4 2 6 1"/>
+          <path d="M52 18v42M58 14v46M52 60h10"/>
+          <path d="M24 18c-2-3 2-5 0-8M32 18c-2-3 2-5 0-8"/>
+        </svg>
+        <span><b>질감 바꾸기</b><br>니트·울·나무·도자기</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M26 12h20l7 20H19z"/>
+          <path d="M36 32v24M26 60h20"/>
+          <path d="M14 40l-5 4M58 40l5 4M12 30H6M60 30h6" opacity="0.6"/>
+        </svg>
+        <span><b>조명 바꾸기</b><br>전구색·낮은 간접 조명</span>
+      </li>
+    </ul>
+  </figure>
   <ol class="steps">
     <li>
       <h3>직물 겹치기</h3>
@@ -254,6 +305,28 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
   <h2 class="sec">이 글의 한계</h2>
   <p>참고한 자료는 대부분 미국이나 영미권 이야기라, 좌식, 온돌, 평수가 다른 한국 집과는 맞지 않을 수 있어요. 트렌드 예측에는 그걸 전하는 매체의 시각도 섞여 있어요. 그리고 '덜 끝난' 느낌은 숫자가 아니라 개인의 감각이에요.</p>
   <p>또한, 검색량 그래프는 작년 7~11월의 기록이고, 검색이 곧 구매는 아니에요. 저는 지금 캐나다 홈스테이에 있어서 한국 집에서 직접 확인한 것도 아니에요.</p>
+
+  <figure class="fig">
+    <div class="set">
+      <div class="box">
+        <svg viewBox="0 0 120 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 32h30l14-4 12-14 8 6 10-14 8 10 10-2 20 6"/></svg>
+        <b>러그 · 블랭킷</b>
+        <span>계절을 타는 직물</span>
+      </div>
+      <div class="op" aria-hidden="true">+</div>
+      <div class="box">
+        <svg viewBox="0 0 120 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24h22l6-2 8 2h20l6-2 8 2h20l6-2h16"/></svg>
+        <b>무드등</b>
+        <span>계절을 안 타는 조명</span>
+      </div>
+      <div class="op" aria-hidden="true">=</div>
+      <div class="box sum">
+        <b>가을 세트</b>
+        <span>'뭘 사야 하지?'에 대한 답</span>
+      </div>
+    </div>
+    <figcaption>작은 선은 위 검색량 그래프의 흐름을 단순하게 그린 거예요.</figcaption>
+  </figure>
 
   <section class="conclusion" aria-labelledby="conclusion-title">
     <h2 id="conclusion-title">결론</h2>
