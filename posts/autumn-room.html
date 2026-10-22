@@ -116,9 +116,11 @@ img { display: block; max-width: 100%; height: auto; }
 .row img { width: 100%; background: var(--thumb); }
 figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6; text-align: center; text-wrap: balance; }
 
-.legend { list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; font-size: var(--step-small); color: var(--muted); }
-.legend li { display: inline-flex; align-items: center; gap: 8px; }
-.legend li::before { content: ""; width: 14px; height: 3px; border-radius: 2px; background: var(--c); }
+.legend { list-style: none; padding: 0; display: grid; gap: 4px; font-size: var(--step-small); line-height: 1.6; color: var(--muted); }
+.legend li { display: grid; grid-template-columns: 14px auto minmax(0, 1fr); align-items: baseline; gap: 10px; }
+.legend li::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); transform: translateY(1px); }
+.legend b { color: var(--ink); font-weight: 400; }
+.tag { display: block; margin-top: 6px; color: var(--muted); font-size: var(--step-small); text-align: center; }
 
 .conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
 .conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
@@ -207,11 +209,11 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
 
   <h2 class="sec">작년 가을 검색량을 봤어요</h2>
   <figure class="fig wide">
-    <img src="images/autumn-room-searches.png" loading="lazy" alt="2025년 7월부터 11월까지 러그, 블랭킷, 무드등의 네이버 검색량 그래프. 러그와 블랭킷은 10월에 크게 오르고 무드등은 거의 일정함">
+    <img src="images/autumn-room-searches.png" width="1410" height="800" loading="lazy" alt="2025년 7월부터 11월까지 러그, 블랭킷, 무드등의 네이버 검색량 그래프. 러그와 블랭킷은 10월에 크게 오르고 무드등은 거의 일정함">
     <ul class="legend">
-      <li style="--c: #1fc35a">러그</li>
-      <li style="--c: #ec6aa0">블랭킷</li>
-      <li style="--c: #9b7bf0">무드등</li>
+      <li style="--c: #00c73c"><b>러그</b><span>러그, 매트, 카페트, 카펫, 거실러그, 원형러그, 침실러그, 단모러그, 장모러그</span></li>
+      <li style="--c: #ec4e8f"><b>블랭킷</b><span>블랭킷, 담요, 이불, 무릎담요, 니트블랭킷, 극세사담요, 소파덮개, 여름이불</span></li>
+      <li style="--c: #9b5cf6"><b>무드등</b><span>무드등, 수면등, 간접조명, 단스탠드, 장스탠드, 테이블조명, 침실조명, 인테리어조명, 탁상조명</span></li>
     </ul>
     <figcaption>출처: 네이버 데이터랩 (2025년 7~11월 검색량)<br>숫자는 실제 검색 횟수가 아니라, 이 기간에 가장 많이 검색된 날을 100으로 놓은 상대값이에요.</figcaption>
   </figure>
@@ -240,8 +242,11 @@ figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6
   </ol>
 
   <figure class="fig">
-    <img src="images/autumn-room-before-after.jpg" loading="lazy" alt="같은 원룸을 찍은 두 장. 왼쪽은 차가운 빛의 빈 바닥, 오른쪽은 스탠드 조명이 켜지고 러그가 깔려 따뜻해 보임">
-    <figcaption>조명과 러그를 더하기 전(왼쪽)과 후(오른쪽) · 출처: 핀터레스트</figcaption>
+    <div class="row stack">
+      <div><img src="images/autumn-room-before.jpg" width="765" height="1024" loading="lazy" alt="조명과 러그를 더하기 전의 원룸. 차가운 빛에 바닥이 비어 있음"><span class="tag">전</span></div>
+      <div><img src="images/autumn-room-after.jpg" width="765" height="1024" loading="lazy" alt="같은 원룸에 스탠드 조명이 켜지고 러그가 깔려 따뜻해 보임"><span class="tag">후</span></div>
+    </div>
+    <figcaption>조명과 러그를 더하기 전과 후 · 출처: 핀터레스트</figcaption>
   </figure>
   <p>제 방은 홈스테이라 전후 차이를 확인할 수 없어서 핀터레스트의 예시 사진을 가져왔어요. 가을 인테리어의 핵심은 비워 둔 방보다 '생활감'을 겹겹이 더하는 거예요.</p>
   <p>차갑게 느껴지던 공간이 따뜻한 조명과 질감으로 포근하게 채워진 게 사진에서 보여요.</p>
