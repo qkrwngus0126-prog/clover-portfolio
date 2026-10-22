@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>7월엔 괜찮던 방이 10월엔 왜 허전해 보일까 · 세잎 아카이브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="방은 그대로인데 계절이 바뀌었을 때, 공사 대신 소품으로 온도를 바꾸는 법. 서비스 분석.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one record, read like a magazine column. The same header as the index, then a narrow
+   text column (about 40 characters of Korean) with figures that step out wider than the text.
+   Clover green marks the interest, the summary, step numbers, key sentences and the conclusion. */
+:root {
+  --bg: #ffffff;
+  --thumb: #f2f3f1;
+  --ink: #1a1c1a;
+  --muted: #6b716b;        /* 5:1 on white */
+  --rule: #e3e6e2;
+  --accent: #17803f;       /* clover green, 5.2:1 on white, readable as text */
+  --accent-soft: #eef6f0;  /* summary ground */
+
+  --font: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+
+  --step-small: 0.875rem;
+  --step-body: 1.0625rem;
+  --step-h2: 1.5rem;
+  --step-title: clamp(2rem, 1.35rem + 2.4vw, 3.25rem);
+
+  --text: 680px;
+  --wide: 1040px;
+  --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: var(--step-body);
+  line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+h1, h2, h3 { font-weight: 300; letter-spacing: -0.02em; line-height: 1.3; margin: 0; text-wrap: balance; }
+p, ol, ul, figure { margin: 0; }
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: #dff0e3; color: var(--ink); }
+
+.wrap { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+
+/* ---------- header, same as the index ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 56px 0; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; text-decoration: none; padding: 8px 0; }
+.wordmark svg { width: 20px; height: 20px; color: var(--accent); --leaf-fill: currentColor; --stem: currentColor; transition: transform 300ms var(--ease-out); }
+.wordmark:hover svg { transform: rotate(-12deg); }
+.menu { display: flex; gap: clamp(20px, 3.4vw, 48px); font-size: 1.125rem; }
+.menu a { color: var(--muted); text-decoration: none; padding: 8px 0; transition: color 160ms ease; }
+.menu a:hover { color: var(--ink); }
+
+/* ---------- the record ---------- */
+.post { display: grid; gap: 28px; padding-block: clamp(56px, 7vw, 104px) 120px; }
+.post > * { width: 100%; max-width: var(--text); margin-inline: auto; }
+.post > .wide { max-width: var(--wide); }
+
+.back { font-size: var(--step-small); color: var(--muted); text-decoration: none; justify-self: start; transition: color 160ms ease; }
+.back:hover { color: var(--accent); }
+
+.head { display: grid; gap: 16px; padding-bottom: 36px; border-bottom: 1px solid var(--rule); }
+.kicker { color: var(--accent); font-size: var(--step-small); font-weight: 500; letter-spacing: 0.02em; }
+.head h1 { font-size: var(--step-title); line-height: 1.22; }
+.dek { color: var(--muted); font-size: 1.1875rem; line-height: 1.6; }
+.meta { color: var(--muted); font-size: var(--step-small); font-variant-numeric: tabular-nums; }
+
+.summary { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 22px 26px; display: grid; gap: 8px; }
+.summary h2 { font-size: 1rem; font-weight: 500; color: var(--accent); letter-spacing: 0; }
+.summary ol { padding-left: 1.3em; display: grid; gap: 4px; }
+.summary li::marker { color: var(--accent); font-weight: 500; }
+
+.post h2.sec { font-size: var(--step-h2); font-weight: 400; margin-top: 36px; }
+.post strong { font-weight: 500; }
+.key { color: var(--accent); font-weight: 500; }
+
+.walls { list-style: none; padding: 0; display: grid; gap: 6px; }
+.walls b { font-weight: 500; }
+
+/* the steps are a real order: read the floor plan, compare numbers, then decide on price */
+.steps { list-style: none; padding: 0; display: grid; gap: 40px; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 4px 16px; counter-increment: step; }
+.steps > li::before {
+  content: counter(step); grid-row: 1 / span 3;
+  color: var(--accent); font-size: 2.25rem; font-weight: 300; line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.steps h3 { font-size: 1.1875rem; font-weight: 400; line-height: 1.5; }
+.steps .fig { grid-column: 1 / -1; margin-top: 20px; }
+
+/* figures: images side by side at one common height, each keeping its own shape */
+.fig { display: grid; gap: 12px; }
+.row { display: flex; gap: 12px; align-items: flex-start; }
+.row > * { min-width: 0; flex: var(--r, 1) 1 0; }
+.row img { width: 100%; background: var(--thumb); }
+figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6; text-align: center; text-wrap: balance; }
+
+.legend { list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; font-size: var(--step-small); color: var(--muted); }
+.legend li { display: inline-flex; align-items: center; gap: 8px; }
+.legend li::before { content: ""; width: 14px; height: 3px; border-radius: 2px; background: var(--c); }
+
+.conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
+.conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
+.conclusion p { font-size: 1.1875rem; line-height: 1.85; font-weight: 400; }
+
+.next { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+.next a { text-decoration: none; transition: color 160ms ease; }
+.next a:hover { color: var(--accent); }
+.next .label { color: var(--muted); font-size: var(--step-small); }
+
+.foot { padding-block: 0 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: var(--step-small); color: var(--muted); }
+
+/* ---------- phone ---------- */
+@media (max-width: 720px) {
+  body { font-size: 1rem; }
+  .top { padding-block: 32px 0; flex-wrap: wrap; }
+  .menu { font-size: 1rem; gap: 20px; }
+  .wordmark { font-size: 1rem; }
+  .post { padding-block: 48px 96px; gap: 24px; }
+  .dek { font-size: 1.0625rem; }
+  .summary { padding: 18px 20px; }
+  .steps > li { grid-template-columns: 1.75rem minmax(0, 1fr); gap: 4px 12px; }
+  .steps > li::before { font-size: 1.75rem; }
+  .conclusion p { font-size: 1.0625rem; }
+  /* three tall pictures: swipe sideways instead of shrinking them to stamps */
+  .row.swipe { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .row.swipe > * { flex: 0 0 72%; scroll-snap-align: start; }
+  /* a tall and a wide picture: stack them, the tall one kept to a readable height */
+  .row.stack { flex-direction: column; align-items: center; }
+  .row.stack > * { flex: none; width: 100%; }
+  .row.stack img { width: auto; max-width: 100%; max-height: 520px; margin-inline: auto; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="leaf" d="M0 0 C-6 -8 -24 -16 -22 -31.2 C-20 -42 -4 -43.2 0 -32.8 C4 -43.2 20 -42 22 -31.2 C24 -16 6 -8 0 0Z"/>
+    <symbol id="trefoil" viewBox="0 0 100 100">
+      <path d="M50 52 Q62 70 56 96" fill="none" stroke-width="3.2" stroke-linecap="round" style="stroke: var(--stem, currentColor)"/>
+      <g transform="translate(50 52)" style="fill: var(--leaf-fill, currentColor)">
+        <use href="#leaf"/>
+        <use href="#leaf" transform="rotate(120)"/>
+        <use href="#leaf" transform="rotate(240)"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="wrap top">
+  <a class="wordmark" href="../index.html"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>세잎 아카이브</a>
+  <nav class="menu" aria-label="주요 메뉴"><a href="../index.html#archive">기록</a><a href="../index.html#about">소개</a><a href="../index.html#contact">연락</a></nav>
+</header>
+
+<main class="wrap">
+<article class="post">
+  <a class="back" href="../index.html#archive">← 기록으로</a>
+
+  <header class="head">
+    <p class="kicker">서비스 분석</p>
+    <h1>7월엔 괜찮던 방이 10월엔 왜 허전해 보일까</h1>
+    <p class="dek">방은 그대로인데 계절이 바뀌었을 때, 공사 대신 소품으로 온도를 바꾸는 법</p>
+    <p class="meta">세잎 수집가 · 2026.10</p>
+  </header>
+
+  <section class="summary" aria-labelledby="summary-title">
+    <h2 id="summary-title">3줄 요약</h2>
+    <ol>
+      <li>가을이 되면 멀쩡하던 방이 허전해 보이는 건 흔한 일이에요.</li>
+      <li>이유는 방이 아니라 계절이에요. 따뜻한 색과 질감이 필요해지는 때거든요.</li>
+      <li>해결은 공사가 아니라 러그, 블랭킷, 조명 같은 작은 소품이에요.</li>
+    </ol>
+  </section>
+
+  <h2 class="sec">방은 그대로인데 낯설었어요</h2>
+  <p>요즘 캐나다는 해가 빨리 져요. 최근 저녁, 날씨가 부쩍 쌀쌀해지고 나서 방이 허전하게 느껴졌어요. 가구도 그대로고 배치도 그대로인데 왠지 낯설었어요.</p>
+  <p>물론 저는 홈스테이라 뭘 사서 바꾸거나 가구 배치를 바꾸기는 쉽지 않아요. 그래도 궁금했어요. 여기가 한국의 내 방이었다면, 어떻게 바꿨을까? 찾아보니 답은 공사가 아니라 작은 소품 쪽에 있었어요.</p>
+
+  <h2 class="sec">가을엔 방도 옷을 갈아입어요</h2>
+  <p>미국 캘리포니아 오렌지카운티의 매거진 Blue Door는 가을이 되면 따뜻한 색이 차가운 중립색 자리를 대신한다고 해요. 그래서 7월에는 딱 알맞던 미니멀한 방이 10월에는 조금 '덜 끝난' 것처럼 보일 수 있대요. 미국 기준의 분석이지만, 방은 그대로인데 낯설게 느껴지는 이 감각에 이름을 붙여 줘요.</p>
+  <p>디자이너들 생각도 비슷해요. 1stDibs가 17개국 디자이너 수백 명에게 물었더니 <strong>39%</strong>가 맥시멀리즘과 레이어링된 인테리어가 올해도 인기일 거라고 답했어요.</p>
+  <p>보그 코리아가 소개한 올해 인테리어 키워드 역시 사람이 실제로 살며 사랑하는, 생활감이 느껴지는 집이에요.</p>
+  <p>세 이야기를 합치면 이렇게 말할 수 있어요.</p>
+  <p class="key">가을에는 비워 둔 방보다 하나씩 겹쳐 채운 방이 더 따뜻해 보여요.</p>
+
+  <h2 class="sec">작년 가을 검색량을 봤어요</h2>
+  <figure class="fig wide">
+    <img src="images/autumn-room-searches.png" loading="lazy" alt="2025년 7월부터 11월까지 러그, 블랭킷, 무드등의 네이버 검색량 그래프. 러그와 블랭킷은 10월에 크게 오르고 무드등은 거의 일정함">
+    <ul class="legend">
+      <li style="--c: #1fc35a">러그</li>
+      <li style="--c: #ec6aa0">블랭킷</li>
+      <li style="--c: #9b7bf0">무드등</li>
+    </ul>
+    <figcaption>출처: 네이버 데이터랩 (2025년 7~11월 검색량)<br>숫자는 실제 검색 횟수가 아니라, 이 기간에 가장 많이 검색된 날을 100으로 놓은 상대값이에요.</figcaption>
+  </figure>
+  <p>작년 7월부터 11월까지 네이버 검색량이에요. 러그는 7~9월 내내 비슷한 수준이다가 10월로 접어들며 눈에 띄게 올라갔고, 블랭킷은 10월 하순에 가장 높은 값을 찍었어요. 이 시기에 허전함을 느낀 게 저만은 아닌 것 같아요.</p>
+  <p>반면 무드등은 이 기간 내내 거의 일정해요. 조명은 계절을 덜 타는 기본템이라서 그런 것 같아요.</p>
+  <p>저는 이걸 이렇게 읽었어요. 방을 다 뜯어고칠 순 없으니, 언제나 통하는 조명에 확실한 가을 시즌템인 러그, 블랭킷을 더하는 것만으로도 공간의 온도를 바꿀 수 있겠구나.</p>
+
+  <h2 class="sec">방을 바꿀 수 없다면 소품을 삽니다</h2>
+  <p>그래프를 보고 하나 더 생각해 봤어요. 가격이 그대로여도 가을이 되면 러그나 블랭킷의 수요가 늘어요. 값이 내려서가 아니라 계절 때문에 마음이 바뀐 거예요.</p>
+  <p>또 방 분위기를 바꾸는 방법은 공사도 있고 소품도 있어요. 둘은 서로 대신할 수 있는 대체재인데, 소품이 훨씬 싸고 간단해서 가을에는 소품 쪽으로 마음이 쏠려요.</p>
+
+  <h2 class="sec">오늘부터 해볼 수 있는 3가지</h2>
+  <ol class="steps">
+    <li>
+      <h3>직물 겹치기</h3>
+      <p>러그, 쿠션, 블랭킷이 대표적이에요. 한 번에 다 사지 말고 하나만 더해도 방의 계절이 달라져요.</p>
+    </li>
+    <li>
+      <h3>질감 바꾸기</h3>
+      <p>니트나 울처럼 도톰한 천, 나무나 도자기 같은 따뜻한 소재를 더하면 색을 바꾸지 않아도 방이 달라 보여요.</p>
+    </li>
+    <li>
+      <h3>조명 바꾸기</h3>
+      <p>해가 짧아진 저녁에는 방의 인상을 조명이 정해요. 따뜻한 전구색으로 바꾸고, 스탠드처럼 낮은 곳에 간접 조명을 하나 더해 보세요.</p>
+    </li>
+  </ol>
+
+  <figure class="fig">
+    <img src="images/autumn-room-before-after.jpg" loading="lazy" alt="같은 원룸을 찍은 두 장. 왼쪽은 차가운 빛의 빈 바닥, 오른쪽은 스탠드 조명이 켜지고 러그가 깔려 따뜻해 보임">
+    <figcaption>조명과 러그를 더하기 전(왼쪽)과 후(오른쪽) · 출처: 핀터레스트</figcaption>
+  </figure>
+  <p>제 방은 홈스테이라 전후 차이를 확인할 수 없어서 핀터레스트의 예시 사진을 가져왔어요. 가을 인테리어의 핵심은 비워 둔 방보다 '생활감'을 겹겹이 더하는 거예요.</p>
+  <p>차갑게 느껴지던 공간이 따뜻한 조명과 질감으로 포근하게 채워진 게 사진에서 보여요.</p>
+
+  <h2 class="sec">이 글의 한계</h2>
+  <p>참고한 자료는 대부분 미국이나 영미권 이야기라, 좌식, 온돌, 평수가 다른 한국 집과는 맞지 않을 수 있어요. 트렌드 예측에는 그걸 전하는 매체의 시각도 섞여 있어요. 그리고 '덜 끝난' 느낌은 숫자가 아니라 개인의 감각이에요.</p>
+  <p>또한, 검색량 그래프는 작년 7~11월의 기록이고, 검색이 곧 구매는 아니에요. 저는 지금 캐나다 홈스테이에 있어서 한국 집에서 직접 확인한 것도 아니에요.</p>
+
+  <section class="conclusion" aria-labelledby="conclusion-title">
+    <h2 id="conclusion-title">결론</h2>
+    <p>계절이 바뀌는 때는 인테리어 플랫폼이 가장 쉽게 구매를 만들 수 있는 순간이라고 생각해요. 사람들은 집을 고치고 싶은 게 아니라 분위기를 바꾸고 싶은 거예요. 그때 필요한 건 상품 목록이 아니라 <span class="key">'뭘 사야 하지?'에 대한 답</span>이에요. 계절을 타는 직물에 계절을 안 타는 조명을 묶은 세트가 그 답이 될 수 있을 것 같아요. 여러분의 방에는 지금 어떤 소품이 가장 필요한가요?</p>
+  </section>
+
+  <nav class="next" aria-label="다음으로">
+    <span class="label">세잎 아카이브의 기록</span>
+    <a href="../index.html#archive">다른 기록 보기 →</a>
+  </nav>
+</article>
+</main>
+
+<footer class="wrap foot">
+  <span>세잎 아카이브, 흔한 행복의 기록</span>
+  <span>2026</span>
+</footer>
+
+</body>
+</html>
