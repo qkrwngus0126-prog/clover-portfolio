@@ -156,9 +156,10 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .steps button {
   flex: none; display: flex; align-items: center; gap: 6px;
   min-height: 36px; padding: 0 14px; border-radius: 999px;
-  font-size: 14px; color: var(--muted); transition: background-color .2s var(--ease), color .2s var(--ease);
+  font-size: 14px; line-height: 1; color: var(--muted); transition: background-color .2s var(--ease), color .2s var(--ease);
 }
-.steps button .mono { font-size: 11px; color: var(--faint); }
+/* the mono numbers sit a little low next to Korean glyphs; lift them onto the same line */
+.steps button .mono { position: relative; top: -1px; font-size: 11px; line-height: 1; color: var(--faint); }
 .steps button:hover { color: var(--ink); }
 .steps button[aria-selected="true"] { background: var(--ink); color: #fff; font-weight: 500; }
 .steps button[aria-selected="true"] .mono { color: rgba(255, 255, 255, .6); }
@@ -173,7 +174,6 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   text-align: center; font-size: clamp(30px, 3.5vw, 56px); pointer-events: none;
   animation: rise .6s var(--ease) both;
 }
-.layout[data-step="card"] .stage-title, .layout[data-step="done"] .stage-title { font-size: clamp(26px, 2.6vw, 40px); }
 .scene-bouquet { position: absolute; inset: 0; z-index: 1; }
 .stage { position: absolute; inset: 92px 0 0; touch-action: none; cursor: grab; }
 .bq { overflow: hidden; }
@@ -260,8 +260,8 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 
 /* segment */
 .segment { display: flex; padding: 4px; margin-bottom: 14px; border-radius: 999px; background: var(--tile); }
-.segment button { flex: 1; display: flex; justify-content: center; align-items: baseline; gap: 5px; min-height: 38px; border-radius: 999px; font-size: 14px; color: var(--muted); transition: background-color .2s var(--ease), color .2s var(--ease); }
-.segment button small { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+.segment button { flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; min-height: 38px; line-height: 1; border-radius: 999px; font-size: 14px; color: var(--muted); transition: background-color .2s var(--ease), color .2s var(--ease); }
+.segment button small { position: relative; top: -1px; font-family: var(--mono); font-size: 10.5px; line-height: 1; color: var(--faint); font-weight: 400; }
 .segment button[aria-selected="true"] { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
 
 /* flower tiles */
@@ -342,7 +342,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .scene-postcard, .scene-final {
   position: absolute; inset: 0; z-index: 1; overflow-y: auto;
   display: flex; flex-direction: column; align-items: center;
-  padding: 130px clamp(20px, 5vw, 64px) 40px;
+  padding: 160px clamp(20px, 5vw, 64px) 40px;
 }
 .postcard {
   position: relative; width: min(100%, 760px); margin: auto 0;
@@ -472,18 +472,18 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .quiz-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 28px; }
 .quiz-options.is-tone { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .qopt {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 2px;
-  min-height: 96px; padding: 14px 16px 15px; border-radius: 10px; background: var(--tile); text-align: left;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px;
+  min-height: 84px; padding: 16px 18px; border-radius: 10px; background: var(--tile); text-align: left;
   transition: background-color .2s var(--ease), color .2s var(--ease), transform .15s var(--ease);
 }
 .qopt:hover { background: var(--tile-2); }
 .qopt:active { transform: scale(.98); }
-.qopt .mono { font-size: 10px; letter-spacing: 0.14em; color: var(--faint); margin-bottom: auto; }
+.qopt .mono { font-size: 10px; letter-spacing: 0.14em; color: var(--faint); margin-bottom: 4px; }
 .qopt b { font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
 .qopt small { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
 .qopt[aria-pressed="true"] { background: var(--ink); color: #fff; }
 .qopt[aria-pressed="true"] .mono, .qopt[aria-pressed="true"] small { color: rgba(255, 255, 255, .65); }
-.qopt-swatch { display: flex; margin-bottom: auto; padding-bottom: 14px; }
+.qopt-swatch { display: flex; margin-bottom: 8px; }
 .qopt-swatch i { width: 26px; height: 26px; margin-right: -7px; border-radius: 50%; background: var(--dot); box-shadow: 0 0 0 2px var(--tile), inset 0 0 0 1px rgba(0, 0, 0, .12); transition: box-shadow .2s var(--ease); }
 .qopt:hover .qopt-swatch i { box-shadow: 0 0 0 2px var(--tile-2), inset 0 0 0 1px rgba(0, 0, 0, .12); }
 .qopt[aria-pressed="true"] .qopt-swatch i { box-shadow: 0 0 0 2px var(--ink); }
@@ -560,7 +560,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   .quiz-title { font-size: 24px; }
   .quiz-sub { font-size: 14px; }
   .quiz-options, .quiz-options.is-tone { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
-  .qopt { min-height: 82px; padding: 12px 14px 13px; }
+  .qopt { min-height: 76px; padding: 14px 16px; }
   .qopt b { font-size: 16px; }
   .quiz-foot { padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom, 0px)); }
   .result-list { grid-template-columns: minmax(0, 1fr); }
@@ -580,7 +580,6 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   .scene { position: sticky; top: 0; z-index: 4; height: 48svh; min-height: 320px; background: #fff; border-bottom: 1px solid var(--line); }
   .layout[data-step="card"] .scene, .layout[data-step="done"] .scene { position: relative; height: auto; min-height: 0; overflow: visible; }
   .stage-title { top: 18px; font-size: 24px; }
-  .layout[data-step="card"] .stage-title, .layout[data-step="done"] .stage-title { font-size: 24px; }
   .stage { inset: 54px 0 0; }
   .scene-postcard, .scene-final { position: relative; inset: auto; overflow: visible; padding: 78px var(--gutter) 24px; }
   .panel { border-left: 0; overflow: visible; min-height: 52svh; }

@@ -113,6 +113,8 @@
       const on = b.dataset.go === step;
       b.setAttribute('aria-selected', on);
       b.tabIndex = on ? 0 : -1;
+      // on narrow screens the step bar scrolls sideways; keep the current step fully in view
+      if (on) { const bar = b.parentNode; const l = b.offsetLeft - bar.offsetLeft, r = l + b.offsetWidth; if (l < bar.scrollLeft || r > bar.scrollLeft + bar.clientWidth) bar.scrollTo({ left: l - (bar.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' }); }
     });
     const scene = step === 'card' ? 'postcard' : step === 'done' ? 'final' : 'bouquet';
     $('.scene-bouquet').hidden = scene !== 'bouquet' && !empty;
