@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>광고인 줄 몰랐는데… 내가 이미 보고 있었다 · 세잎 아카이브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="오늘의집 같은 커머스 앱이 광고를 콘텐츠처럼 띄우는 RMN(리테일 미디어 네트워크) 이야기. 서비스 분석.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one record, read like a magazine column. The same header as the index, then a narrow
+   text column (about 40 characters of Korean) with figures that step out wider than the text.
+   Clover green marks the interest, the summary, step numbers, key sentences and the conclusion. */
+:root {
+  --bg: #ffffff;
+  --thumb: #f2f3f1;
+  --ink: #1a1c1a;
+  --muted: #6b716b;        /* 5:1 on white */
+  --rule: #e3e6e2;
+  --accent: #17803f;       /* clover green, 5.2:1 on white, readable as text */
+  --accent-soft: #eef6f0;  /* summary ground */
+
+  --font: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+
+  --step-small: 0.875rem;
+  --step-body: 1.0625rem;
+  --step-h2: 1.5rem;
+  --step-title: clamp(2rem, 1.35rem + 2.4vw, 3.25rem);
+
+  --text: 680px;
+  --wide: 1040px;
+  --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: var(--step-body);
+  line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+h1, h2, h3 { font-weight: 300; letter-spacing: -0.02em; line-height: 1.3; margin: 0; text-wrap: balance; }
+p, ol, ul, figure { margin: 0; }
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: #dff0e3; color: var(--ink); }
+
+.wrap { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+
+/* ---------- header, same as the index ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 56px 0; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; text-decoration: none; padding: 8px 0; }
+.wordmark svg { width: 20px; height: 20px; color: var(--accent); --leaf-fill: currentColor; --stem: currentColor; transition: transform 300ms var(--ease-out); }
+.wordmark:hover svg { transform: rotate(-12deg); }
+.menu { display: flex; gap: clamp(20px, 3.4vw, 48px); font-size: 1.125rem; }
+.menu a { color: var(--muted); text-decoration: none; padding: 8px 0; transition: color 160ms ease; }
+.menu a:hover { color: var(--ink); }
+
+/* ---------- the record ---------- */
+.post { display: grid; gap: 28px; padding-block: clamp(56px, 7vw, 104px) 120px; }
+.post > * { width: 100%; max-width: var(--text); margin-inline: auto; }
+.post > .wide { max-width: var(--wide); }
+
+.back { font-size: var(--step-small); color: var(--muted); text-decoration: none; justify-self: start; transition: color 160ms ease; }
+.back:hover { color: var(--accent); }
+
+.head { display: grid; gap: 16px; padding-bottom: 36px; border-bottom: 1px solid var(--rule); }
+.kicker { color: var(--accent); font-size: var(--step-small); font-weight: 500; letter-spacing: 0.02em; }
+.head h1 { font-size: var(--step-title); line-height: 1.22; }
+.dek { color: var(--muted); font-size: 1.1875rem; line-height: 1.6; }
+.meta { color: var(--muted); font-size: var(--step-small); font-variant-numeric: tabular-nums; }
+
+.summary { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 22px 26px; display: grid; gap: 8px; }
+.summary h2 { font-size: 1rem; font-weight: 500; color: var(--accent); letter-spacing: 0; }
+.summary ol { padding-left: 1.3em; display: grid; gap: 4px; }
+.summary li::marker { color: var(--accent); font-weight: 500; }
+
+.post h2.sec { font-size: var(--step-h2); font-weight: 400; margin-top: 36px; }
+.post strong { font-weight: 500; }
+.key { color: var(--accent); font-weight: 500; }
+
+.quote { border-left: 2px solid var(--rule); padding: 4px 0 4px 22px; display: grid; gap: 4px; }
+.quote p { color: var(--ink); }
+
+/* three numbered reasons, in the order the original post gives them */
+.steps { list-style: none; padding: 0; display: grid; gap: 40px; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 4px 16px; counter-increment: step; }
+.steps > li::before {
+  content: counter(step); grid-row: 1 / span 3;
+  color: var(--accent); font-size: 2.25rem; font-weight: 300; line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.steps h3 { font-size: 1.1875rem; font-weight: 400; line-height: 1.5; }
+.steps .fig { grid-column: 1 / -1; margin-top: 20px; }
+
+/* figures: images side by side at one common height, each keeping its own shape */
+.fig { display: grid; gap: 12px; }
+.row { display: flex; gap: 12px; align-items: flex-start; }
+.row > * { min-width: 0; flex: var(--r, 1) 1 0; }
+.row img { width: 100%; background: var(--thumb); }
+figcaption { color: var(--muted); font-size: var(--step-small); line-height: 1.6; text-align: center; text-wrap: balance; }
+
+.conclusion { border-top: 2px solid var(--accent); padding-top: 24px; margin-top: 36px; display: grid; gap: 12px; }
+.conclusion h2 { font-size: var(--step-small); font-weight: 500; color: var(--accent); letter-spacing: 0.02em; }
+.conclusion p { font-size: 1.1875rem; line-height: 1.85; font-weight: 400; }
+
+.next { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+.next a { text-decoration: none; transition: color 160ms ease; }
+.next a:hover { color: var(--accent); }
+.next .label { color: var(--muted); font-size: var(--step-small); }
+
+.foot { padding-block: 0 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: var(--step-small); color: var(--muted); }
+
+/* ---------- phone ---------- */
+@media (max-width: 720px) {
+  body { font-size: 1rem; }
+  .top { padding-block: 32px 0; flex-wrap: wrap; }
+  .menu { font-size: 1rem; gap: 20px; }
+  .wordmark { font-size: 1rem; }
+  .post { padding-block: 48px 96px; gap: 24px; }
+  .dek { font-size: 1.0625rem; }
+  .summary { padding: 18px 20px; }
+  .steps > li { grid-template-columns: 1.75rem minmax(0, 1fr); gap: 4px 12px; }
+  .steps > li::before { font-size: 1.75rem; }
+  .conclusion p { font-size: 1.0625rem; }
+  /* three tall pictures: swipe sideways instead of shrinking them to stamps */
+  .row.swipe { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .row.swipe > * { flex: 0 0 72%; scroll-snap-align: start; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="leaf" d="M0 0 C-6 -8 -24 -16 -22 -31.2 C-20 -42 -4 -43.2 0 -32.8 C4 -43.2 20 -42 22 -31.2 C24 -16 6 -8 0 0Z"/>
+    <symbol id="trefoil" viewBox="0 0 100 100">
+      <path d="M50 52 Q62 70 56 96" fill="none" stroke-width="3.2" stroke-linecap="round" style="stroke: var(--stem, currentColor)"/>
+      <g transform="translate(50 52)" style="fill: var(--leaf-fill, currentColor)">
+        <use href="#leaf"/>
+        <use href="#leaf" transform="rotate(120)"/>
+        <use href="#leaf" transform="rotate(240)"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="wrap top">
+  <a class="wordmark" href="../index.html"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#trefoil"/></svg>세잎 아카이브</a>
+  <nav class="menu" aria-label="주요 메뉴"><a href="../index.html#archive">기록</a><a href="../index.html#about">소개</a><a href="../index.html#contact">연락</a></nav>
+</header>
+
+<main class="wrap">
+<article class="post">
+  <a class="back" href="../index.html#archive">← 기록으로</a>
+
+  <header class="head">
+    <p class="kicker">서비스 분석</p>
+    <h1>광고인 줄 몰랐는데… 내가 이미 보고 있었다</h1>
+    <p class="dek">광고야, 콘텐츠야? 오늘의집이 '광고 매체'가 된 이유</p>
+    <p class="meta">세잎 수집가 · 2026.04</p>
+  </header>
+
+  <section class="summary" aria-labelledby="summary-title">
+    <h2 id="summary-title">3줄 요약</h2>
+    <ol>
+      <li>오늘의집 같은 커머스 앱은 유저 데이터를 분석해 '가장 살 것 같은 순간'에 광고를 콘텐츠처럼 띄워요. 이걸 RMN이라고 해요.</li>
+      <li>인테리어 플랫폼은 유저의 취향과 공간 데이터가 있어서 타겟팅이 정교하고, 광고가 '인테리어 팁'처럼 소비돼요.</li>
+      <li>플랫폼은 광고 지면 판매로 수익을 얻고, 브랜드는 광고 효율을 높여요. 광고가 곧 판매 채널이 되는 거예요.</li>
+    </ol>
+  </section>
+
+  <p>최근 오늘의집 같은 커머스 앱을 켜면 이런 생각이 들어요.</p>
+  <blockquote class="quote">
+    <p>"이거 방금 내가 고민하던 건데, 광고야 정보야?"</p>
+  </blockquote>
+  <p>경계가 흐릿해진 이 현상의 중심에는 요즘 빠르게 커지고 있는 광고 모델, <span class="key">RMN</span>이 있어요.</p>
+
+  <h2 class="sec">RMN, 한 마디로 정의하면?</h2>
+  <p>RMN은 리테일 미디어 네트워크(Retail Media Network)의 줄임말이에요. 쇼핑 플랫폼이 자기 앱의 광고 자리와 구매 데이터를 이용해 파는 광고를 말해요. 비유하자면 이런 점원이에요.</p>
+  <blockquote class="quote">
+    <p>내가 라면 코너 앞에 서자마자,<br>조용히 양은냄비 할인 쿠폰을 건네주는 '눈치 만렙' 점원</p>
+  </blockquote>
+  <p>과거의 쇼핑몰이 단순히 상품을 진열했다면, 지금의 플랫폼은 유저의 데이터를 분석해 <span class="key">'가장 살 것 같은 순간'에 광고를 콘텐츠처럼 띄워요.</span> 불특정 다수가 아닌, '준비된 구매자'만 골라내는 기술이죠.</p>
+
+  <figure class="fig">
+    <div class="row swipe">
+      <img src="images/retail-media-ad-1.png" width="224" height="376" style="--r: 0.596" loading="lazy" alt="오늘의집 앱 첫 화면의 광고. '믿을 수 있는 시공, 오늘의집 인테리어' 문구와 벽을 손보는 작업자 사진">
+      <img src="images/retail-media-ad-2.png" width="224" height="376" style="--r: 0.596" loading="lazy" alt="오늘의집 앱 첫 화면의 광고. '검증된 파트너와 함께하는 이사, 이사 무료 견적' 문구와 이삿짐 상자 사진">
+      <img src="images/retail-media-popular.png" width="307" height="355" style="--r: 0.865" loading="lazy" alt="'최근 찾아본 주제의 인기글' 목록. 원목책상의자, 원목의자, 소파 같은 주제와 원목 가구 글이 보임">
+    </div>
+    <figcaption>이사 시즌엔 이사·시공 광고, 의자를 찾아볼 땐 의자 광고 · 오늘의집 앱 캡처</figcaption>
+  </figure>
+
+  <h2 class="sec">인테리어 플랫폼이 RMN에 강한 이유</h2>
+  <ol class="steps">
+    <li>
+      <h3>데이터의 '질'이 달라요.</h3>
+      <p>단순 검색을 넘어 유저는 자기 방 사진(스타일)을 올리고, 특정 무드(미니멀, 빈티지 등)를 저장해요. 이제 플랫폼은 <span class="key">유저의 '취향'과 공간 규모를 추정</span>할 수 있어요.</p>
+    </li>
+    <li>
+      <h3>타겟팅이 정교해졌어요.</h3>
+      <p>예를 들면, 과거엔 20대 여성에게 소파 광고를 했다면 2026년엔 미니멀 원룸 스타일을 5번 이상 저장한 유저에게 소파 광고를 하는 셈이에요.</p>
+    </li>
+    <li>
+      <h3>광고가 정보처럼 소비돼요.</h3>
+      <p>유저 리뷰 속 상품 태그, 브랜드 협업 매거진 등은 광고지만 유저에겐 <span class="key">'인테리어 팁'으로 소비</span>돼요. 그래서 거부감은 낮고, 구매로 이어지기도 쉽죠.</p>
+      <figure class="fig">
+        <div class="row swipe">
+          <img src="images/retail-media-house-1.png" width="397" height="640" style="--r: 0.620" loading="lazy" alt="거실 집들이 사진 위에 파란 + 상품 태그가 여러 개 있고, 아래에 선반, 조명, 헤드폰 같은 상품 사진이 줄지어 있음">
+          <img src="images/retail-media-house-2.png" width="436" height="696" style="--r: 0.626" loading="lazy" alt="세면대 집들이 사진 위에 파란 + 상품 태그가 있고, 아래에 컵, 수납 바구니 같은 상품 사진이 줄지어 있음">
+        </div>
+        <figcaption>집들이 사진 속 파란 + 표시가 상품 태그예요 · 오늘의집 앱 캡처</figcaption>
+      </figure>
+    </li>
+  </ol>
+
+  <h2 class="sec">수익 구조가 바뀌었어요</h2>
+  <p>이 변화는 기업의 수익 구조를 바꿨어요. 유통사(플랫폼)는 상품 판매 수수료를 넘어, 플랫폼 안의 '광고 지면 판매'라는 고수익 모델을 확보했어요. 브랜드(마케터)는 엉뚱한 곳에 광고비를 태우지 않고, 확실한 타겟에게만 비용을 집중해 광고 효율(ROAS, 광고비 대비 매출)을 높여요.</p>
+  <p>결과적으로, <span class="key">상품 자체가 광고가 되고, 광고가 곧 판매 채널이 되는 '콘텐츠 커머스'</span>가 완성되는 거예요.</p>
+
+  <h2 class="sec">알고리즘과는 뭐가 달라요?</h2>
+  <p>RMN 안에 알고리즘이 포함돼요. 알고리즘이 유저의 가려운 곳을 찾아내고 긁어 주는 '기술'이라면, RMN은 그 알고리즘을 활용해 가장 적절한 타이밍에 상품(광고)을 노출하고 <span class="key">수익으로 연결하는 '비즈니스 모델'</span>이에요.</p>
+
+  <section class="conclusion" aria-labelledby="conclusion-title">
+    <h2 id="conclusion-title">결론</h2>
+    <p>처음엔 광고인 줄 몰랐고, 알고 나서도 소비자는 클릭해요. 나에게 지금 <span class="key">'꼭 필요한 정보'라고 느껴지기 때문</span>이에요. RMN은 단순한 기술이 아니라, 유저의 라이프스타일 속에 자연스럽게 스며들어요.</p>
+  </section>
+
+  <nav class="next" aria-label="다음으로">
+    <span class="label">세잎 아카이브의 기록</span>
+    <a href="../index.html#archive">다른 기록 보기 →</a>
+  </nav>
+</article>
+</main>
+
+<footer class="wrap foot">
+  <span>세잎 아카이브, 흔한 행복의 기록</span>
+  <span>2026</span>
+</footer>
+
+</body>
+</html>
