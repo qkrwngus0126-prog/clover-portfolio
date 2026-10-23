@@ -29,7 +29,7 @@
   } catch (e) { /* private window or blocked storage: start fresh */ }
   function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* not essential */ } }
 
-  const ui = { group: 'main', color: {}, recMood: null, recViews: [], realViews: [] };
+  const ui = { group: 'main', color: {}, quizViews: [], realViews: [] };
   D.flowers.forEach(fl => { ui.color[fl.id] = fl.colors[0].id; });
 
   /* ---------- helpers ---------- */
@@ -319,19 +319,18 @@
   }
   $('.real-list').addEventListener('click', (e) => {
     const b = e.target.closest('[data-load]');
-    if (b) loadRecipe(b.dataset.load, null, () => renderReal());
+    if (b) loadRecipe(D.recipes.find(x => x.id === b.dataset.load), null, () => renderReal());
   });
   function recipeLine(r) { return r.items.map(([f, , n]) => `${flowersById[f].name} ${n}`).join(' · '); }
 
   /* ---------- recipes ---------- */
   let loading = null;
-  function loadRecipe(id, mood, done) {
-    const r = D.recipes.find(x => x.id === id);
+  function loadRecipe(r, mood, done) {
     if (!r) return;
     const before = JSON.stringify(state);
     clearTimeout(loading);
     state.stems = []; state.wrap = null; state.ribbon = null;
-    state.mood = mood || r.moods[0];
+    state.mood = mood || r.moods[0] || null;
     state.edited = false;
     refresh();
     // one stem at a time, so each one lands with its own little "톡"
@@ -359,54 +358,126 @@
     go(state.step);
   }
 
-  /* ---------- recommend sheet ---------- */
-  const sheet = $('#recommend');
-  $('[data-open-recommend]').addEventListener('click', () => {
-    renderRecMoods();
-    renderRecList();
-    sheet.showModal();
-  });
-  sheet.addEventListener('click', (e) => {
-    if (e.target === sheet || e.target.closest('[data-close]')) sheet.close();
-  });
-  sheet.addEventListener('close', () => { ui.recViews.forEach(v => v.destroy()); ui.recViews = []; });
-  function renderRecMoods() {
-    $('#rec-moods').innerHTML = D.moods.map(m =>
-      `<button type="button" class="mood" aria-pressed="${ui.recMood === m.id}" data-mood="${m.id}"><span class="mono">${esc(m.en || '')}</span><b>${esc(m.name)}</b><small>${esc(m.desc)}</small></button>`).join('');
+  /* ---------- 추천 받기: one question at a time, then three bouquets ---------- */
+  const QUIZ_STORE = 'hansongi:quiz:v1';
+  let quiz = { i: 0, answers: {} };
+  try {
+    const saved = JSON.parse(localStorage.getItem(QUIZ_STORE) || 'null');
+    if (saved && saved.answers) quiz = { i: Math.min(+saved.i || 0, D.quiz.length), answers: saved.answers };
+  } catch (e) { /* start fresh */ }
+  function saveQuiz() { try { localStorage.setItem(QUIZ_STORE, JSON.stringify(quiz)); } catch (e) { /* not essential */ } }
+  let quizResult = null;
+
+  function optionsOf(q) {
+    if (q.id === 'mood') return D.moods.map(m => ({ id: m.id, name: m.name, desc: m.desc, en: m.en }));
+    return q.options || [];
   }
-  function renderRecList() {
-    ui.recViews.forEach(v => v.destroy()); ui.recViews = [];
-    const list = $('#rec-list');
-    if (!ui.recMood) { list.innerHTML = ''; return; }
-    const recipes = D.recipes.filter(r => r.moods.includes(ui.recMood)).slice(0, 3);
-    const warn = state.stems.length ? `<p class="note">지금 담은 ${state.stems.length}송이는 비워져요. 불러온 뒤 되돌릴 수 있어요.</p>` : '';
-    list.innerHTML = recipes.map(r =>
-      `<li class="rec-item"><div class="rec-art" data-rec="${r.id}"></div><div class="rec-meta">` +
-      `<h3>${esc(r.name)}</h3><p class="rec-note">${esc(r.note)}</p>` +
+  function answerName(q) {
+    const o = optionsOf(q).find(x => x.id === quiz.answers[q.id]);
+    return o ? o.name : '';
+  }
+
+  function openQuiz() {
+    setView('quiz');
+    renderQuiz();
+  }
+  function renderQuiz() {
+    const N = D.quiz.length, done = quiz.i >= N;
+    $('.quiz-count').textContent = done ? 'RESULT' : `${pad(quiz.i + 1)} / ${pad(N)}`;
+    $('.quiz-bar i').style.width = (done ? 100 : (quiz.i / N) * 100) + '%';
+    $('.quiz-answers').innerHTML = D.quiz.map((q, i) => quiz.answers[q.id]
+      ? `<li><button type="button" data-jump="${i}" aria-label="${esc(q.title)} ${esc(answerName(q))}, 다시 고르기"${i === quiz.i ? ' aria-current="step"' : ''}><span class="mono">Q${i + 1}</span>${esc(answerName(q))}</button></li>` : '').join('');
+    $('.quiz-step').hidden = done;
+    $('.quiz-result').hidden = !done;
+    $('[data-quiz-prev]').hidden = quiz.i === 0;
+    $('[data-quiz-prev]').textContent = done ? '질문으로 돌아가기' : '이전';
+    $('[data-quiz-skip]').hidden = done;
+    $('[data-quiz-skip]').textContent = quiz.i === N - 1 ? '건너뛰고 결과 보기' : '건너뛰기';
+    $('.quiz-scroll').scrollTop = 0;
+    if (done) { renderResults(); return; }
+
+    const q = D.quiz[quiz.i];
+    $('.quiz-step .quiz-kicker').textContent = `Q${quiz.i + 1} · ${q.en || ''}`;
+    $('.quiz-step .quiz-title').textContent = q.title;
+    $('.quiz-step .quiz-sub').textContent = q.sub || '';
+    const opts = optionsOf(q);
+    const box = $('.quiz-options');
+    box.setAttribute('aria-label', q.title);
+    box.className = 'quiz-options' + (opts.length <= 3 ? ' is-few' : '') + (q.id === 'tone' ? ' is-tone' : '');
+    box.innerHTML = opts.map(o =>
+      `<button type="button" class="qopt" aria-pressed="${quiz.answers[q.id] === o.id}" data-answer="${o.id}">` +
+        (o.swatch ? `<span class="qopt-swatch">${o.swatch.map(c => `<i style="--dot:${colorHex(c)}"></i>`).join('')}</span>` : '') +
+        (o.en ? `<span class="mono">${esc(o.en)}</span>` : '') +
+        `<b>${esc(o.name)}</b>` + (o.desc ? `<small>${esc(o.desc)}</small>` : '') +
+      `</button>`).join('');
+  }
+  function quizGo(i) {
+    quiz.i = Math.max(0, Math.min(D.quiz.length, i));
+    saveQuiz();
+    renderQuiz();
+    const title = quiz.i >= D.quiz.length ? $('.quiz-result .quiz-title') : $('.quiz-step .quiz-title');
+    title.focus({ preventScroll: true });
+  }
+  let quizTimer = null;
+  $('.quiz-options').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-answer]');
+    if (!b) return;
+    const q = D.quiz[quiz.i];
+    quiz.answers[q.id] = b.dataset.answer;
+    $$('.qopt', b.parentNode).forEach(x => x.setAttribute('aria-pressed', x === b));
+    saveQuiz();
+    // a beat to see the choice land before the next question slides in
+    clearTimeout(quizTimer);
+    quizTimer = setTimeout(() => quizGo(quiz.i + 1), 260);
+  });
+  $('[data-quiz-skip]').addEventListener('click', () => {
+    delete quiz.answers[D.quiz[quiz.i].id];
+    quizGo(quiz.i + 1);
+  });
+  $('[data-quiz-prev]').addEventListener('click', () => quizGo(quiz.i >= D.quiz.length ? D.quiz.length - 1 : quiz.i - 1));
+  $('.quiz-answers').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-jump]');
+    if (b) quizGo(+b.dataset.jump);
+  });
+  $('[data-quiz-restart]').addEventListener('click', () => { quiz = { i: 0, answers: {} }; quizGo(0); });
+
+  function resultHTML(r, key, no) {
+    const why = r.reasons && r.reasons.length ? `<p class="result-why"><b>${r.reasons.map(esc).join(' · ')}</b>에 맞춰 골랐어요</p>` : '';
+    const dress = [r.wrap && wrapsById[r.wrap].name + ' 포장', r.ribbon && ribbonsById[r.ribbon].name].filter(Boolean).join(' · ');
+    return `<li class="result"><div class="result-art" data-art="${key}"></div><div class="result-meta">` +
+      (no ? `<p class="mono result-no">${no}</p>` : '') + `<h3>${esc(r.name)}</h3><p class="rec-note">${esc(r.note)}</p>` +
       `<p class="rec-flowers">${r.items.map(([f, c, n]) => `<span><i style="--dot:${colorHex(c)}"></i>${esc(flowersById[f].name)} ${n}</span>`).join('')}</p>` +
-      `<button type="button" class="pill pill-dark" data-pick="${r.id}">이 조합으로 시작하기</button>${warn}</div></li>`).join('');
-    $$('.rec-art', list).forEach(el => {
-      const r = D.recipes.find(x => x.id === el.dataset.rec);
+      `<p class="result-dress">${esc(dress)}</p>${why}` +
+      `<button type="button" class="pill pill-dark" data-quiz-pick="${key}">이 조합으로 시작하기</button></div></li>`;
+  }
+  function renderResults() {
+    ui.quizViews.forEach(v => v.destroy()); ui.quizViews = [];
+    quizResult = HansongiRecommend(quiz.answers);
+    const all = {};
+    quizResult.suggestions.forEach((r, i) => { all['a' + i] = r; });
+    $('.result-list').innerHTML = quizResult.suggestions.map((r, i) => resultHTML(r, 'a' + i, 'No.' + pad(i + 1))).join('');
+    const sig = quizResult.signature;
+    all.sig = sig;
+    $('.result-sig').innerHTML = sig ? resultHTML(sig, 'sig', '') : '';
+    const warn = state.stems.length ? `지금 담은 ${state.stems.length}송이는 비워져요. 불러온 뒤 되돌릴 수 있어요.` : '';
+    $$('.result-meta', $('.quiz-result')).forEach(m => { if (warn) m.insertAdjacentHTML('beforeend', `<p class="note">${warn}</p>`); });
+    $$('.result-art', $('.quiz-result')).forEach(el => {
+      const r = all[el.dataset.art];
       const v = new BouquetView(el, { static: true });
       v.update(expand(r), r.wrap, r.ribbon);
-      ui.recViews.push(v);
+      ui.quizViews.push(v);
     });
+    ui.quizAll = all;
   }
-  $('#rec-moods').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-mood]');
+  $('.quiz-result').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-quiz-pick]');
     if (!b) return;
-    ui.recMood = b.dataset.mood;
-    renderRecMoods();
-    renderRecList();
-  });
-  $('#rec-list').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-pick]');
-    if (!b) return;
-    sheet.close();
+    const r = ui.quizAll[b.dataset.quizPick];
     enterApp();
     go('flowers');
-    loadRecipe(b.dataset.pick, ui.recMood);
+    loadRecipe(r, quizResult.mood);
   });
+  $$('[data-open-quiz]').forEach(b => b.addEventListener('click', openQuiz));
 
   /* ---------- 4. postcard ---------- */
   function composeMessage() {
@@ -536,20 +607,22 @@
     }).join('');
     $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
   }
-  function enterApp() {
-    document.body.dataset.view = 'app';
-    $('.app').removeAttribute('aria-hidden');
-    $('.intro').setAttribute('aria-hidden', 'true');
+  function setView(name) {
+    document.body.dataset.view = name;
+    ['intro', 'app', 'quiz'].forEach(v => {
+      const el = $('.' + v);
+      if (v === name) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', 'true');
+    });
+    if (name !== 'quiz') { ui.quizViews.forEach(v => v.destroy()); ui.quizViews = []; }
     window.scrollTo({ top: 0 });
   }
+  function enterApp() { setView('app'); }
   function showIntro() {
-    document.body.dataset.view = 'intro';
-    $('.app').setAttribute('aria-hidden', 'true');
-    $('.intro').removeAttribute('aria-hidden');
-    $('[data-start] .mono').textContent = state.stems.length ? 'CONTINUE' : 'START';
+    setView('intro');
+    $('[data-start-label]').textContent = state.stems.length ? '이어서 고르기' : '직접 고르기';
   }
   $('[data-start]').addEventListener('click', enterApp);
-  $('[data-home]').addEventListener('click', showIntro);
+  $$('[data-home]').forEach(b => b.addEventListener('click', showIntro));
   function uprightCard(card) {
     const m = new DOMMatrix(getComputedStyle($('.ring-spin')).transform);
     const spin = Math.atan2(m.b, m.a) * 180 / Math.PI;
