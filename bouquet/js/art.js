@@ -24,6 +24,51 @@
 
   const f = n => Math.round(n * 10) / 10;
 
+  /* ---------- depth ----------
+     While a flower is being drawn, `defs` collects its gradients: petals darken toward the base and
+     brighten at the tip, round parts get a soft top-left highlight. The whole head then goes through
+     one shared lighting filter (#fl-relief) that reads brightness as height, so petal edges and the
+     cupped centre catch light like a small sculpted model. */
+  let defs = null, gid = 0;
+  function petalFill(c) {
+    if (!defs || c[0] !== '#') return c;
+    const key = 'p' + c;
+    if (!defs.map[key]) {
+      const id = 'pg' + (++gid);
+      defs.map[key] = id;
+      defs.out += `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${dark(c, 0.24)}"/><stop offset=".5" stop-color="${c}"/><stop offset="1" stop-color="${light(c, 0.18)}"/></linearGradient>`;
+    }
+    return `url(#${defs.map[key]})`;
+  }
+  function ballFill(c) {
+    if (!defs || c[0] !== '#') return c;
+    const key = 'b' + c;
+    if (!defs.map[key]) {
+      const id = 'bg' + (++gid);
+      defs.map[key] = id;
+      defs.out += `<radialGradient id="${id}" cx=".36" cy=".32" r=".78"><stop offset="0" stop-color="${light(c, 0.22)}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${dark(c, 0.22)}"/></radialGradient>`;
+    }
+    return `url(#${defs.map[key]})`;
+  }
+  function ensureRelief() {
+    if (document.getElementById('fl-relief')) return;
+    const holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    holder.setAttribute('aria-hidden', 'true');
+    holder.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden');
+    holder.innerHTML =
+      `<filter id="fl-relief" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">` +
+        `<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .3 .59 .11 0 0" result="lum"/>` +
+        `<feComposite in="lum" in2="SourceAlpha" operator="in" result="height"/>` +
+        `<feGaussianBlur in="height" stdDeviation=".9" result="bump"/>` +
+        `<feDiffuseLighting in="bump" surfaceScale="2" diffuseConstant="1" lighting-color="#fff" result="diffuse"><feDistantLight azimuth="225" elevation="64"/></feDiffuseLighting>` +
+        `<feSpecularLighting in="bump" surfaceScale="2" specularConstant=".35" specularExponent="36" lighting-color="#fff" result="spec"><feDistantLight azimuth="225" elevation="36"/></feSpecularLighting>` +
+        `<feComposite in="spec" in2="SourceAlpha" operator="in" result="shine"/>` +
+        `<feComposite in="SourceGraphic" in2="diffuse" operator="arithmetic" k1="1.11" result="lit"/>` +
+        `<feComposite in="lit" in2="shine" operator="arithmetic" k2="1" k3="1"/>` +
+      `</filter>`;
+    (document.body || document.documentElement).prepend(holder);
+  }
+
   /* A petal from the origin to (0,-len), half-width w. pointed 0 = round tip, 1 = sharp tip. */
   function petal(len, w, pointed = 0) {
     const t = 1 - pointed * 0.75;
@@ -35,11 +80,17 @@
     for (let i = 0; i < n; i++) {
       const a = rot + (360 / n) * i + (r ? (r() - 0.5) * jitter : 0);
       const l = len * (r ? 1 - r() * 0.08 : 1);
-      out += `<path d="${petal(l, w, pointed)}" transform="rotate(${f(a)}) translate(0,${-offset})" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-opacity=".55"/>`;
+      const d = petal(l, w, pointed);
+      let p = `<path d="${d}" fill="${petalFill(fill)}" stroke="${stroke}" stroke-width="${sw}" stroke-opacity=".55"/>`;
+      if (defs && w >= 5 && l >= 10) {
+        p += `<path d="M0,${f(-l * 0.1)} Q${f(w * 0.1)},${f(-l * 0.48)} 0,${f(-l * 0.8)}" fill="none" stroke="${light(fill, 0.4)}" stroke-width="${f(Math.max(0.5, w * 0.05))}" stroke-linecap="round" opacity=".5"/>` +
+          `<path d="${petal(l * 0.5, w * 0.4, pointed)}" transform="translate(${f(-w * 0.2)},${f(-l * 0.4)})" fill="#fff" opacity=".14"/>`;
+      }
+      out += `<g transform="rotate(${f(a)}) translate(0,${-offset})">${p}</g>`;
     }
     return out;
   }
-  function circle(cx, cy, r, fill, extra = '') { return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${fill}" ${extra}/>`; }
+  function circle(cx, cy, r, fill, extra = '') { return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${r >= 2.5 ? ballFill(fill) : fill}" ${extra}/>`; }
   function ruffle(r0, amp, n, rand) {
     let d = '';
     for (let i = 0; i <= n; i++) {
@@ -103,7 +154,7 @@
     const cols = [dark(c, 0.16), c, light(c, 0.12), dark(c, 0.06), light(c, 0.22)];
     let s = '';
     [47, 39, 30, 21, 12].forEach((rad, i) => {
-      s += `<path d="${ruffle(rad, 5, 40 - i * 4, r)}" fill="${cols[i]}" stroke="${dark(c, 0.3)}" stroke-width=".6" stroke-opacity=".5" transform="rotate(${r() * 30})"/>`;
+      s += `<path d="${ruffle(rad, 5, 40 - i * 4, r)}" fill="${ballFill(cols[i])}" stroke="${dark(c, 0.3)}" stroke-width=".6" stroke-opacity=".5" transform="rotate(${r() * 30})"/>`;
     });
     return s;
   };
@@ -138,9 +189,9 @@
   shapes.tulip = (c) => {
     const d1 = dark(c, 0.16), d2 = dark(c, 0.32), l1 = light(c, 0.16);
     return `<path d="M-6,46 C-4,30 -2,26 0,22" stroke="#5f7a4a" stroke-width="4" fill="none"/>` +
-      `<path d="M-26,-2 C-30,-30 -20,-44 -12,-48 C-6,-34 -6,-14 -8,4Z" fill="${d1}" stroke="${d2}" stroke-width=".6"/>` +
-      `<path d="M26,-2 C30,-30 20,-44 12,-48 C6,-34 6,-14 8,4Z" fill="${d1}" stroke="${d2}" stroke-width=".6"/>` +
-      `<path d="M0,30 C-22,28 -28,6 -24,-14 C-20,-30 -10,-40 -2,-45 C0,-42 2,-42 4,-45 C12,-40 22,-30 24,-14 C28,6 22,28 0,30Z" fill="${c}" stroke="${d2}" stroke-width=".7" stroke-opacity=".6"/>` +
+      `<path d="M-26,-2 C-30,-30 -20,-44 -12,-48 C-6,-34 -6,-14 -8,4Z" fill="${petalFill(d1)}" stroke="${d2}" stroke-width=".6"/>` +
+      `<path d="M26,-2 C30,-30 20,-44 12,-48 C6,-34 6,-14 8,4Z" fill="${petalFill(d1)}" stroke="${d2}" stroke-width=".6"/>` +
+      `<path d="M0,30 C-22,28 -28,6 -24,-14 C-20,-30 -10,-40 -2,-45 C0,-42 2,-42 4,-45 C12,-40 22,-30 24,-14 C28,6 22,28 0,30Z" fill="${petalFill(c)}" stroke="${d2}" stroke-width=".7" stroke-opacity=".6"/>` +
       `<path d="M0,26 C-3,8 -2,-20 1,-40" stroke="${l1}" stroke-width="2" fill="none" opacity=".8"/>` +
       `<path d="M-16,20 C-24,6 -22,-14 -14,-30" stroke="${d1}" stroke-width="1" fill="none" opacity=".6"/>`;
   };
@@ -206,9 +257,9 @@
 
   shapes.sweetpea = (c, r) => {
     const fl = (x, y, s, rot) => `<g transform="translate(${x},${y}) rotate(${rot}) scale(${s})">` +
-      `<path d="${ruffle(16, 2.4, 22, r)}" fill="${c}" stroke="${dark(c, 0.28)}" stroke-width=".6" transform="translate(0,-6) scale(1.15 0.9)"/>` +
-      `<path d="M-12,4 C-14,14 -2,16 0,8 C2,16 14,14 12,4 C6,0 -6,0 -12,4Z" fill="${dark(c, 0.12)}"/>` +
-      `<path d="M-3,6 C-2,12 2,12 3,6Z" fill="${light(c, 0.3)}"/></g>`;
+      `<path d="${ruffle(16, 2.4, 22, r)}" fill="${petalFill(c)}" stroke="${dark(c, 0.28)}" stroke-width=".6" transform="translate(0,-6) scale(1.15 0.9)"/>` +
+      `<path d="M-12,4 C-14,14 -2,16 0,8 C2,16 14,14 12,4 C6,0 -6,0 -12,4Z" fill="${petalFill(dark(c, 0.12))}"/>` +
+      `<path d="M-3,6 C-2,12 2,12 3,6Z" fill="${petalFill(light(c, 0.3))}"/></g>`;
     return `<path d="M0,46 C0,20 -4,0 -10,-20 M0,24 C8,10 16,-4 20,-14" stroke="#7e9a5a" stroke-width="2" fill="none"/>` +
       fl(-16, -18, 1.05, -15) + fl(18, -12, 0.95, 20) + fl(0, 10, 1.15, 0);
   };
@@ -233,7 +284,7 @@
     for (let i = 0; i < 26; i++) {
       const rad = Math.sqrt(r()) * 36, a = r() * Math.PI * 2;
       const x = Math.cos(a) * rad, y = Math.sin(a) * rad * 0.75 - 10;
-      s += `<rect x="${f(x - 5)}" y="${f(y - 5)}" width="10" height="10" rx="4" fill="${mix(c, '#2b1d1a', r() * 0.15)}" transform="rotate(${f(r() * 90)} ${f(x)} ${f(y)})"/>`;
+      s += `<rect x="${f(x - 5)}" y="${f(y - 5)}" width="10" height="10" rx="4" fill="${ballFill(mix(c, '#2b1d1a', r() * 0.15))}" transform="rotate(${f(r() * 90)} ${f(x)} ${f(y)})"/>`;
       if (i % 2) s += circle(x, y, 1.6, '#fbf7ee');
     }
     return s;
@@ -252,7 +303,7 @@
   shapes.gomphrena = (c, r) => {
     let s = `<path d="M0,44 C0,20 -10,0 -18,-14 M0,30 C6,10 16,0 20,-12 M0,20 C0,0 2,-14 2,-26" stroke="#6f8a50" stroke-width="1.6" fill="none"/>`;
     [[-18, -18, 1], [20, -16, 0.9], [2, -30, 1.05], [-6, 0, 0.85], [14, 4, 0.8]].forEach(([x, y, k]) => {
-      s += `<g transform="translate(${x},${y}) scale(${k})"><ellipse rx="10" ry="11" fill="${c}"/>`;
+      s += `<g transform="translate(${x},${y}) scale(${k})"><ellipse rx="10" ry="11" fill="${ballFill(c)}"/>`;
       for (let i = 0; i < 9; i++) {
         s += `<path d="M${f(-6 + (i % 3) * 6)},${f(-7 + Math.floor(i / 3) * 6)} q2,-2 4,0" stroke="${dark(c, 0.25)}" stroke-width=".8" fill="none"/>`;
       }
@@ -274,7 +325,7 @@
     let s = `<path d="M0,0 L0,-112" stroke="#5f7a4a" stroke-width="3"/>`;
     for (let i = 0; i < 11; i++) {
       const t = i / 10, y = -28 - t * 84, size = 1.05 - t * 0.6, x = (i % 2 ? 7 : -7) * (1 - t * 0.6);
-      if (t > 0.8) { s += `<ellipse cx="${f(x * 0.5)}" cy="${f(y)}" rx="${f(4 * size + 1)}" ry="${f(5 * size + 1.5)}" fill="${dark(c, 0.08)}"/>`; continue; }
+      if (t > 0.8) { s += `<ellipse cx="${f(x * 0.5)}" cy="${f(y)}" rx="${f(4 * size + 1)}" ry="${f(5 * size + 1.5)}" fill="${ballFill(dark(c, 0.08))}"/>`; continue; }
       s += `<g transform="translate(${f(x)},${f(y)}) scale(${f(size)}) rotate(${f(r() * 72)})">${ring(5, 12, 7.4, mix(c, '#ffffff', r() * 0.15), { sw: 0.5 })}${circle(0, 0, 3.2, lum(c) > 0.8 ? '#3d4a7a' : '#f4f2ea')}</g>`;
     }
     return s;
@@ -284,7 +335,7 @@
     let s = `<path d="M0,0 L0,-110" stroke="#6d8a54" stroke-width="3.4"/>`;
     for (let i = 0; i < 12; i++) {
       const t = i / 11, y = -26 - t * 84, rad = 13 - t * 7, x = (i % 2 ? 6 : -6) * (1 - t * 0.5);
-      s += `<path d="${ruffle(rad, 2.4, 16, r)}" transform="translate(${f(x)},${f(y)})" fill="${i % 3 ? c : light(c, 0.14)}" stroke="${dark(c, 0.3)}" stroke-width=".5"/>`;
+      s += `<path d="${ruffle(rad, 2.4, 16, r)}" transform="translate(${f(x)},${f(y)})" fill="${ballFill(i % 3 ? c : light(c, 0.14))}" stroke="${dark(c, 0.3)}" stroke-width=".5"/>`;
       s += circle(x, y, 2, dark(c, 0.18));
     }
     return s;
@@ -293,8 +344,8 @@
   shapes.calla = (c) => {
     const d1 = dark(c, 0.18), inside = lum(c) > 0.75 ? '#f3efd8' : light(c, 0.2);
     return `<path d="M0,0 C0,-14 1,-30 2,-44" stroke="#5f7a4a" stroke-width="5" fill="none" stroke-linecap="round"/>` +
-      `<path d="M2,-42 C-14,-58 -18,-92 -10,-112 C-2,-104 16,-98 22,-82 C26,-70 14,-52 2,-42Z" fill="${c}" stroke="${d1}" stroke-width=".8"/>` +
-      `<path d="M-10,-112 C-2,-104 16,-98 22,-82 C10,-90 -2,-100 -10,-112Z" fill="${inside}"/>` +
+      `<path d="M2,-42 C-14,-58 -18,-92 -10,-112 C-2,-104 16,-98 22,-82 C26,-70 14,-52 2,-42Z" fill="${petalFill(c)}" stroke="${d1}" stroke-width=".8"/>` +
+      `<path d="M-10,-112 C-2,-104 16,-98 22,-82 C10,-90 -2,-100 -10,-112Z" fill="${petalFill(inside)}"/>` +
       `<path d="M2,-48 C2,-62 4,-76 6,-86" stroke="#e9c443" stroke-width="3.6" stroke-linecap="round" fill="none"/>` +
       `<path d="M-6,-60 C-10,-80 -10,-96 -8,-106" stroke="${d1}" stroke-width="1" fill="none" opacity=".6"/>`;
   };
@@ -314,7 +365,7 @@
     let s = `<path d="M0,0 C1,-50 -2,-100 2,-156" stroke="${dark(c, 0.1)}" stroke-width="1.8" fill="none"/>`;
     for (let i = 0; i < 12; i++) {
       const t = i / 11, y = -16 - t * 136, side = i % 2 ? 1 : -1, len = 26 - t * 10;
-      s += `<path d="${petal(len, 6.5, 1)}" transform="translate(${f(side * 1)},${f(y)}) rotate(${side * (52 + r() * 10)})" fill="${mix(c, '#ffffff', r() * 0.1)}" stroke="${dark(c, 0.25)}" stroke-width=".5"/>`;
+      s += `<path d="${petal(len, 6.5, 1)}" transform="translate(${f(side * 1)},${f(y)}) rotate(${side * (52 + r() * 10)})" fill="${petalFill(mix(c, '#ffffff', r() * 0.1))}" stroke="${dark(c, 0.25)}" stroke-width=".5"/>`;
     }
     return s;
   };
@@ -324,7 +375,7 @@
     for (let i = 0; i < 7; i++) {
       const t = i / 6, y = -22 - t * 126, side = i % 2 ? 1 : -1, len = 36 - t * 12;
       const rot = side * (48 + r() * 14);
-      s += `<g transform="translate(0,${f(y)}) rotate(${f(rot)})"><path d="${petal(len, len * 0.42, 0.6)}" fill="${mix(c, '#ffffff', r() * 0.1)}" stroke="${dark(c, 0.3)}" stroke-width=".6"/>` +
+      s += `<g transform="translate(0,${f(y)}) rotate(${f(rot)})"><path d="${petal(len, len * 0.42, 0.6)}" fill="${petalFill(mix(c, '#ffffff', r() * 0.1))}" stroke="${dark(c, 0.3)}" stroke-width=".6"/>` +
         `<path d="M0,0 L0,${f(-len * 0.92)}" stroke="${light(c, 0.25)}" stroke-width=".9"/></g>`;
     }
     return s;
@@ -348,8 +399,12 @@
 
   function flowerSVG(flower, colorHex) {
     const draw = shapes[flower.shape] || shapes.daisy;
+    ensureRelief();
+    defs = { out: '', map: {} };
     const body = draw(colorHex, rng(flower.id + colorHex));
-    return `<svg viewBox="${VIEWBOX[flower.art] || VIEWBOX.head}" overflow="visible" aria-hidden="true">${body}</svg>`;
+    const extra = defs.out;
+    defs = null;
+    return `<svg viewBox="${VIEWBOX[flower.art] || VIEWBOX.head}" overflow="visible" aria-hidden="true"><defs>${extra}</defs><g filter="url(#fl-relief)">${body}</g></svg>`;
   }
 
   /* ---------- wrapping paper (coordinates relative to the binding point) ---------- */
@@ -381,7 +436,8 @@
     const id = 'pp' + (++uid), W = g.R + 64, T = g.top - 34;
     const sheet = (rot, shade) => `<g transform="rotate(${rot})"><path d="M-14,8 L${f(-W * 0.92)},${f(T * 0.58)} L${f(-W * 0.18)},${f(T)} L${f(W * 0.62)},${f(T * 0.8)} L14,8Z" ${paperFill(wrap, id, shade)} stroke="${edge(wrap)}" stroke-width=".8" stroke-linejoin="round"/>` +
       `<path d="M0,6 L${f(-W * 0.18)},${f(T)}" stroke="${edge(wrap)}" stroke-width=".7" opacity=".45"/></g>`;
-    return `<defs>${paperDefs(wrap, id)}</defs>` + sheet(-14, 0.1) + sheet(13, 0.04);
+    ensureRelief();
+    return `<defs>${paperDefs(wrap, id)}</defs><g filter="url(#fl-relief)">` + sheet(-14, 0.1) + sheet(13, 0.04) + '</g>';
   }
 
   function wrapFront(wrap, g) {
@@ -393,16 +449,23 @@
       `C${-neck - 6},-6 ${f(-w * 0.7)},${f(y * 0.45)} ${f(-w)},${f(y)}Z`;
     const flap = `M${f(w)},${f(y)} C${f(w * 0.3)},${f(y + sag * 0.8)} ${f(-w * 0.2)},${f(y * 0.5)} -2,2 L-${skirt - 6},${bottom} L${skirt},${bottom} L${neck},2 C${neck + 6},-6 ${f(w * 0.7)},${f(y * 0.45)} ${f(w)},${f(y)}Z`;
     const crease = (x1, y1) => `<path d="M${f(x1)},${f(y1)} L0,0" stroke="${edge(wrap)}" stroke-width=".8" opacity=".5" fill="none"/>`;
-    return `<defs>${paperDefs(wrap, id)}</defs>` +
+    ensureRelief();
+    return `<defs>${paperDefs(wrap, id)}</defs><g filter="url(#fl-relief)">` +
       `<path d="${body}" ${paperFill(wrap, id, 0.02)} stroke="${edge(wrap)}" stroke-width=".9" stroke-linejoin="round"/>` +
       crease(-w * 0.45, y + sag * 0.7) +
       `<path d="${flap}" ${paperFill(wrap, id, 0)} stroke="${edge(wrap)}" stroke-width=".9" stroke-linejoin="round"/>` +
       `<path d="M${f(w)},${f(y)} C${f(w * 0.3)},${f(y + sag * 0.8)} ${f(-w * 0.2)},${f(y * 0.5)} -2,2" stroke="${wrap.style === 'sheer' ? '#ffffff' : light(wrap.hex, 0.35)}" stroke-width="1.4" fill="none" opacity=".7"/>` +
-      crease(w * 0.5, y + 6);
+      crease(w * 0.5, y + 6) + '</g>';
   }
 
   /* ---------- ribbon at the binding point ---------- */
   function ribbonSVG(ribbon, wrapped) {
+    const out = ribbonBody(ribbon, wrapped);
+    if (!out) return '';
+    ensureRelief();
+    return `<g filter="url(#fl-relief)">${out}</g>`;
+  }
+  function ribbonBody(ribbon, wrapped) {
     if (!ribbon) {
       // no ribbon: plain florist's tape around the stems
       return wrapped ? '' : `<rect x="-11" y="-4" width="22" height="9" rx="3" fill="#7d8a55"/><path d="M-11,0 L11,-2" stroke="#93a067" stroke-width="1"/>`;

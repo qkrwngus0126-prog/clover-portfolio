@@ -194,6 +194,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .scene-bouquet { position: absolute; inset: 0; z-index: 1; }
 .stage { position: absolute; inset: 92px 0 0; touch-action: none; cursor: grab; }
 .bq { overflow: hidden; }
+.bq-live { perspective: 1400px; }
 .stamp-art, .final-bouquet, .rec-art { position: relative; }
 .bq-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .bq-stalks { position: absolute; inset: 0; z-index: 1; }
@@ -538,14 +539,15 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 /* ---------- toast ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 28px; z-index: 50; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px);
-  padding: 10px 10px 10px 20px; border-radius: 999px;
+  display: flex; align-items: center; gap: 14px; width: max-content; max-width: calc(100% - 32px);
+  padding: 10px 10px 10px 20px; border-radius: 24px;
   background: var(--ink); color: #fff; font-size: 14px;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .4);
 }
 .toast.is-in { animation: toast-in .35s var(--ease); }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 10px); } }
-.toast-action { padding: 6px 14px; border-radius: 999px; color: #BFE0CB; font-weight: 600; }
+.toast-text { min-width: 0; line-height: 1.45; }
+.toast-action { flex: none; padding: 6px 14px; border-radius: 999px; color: #BFE0CB; font-weight: 600; }
 .toast-action:hover { background: rgba(255, 255, 255, .1); }
 .toast-action[hidden] { display: none; }
 .toast:not(:has(.toast-action:not([hidden]))) { padding-right: 20px; }

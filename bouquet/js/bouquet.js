@@ -123,6 +123,7 @@
       this.cam = { s: 1, cy: BY - LC, ts: 1, tcy: BY - LC };
 
       el.classList.add('bq');
+      if (this.interactive) el.classList.add('bq-live');
       el.innerHTML =
         `<div class="bq-world" style="width:${WORLD_W}px;height:${WORLD_H}px">` +
           `<div class="bq-shadow" style="left:${BX}px;top:${BY + 150}px"></div>` +
@@ -288,7 +289,9 @@
       cam.s += (cam.ts - cam.s) * (settle ? 1 : ease(0.06));
       cam.cy += (cam.tcy - cam.cy) * (settle ? 1 : ease(0.06));
       const s = (this.base || 1) * cam.s;
-      this.world.style.transform = `translate(${this.vw / 2 - BX * s}px, ${this.vh / 2 - cam.cy * s}px) scale(${s})`;
+      // the whole bunch turns a few degrees toward the pointer, like holding it up and tilting it in the hand
+      const tilt = this.interactive ? `translate(${BX}px, ${cam.cy}px) rotateY(${(P.sx * 9).toFixed(2)}deg) rotateX(${(-P.sy * 5).toFixed(2)}deg) translate(${-BX}px, ${-cam.cy}px)` : '';
+      this.world.style.transform = `translate(${this.vw / 2 - BX * s}px, ${this.vh / 2 - cam.cy * s}px) scale(${s}) ${tilt}`;
 
       const T = P.sx * 7;
       const breathe = settle ? 0 : 0.55;
