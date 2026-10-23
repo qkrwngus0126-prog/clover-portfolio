@@ -88,45 +88,46 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .link:hover { color: var(--ink); }
 
 /* ---------- intro ---------- */
-.intro {
-  --r: min(40vmin, 410px);
-  --card: clamp(52px, 7.2vmin, 88px);
-  position: relative; min-height: 100svh; overflow: hidden;
-  display: grid; place-items: center;
+.intro { position: relative; min-height: 100svh; overflow: hidden; display: grid; place-items: center; }
+.field { position: absolute; inset: 0; }
+/* four layers so each motion owns its transform: parallax, drift, pop-in, then the 3D tilt and flip */
+.tile {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-50%, -50%) translate3d(calc(var(--px, 0) * var(--d) * -38px), calc(var(--py, 0) * var(--d) * -26px), 0);
+  transition: transform 1.4s var(--ease);
 }
-.ring { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-.ring-spin { position: absolute; inset: 0; animation: spin 160s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.ring-card {
-  position: absolute; left: 0; top: 0; width: var(--card); height: calc(var(--card) * 1.3);
-  transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--r) * -1));
+.tile.is-far { pointer-events: none; }
+.tile-float { display: block; opacity: calc(.4 + var(--d) * .6); animation: drift var(--dur) ease-in-out var(--delay) infinite; }
+@keyframes drift { 50% { transform: translateY(calc(-6px - var(--d) * 14px)) rotate(4deg); } }
+.tile-pop { display: block; animation: card-pop .9s var(--ease) both; animation-delay: calc(var(--i) * 22ms + .1s); }
+@keyframes card-pop { from { opacity: 0; transform: scale(.5); } }
+.tile-3d {
+  position: relative; display: block; width: var(--w); height: calc(var(--w) * 1.28);
+  transform-style: preserve-3d;
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
+  transition: transform .7s cubic-bezier(.3, 1.3, .5, 1);
 }
-.ring-spin:has(.ring-card:hover), .ring-spin:has(.is-flipped) { animation-play-state: paused; }
-/* three layers so each motion owns its transform: pop plays once on load, flip follows hover/tap */
-.ring-pop { display: block; width: 100%; height: 100%; perspective: 600px; animation: card-pop .7s var(--ease) both; animation-delay: calc(var(--i) * 35ms + .1s); }
-@keyframes card-pop { from { opacity: 0; transform: scale(.4) rotate(-12deg); } }
-.ring-flip { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.4, .5, 1); }
-/* --up turns the card upright first, so the meaning never reads upside down at the bottom of the ring */
-.ring-card:hover .ring-flip, .ring-card.is-flipped .ring-flip { transform: rotate(var(--up, 0deg)) scale(1.35) rotateY(180deg); }
-.ring-card:hover, .ring-card.is-flipped { z-index: 2; }
-.ring-front, .ring-back {
-  position: absolute; inset: 0; border-radius: 7px;
+.tile.is-far .tile-3d { filter: blur(var(--blur)); }
+.tile:hover, .tile.is-flipped { z-index: 200 !important; }
+.tile:hover .tile-3d, .tile.is-flipped .tile-3d { transform: perspective(700px) rotateY(180deg) scale(1.4); }
+.tile-front, .tile-back {
+  position: absolute; inset: 0; border-radius: 10px; background: #fff;
   -webkit-backface-visibility: hidden; backface-visibility: hidden;
-  box-shadow: 0 1px 1px rgba(30, 30, 60, .08), 0 6px 14px -6px rgba(30, 30, 60, .28);
+  /* stacked edges give the card a little thickness, like a small block */
+  box-shadow: 0 1px 0 #EFEFEC, 0 2px 0 #E8E8E4, 0 3px 0 #E1E1DC, 0 4px 0 #DADAD5, 0 5px 0 #D3D3CE, 0 16px 24px -10px rgba(30, 30, 50, .3);
 }
-.ring-front { padding: 14% 10%; background: #fff; }
-.ring-front .art { filter: drop-shadow(0 2px 2px rgba(40, 30, 30, .18)); }
-.ring-back {
+.tile-front { padding: 14% 12%; }
+.tile-back {
   display: flex; flex-direction: column; justify-content: space-between;
-  padding: 9% 9% 8%; background: #fff; text-align: left; transform: rotateY(180deg);
-  font-size: calc(var(--card) * 0.13); line-height: 1.35; letter-spacing: -0.01em;
+  padding: 9% 9% 8%; text-align: left; transform: rotateY(180deg);
+  font-size: calc(var(--w) * 0.13); line-height: 1.35; letter-spacing: -0.01em;
 }
-.ring-back .mono { display: flex; justify-content: space-between; align-items: center; font-size: .72em; color: var(--faint); letter-spacing: 0.04em; }
-.ring-back .mono i { width: .9em; height: .9em; border-radius: 50%; background: var(--dot); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); }
-.ring-back b { display: block; font-weight: 700; font-size: 1.1em; }
-.ring-back em { display: block; margin-top: .2em; font-family: var(--serif); font-style: normal; color: var(--ink-2); letter-spacing: 0; }
-.ring-back small { font-family: var(--mono); font-size: .62em; letter-spacing: 0.1em; color: var(--accent); }
-.intro-center { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 24px; }
+.tile-back .mono { display: flex; justify-content: space-between; align-items: center; font-size: .72em; color: var(--faint); letter-spacing: 0.04em; }
+.tile-back .mono i { width: .9em; height: .9em; border-radius: 50%; background: var(--dot); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); }
+.tile-back b { display: block; font-weight: 700; font-size: 1.1em; }
+.tile-back em { display: block; margin-top: .2em; font-family: var(--serif); font-style: normal; color: var(--ink-2); letter-spacing: 0; }
+.tile-back small { font-family: var(--mono); font-size: .62em; letter-spacing: 0.1em; color: var(--accent); }
+.intro-center { position: relative; z-index: 30; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 24px; }
 .intro-kicker { font-size: 11px; letter-spacing: 0.24em; color: var(--muted); }
 .intro-title { margin: 6px 0 4px; font-size: clamp(76px, 13vmin, 156px); line-height: .95; animation: rise .9s var(--ease) both .15s; }
 .intro-sub { font-size: 15px; color: var(--ink-2); margin-bottom: 28px; }
@@ -143,7 +144,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .path::after { content: ""; width: 6px; height: 6px; margin-left: 2px; border: solid currentColor; border-width: 1.3px 1.3px 0 0; transform: rotate(45deg); }
 .path:hover { background: rgba(255, 255, 255, .92); border-color: var(--ink); }
 .path:active { transform: scale(.97); }
-.intro-foot { position: absolute; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 11px; letter-spacing: 0.16em; color: var(--muted); white-space: pre; }
+.intro-foot { z-index: 30; position: absolute; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 11px; letter-spacing: 0.16em; color: var(--muted); white-space: pre; }
 
 /* ---------- the app sheet ---------- */
 .app {
@@ -547,8 +548,6 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 
 /* ---------- phones & tablets ---------- */
 @media (max-width: 899px) {
-  .intro { --r: min(44vmin, 300px); --card: clamp(44px, 12vmin, 64px); }
-  @media (orientation: portrait) { .intro { --r: 62vw; --card: 58px; } }
   .intro-title { font-size: clamp(60px, 17vmin, 96px); }
   .intro-sub { font-size: 14px; margin-bottom: 22px; }
   .intro-kicker { font-size: 10px; }
