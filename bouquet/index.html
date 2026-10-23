@@ -15,24 +15,22 @@
 </head>
 <body data-view="intro">
 
-<!-- 첫 화면: 작업대에서 꽃다발을 엮는 사람 사진 한 장과 이름 -->
+<!-- 첫 화면: 연필로 그린 꽃집 한 채, 꽃에만 색. 왼쪽 문은 직접 고르기, 오른쪽 문은 추천 받기 -->
 <section class="intro" aria-labelledby="intro-title">
-  <header class="intro-top mono">
-    <span>BUILD YOUR OWN BOUQUET</span>
-    <span class="intro-foot"></span>
-  </header>
-  <figure class="intro-photo">
-    <img src="images/intro.webp" width="642" height="760" alt="작업대에 앉아 크라프트지로 감싼 꽃다발에 리본을 묶는 사람" fetchpriority="high">
-  </figure>
-  <div class="intro-bottom">
-    <div class="intro-copy">
-      <h1 class="wordmark intro-title" id="intro-title" data-name>Fl.own</h1>
-      <p class="intro-sub" data-tagline></p>
+  <h1 class="sr-only" id="intro-title"><span data-name>Fl.own</span> · <span data-tagline></span></h1>
+  <div class="intro-scene">
+    <div class="shop">
+      <img class="shop-art" src="images/intro.webp" width="1672" height="941" alt="연필로 그린 작은 꽃집. 문 옆 양동이 세 개와 창가 화분에만 색이 있는 꽃이 담겨 있고, 문 앞에 고양이가 앉아 있어요." fetchpriority="high">
+      <img class="cloud cloud-1" src="images/intro-cloud-1.png" width="304" height="118" alt="">
+      <img class="cloud cloud-2" src="images/intro-cloud-2.png" width="328" height="136" alt="">
+      <button type="button" class="door door-l" data-start><span class="sr-only" data-start-label>직접 고르기</span></button>
+      <button type="button" class="door door-r" data-open-quiz><span class="sr-only">추천 받기</span></button>
     </div>
-    <div class="intro-paths">
-      <button type="button" class="path" data-start><span class="path-icon" data-icon="rose:pink"></span><span class="path-text"><span class="mono">01 · PICK</span><b data-start-label>직접 고르기</b></span></button>
-      <button type="button" class="path" data-open-quiz><span class="path-icon" data-icon="ranunculus:peach"></span><span class="path-text"><span class="mono">02 · FIND</span><b>추천 받기</b></span></button>
-    </div>
+  </div>
+  <!-- 휴대폰에서는 문 팻말 글씨가 작아서 아래에 버튼을 한 번 더 둬요 -->
+  <div class="intro-paths">
+    <button type="button" class="path" data-start><span class="path-icon" data-icon="rose:pink"></span><span class="path-text"><span class="mono">01 · PICK</span><b data-start-label>직접 고르기</b></span></button>
+    <button type="button" class="path" data-open-quiz><span class="path-icon" data-icon="ranunculus:peach"></span><span class="path-text"><span class="mono">02 · FIND</span><b>추천 받기</b></span></button>
   </div>
 </section>
 

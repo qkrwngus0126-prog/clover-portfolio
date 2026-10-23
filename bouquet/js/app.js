@@ -594,7 +594,6 @@
     const [f, c] = el.dataset.icon.split(':');
     if (flowersById[f]) el.innerHTML = artHTML(flowersById[f], c);
   });
-  $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
 
   function setView(name) {
     document.body.dataset.view = name;
@@ -608,9 +607,9 @@
   function enterApp() { setView('app'); }
   function showIntro() {
     setView('intro');
-    $('[data-start-label]').textContent = state.stems.length ? '이어서 고르기' : '직접 고르기';
+    $$('[data-start-label]').forEach(el => { el.textContent = state.stems.length ? '이어서 고르기' : '직접 고르기'; });
   }
-  $('[data-start]').addEventListener('click', enterApp);
+  $$('[data-start]').forEach(b => b.addEventListener('click', enterApp));
   $$('[data-home]').forEach(b => b.addEventListener('click', showIntro));
   /* ---------- start ---------- */
   renderSegment();
