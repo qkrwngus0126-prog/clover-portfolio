@@ -99,7 +99,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 /* the photo is centred on the whole screen, not on the space left over by the words */
 .intro-photo img {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%);
-  display: block; width: auto; height: min(54vh, 500px);
+  display: block; width: auto; height: min(46vh, 430px);
   /* fade the edges so the floor shadow never ends in a straight line */
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 93%, transparent);
   -webkit-mask-composite: source-in;
@@ -540,7 +540,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   .intro-top { font-size: 10px; letter-spacing: 0.16em; }
   .intro-foot { display: none; }
   .intro-photo { position: relative; height: 100%; }
-  .intro-photo img { height: min(100%, 400px); max-width: 100%; object-fit: contain; transform: translate(-50%, -50%); }
+  .intro-photo img { height: min(100%, 340px); max-width: 100%; object-fit: contain; transform: translate(-50%, -50%); }
   @keyframes photo-in { from { opacity: 0; transform: translate(-50%, -48%) scale(.985); } }
   .intro-bottom { flex-direction: column; align-items: stretch; gap: 18px; }
   .intro-title { font-size: clamp(56px, 16vw, 80px); }
