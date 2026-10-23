@@ -18,6 +18,10 @@
 <!-- 첫 화면: 연필로 그린 꽃집 한 채, 꽃에만 색. 왼쪽 문은 직접 고르기, 오른쪽 문은 추천 받기 -->
 <section class="intro" aria-labelledby="intro-title">
   <h1 class="sr-only" id="intro-title"><span data-name>Fl.own</span> · <span data-tagline></span></h1>
+  <header class="intro-top" aria-hidden="true">
+    <span class="wordmark" data-name>Fl.own</span>
+    <span class="intro-foot mono"></span>
+  </header>
   <div class="intro-scene">
     <div class="shop">
       <!-- 세로로 긴 화면(휴대폰)은 세로 그림, 나머지는 가로 그림 -->
@@ -31,8 +35,9 @@
       <img class="cloud cloud-4 wide-only" src="images/intro-cloud-4.png" width="151" height="75" alt="">
       <img class="cloud cloud-t1 tall-only" src="images/intro-tall-cloud-1.png" width="315" height="124" alt="">
       <img class="cloud cloud-t2 tall-only" src="images/intro-tall-cloud-2.png" width="296" height="122" alt="">
-      <button type="button" class="door door-l" data-start><span class="sr-only" data-start-label>직접 고르기</span></button>
-      <button type="button" class="door door-r" data-open-quiz><span class="sr-only">추천 받기</span></button>
+      <!-- 문짝 하나가 버튼 하나. 팻말 글씨는 그림이 아닌 진짜 글자라 어떤 화면에서도 또렷해요 -->
+      <button type="button" class="door door-l" data-start><span class="leaf"><span class="door-sign"><span class="mono">01 · PICK</span><b data-start-label>직접 고르기</b></span></span></button>
+      <button type="button" class="door door-r" data-open-quiz><span class="leaf"><span class="door-sign"><span class="mono">02 · FIND</span><b>추천 받기</b></span></span></button>
     </div>
   </div>
   <!-- 휴대폰에서는 문 팻말 글씨가 작아서 그림 아래쪽 길 위에 버튼을 한 번 더 둬요 -->

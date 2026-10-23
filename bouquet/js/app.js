@@ -594,6 +594,7 @@
     const [f, c] = el.dataset.icon.split(':');
     if (flowersById[f]) el.innerHTML = artHTML(flowersById[f], c);
   });
+  $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
 
   function setView(name) {
     document.body.dataset.view = name;
