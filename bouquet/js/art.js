@@ -24,49 +24,39 @@
 
   const f = n => Math.round(n * 10) / 10;
 
-  /* ---------- depth ----------
-     While a flower is being drawn, `defs` collects its gradients: petals darken toward the base and
-     brighten at the tip, round parts get a soft top-left highlight. The whole head then goes through
-     one shared lighting filter (#fl-relief) that reads brightness as height, so petal edges and the
-     cupped centre catch light like a small sculpted model. */
-  let defs = null, gid = 0;
-  function petalFill(c) {
-    if (!defs || c[0] !== '#') return c;
-    const key = 'p' + c;
-    if (!defs.map[key]) {
-      const id = 'pg' + (++gid);
-      defs.map[key] = id;
-      defs.out += `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${dark(c, 0.24)}"/><stop offset=".5" stop-color="${c}"/><stop offset="1" stop-color="${light(c, 0.18)}"/></linearGradient>`;
-    }
-    return `url(#${defs.map[key]})`;
-  }
-  function ballFill(c) {
-    if (!defs || c[0] !== '#') return c;
-    const key = 'b' + c;
-    if (!defs.map[key]) {
-      const id = 'bg' + (++gid);
-      defs.map[key] = id;
-      defs.out += `<radialGradient id="${id}" cx=".36" cy=".32" r=".78"><stop offset="0" stop-color="${light(c, 0.22)}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${dark(c, 0.22)}"/></radialGradient>`;
-    }
-    return `url(#${defs.map[key]})`;
-  }
-  function ensureRelief() {
-    if (document.getElementById('fl-relief')) return;
+  /* ---------- paint ----------
+     Flat colours, painted like watercolour with a pencil line on top: the shapes go through one shared
+     wash filter (#fl-wash) that roughens the edges, leaves the colour uneven and darkens the rim where
+     the paint dried. A second copy of the same shapes, filled white and multiplied over the wash, keeps
+     only the outlines that are really in view. */
+  let drawing = false;
+  function petalFill(c) { return c; }
+  function ballFill(c) { return c; }
+  function ensurePaint() {
+    if (document.getElementById('fl-wash')) return;
     const holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     holder.setAttribute('aria-hidden', 'true');
     holder.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden');
     holder.innerHTML =
-      `<filter id="fl-relief" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">` +
-        `<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .3 .59 .11 0 0" result="lum"/>` +
-        `<feComposite in="lum" in2="SourceAlpha" operator="in" result="height"/>` +
-        `<feGaussianBlur in="height" stdDeviation=".9" result="bump"/>` +
-        `<feDiffuseLighting in="bump" surfaceScale="2" diffuseConstant="1" lighting-color="#fff" result="diffuse"><feDistantLight azimuth="225" elevation="64"/></feDiffuseLighting>` +
-        `<feSpecularLighting in="bump" surfaceScale="2" specularConstant=".35" specularExponent="36" lighting-color="#fff" result="spec"><feDistantLight azimuth="225" elevation="36"/></feSpecularLighting>` +
-        `<feComposite in="spec" in2="SourceAlpha" operator="in" result="shine"/>` +
-        `<feComposite in="SourceGraphic" in2="diffuse" operator="arithmetic" k1="1.11" result="lit"/>` +
-        `<feComposite in="lit" in2="shine" operator="arithmetic" k2="1" k3="1"/>` +
+      `<style>.fl-line{mix-blend-mode:multiply;opacity:.85}.fl-line *{fill:#fff!important}` +
+        `.fl-line path,.fl-line circle,.fl-line ellipse{stroke:#5a5a5a;stroke-width:1.1;stroke-linejoin:round}</style>` +
+      `<filter id="fl-wash" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">` +
+        `<feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="3" seed="2" result="n1"/>` +
+        `<feDisplacementMap in="SourceGraphic" in2="n1" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>` +
+        `<feTurbulence type="fractalNoise" baseFrequency=".08" numOctaves="2" seed="7" result="n2"/>` +
+        `<feColorMatrix in="n2" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -1.1 0 0 0 1.35" result="wash"/>` +
+        `<feComposite in="d" in2="wash" operator="in" result="washed"/>` +
+        `<feMorphology in="d" operator="erode" radius="1.3" result="er"/>` +
+        `<feComposite in="d" in2="er" operator="out" result="edge"/>` +
+        `<feColorMatrix in="edge" type="matrix" values=".72 0 0 0 0  0 .72 0 0 0  0 0 .72 0 0  0 0 0 .8 0" result="edgeD"/>` +
+        `<feMerge result="m"><feMergeNode in="washed"/><feMergeNode in="edgeD"/></feMerge>` +
+        `<feComponentTransfer in="m"><feFuncA type="linear" slope=".9"/></feComponentTransfer>` +
       `</filter>`;
     (document.body || document.documentElement).prepend(holder);
+  }
+  function paint(body) {
+    ensurePaint();
+    return `<g filter="url(#fl-wash)">${body}</g><g class="fl-line">${body}</g>`;
   }
 
   /* A petal from the origin to (0,-len), half-width w. pointed 0 = round tip, 1 = sharp tip. */
@@ -82,7 +72,7 @@
       const l = len * (r ? 1 - r() * 0.08 : 1);
       const d = petal(l, w, pointed);
       let p = `<path d="${d}" fill="${petalFill(fill)}" stroke="${stroke}" stroke-width="${sw}" stroke-opacity=".55"/>`;
-      if (defs && w >= 5 && l >= 10) {
+      if (drawing && w >= 5 && l >= 10) {
         p += `<path d="M0,${f(-l * 0.1)} Q${f(w * 0.1)},${f(-l * 0.48)} 0,${f(-l * 0.8)}" fill="none" stroke="${light(fill, 0.4)}" stroke-width="${f(Math.max(0.5, w * 0.05))}" stroke-linecap="round" opacity=".5"/>` +
           `<path d="${petal(l * 0.5, w * 0.4, pointed)}" transform="translate(${f(-w * 0.2)},${f(-l * 0.4)})" fill="#fff" opacity=".14"/>`;
       }
@@ -399,12 +389,10 @@
 
   function flowerSVG(flower, colorHex) {
     const draw = shapes[flower.shape] || shapes.daisy;
-    ensureRelief();
-    defs = { out: '', map: {} };
+    drawing = true;
     const body = draw(colorHex, rng(flower.id + colorHex));
-    const extra = defs.out;
-    defs = null;
-    return `<svg viewBox="${VIEWBOX[flower.art] || VIEWBOX.head}" overflow="visible" aria-hidden="true"><defs>${extra}</defs><g filter="url(#fl-relief)">${body}</g></svg>`;
+    drawing = false;
+    return `<svg viewBox="${VIEWBOX[flower.art] || VIEWBOX.head}" overflow="visible" aria-hidden="true">${paint(body)}</svg>`;
   }
 
   /* ---------- wrapping paper (coordinates relative to the binding point) ---------- */
@@ -436,8 +424,7 @@
     const id = 'pp' + (++uid), W = g.R + 64, T = g.top - 34;
     const sheet = (rot, shade) => `<g transform="rotate(${rot})"><path d="M-14,8 L${f(-W * 0.92)},${f(T * 0.58)} L${f(-W * 0.18)},${f(T)} L${f(W * 0.62)},${f(T * 0.8)} L14,8Z" ${paperFill(wrap, id, shade)} stroke="${edge(wrap)}" stroke-width=".8" stroke-linejoin="round"/>` +
       `<path d="M0,6 L${f(-W * 0.18)},${f(T)}" stroke="${edge(wrap)}" stroke-width=".7" opacity=".45"/></g>`;
-    ensureRelief();
-    return `<defs>${paperDefs(wrap, id)}</defs><g filter="url(#fl-relief)">` + sheet(-14, 0.1) + sheet(13, 0.04) + '</g>';
+    return `<defs>${paperDefs(wrap, id)}</defs>` + paint(sheet(-14, 0.1) + sheet(13, 0.04));
   }
 
   function wrapFront(wrap, g) {
@@ -449,21 +436,19 @@
       `C${-neck - 6},-6 ${f(-w * 0.7)},${f(y * 0.45)} ${f(-w)},${f(y)}Z`;
     const flap = `M${f(w)},${f(y)} C${f(w * 0.3)},${f(y + sag * 0.8)} ${f(-w * 0.2)},${f(y * 0.5)} -2,2 L-${skirt - 6},${bottom} L${skirt},${bottom} L${neck},2 C${neck + 6},-6 ${f(w * 0.7)},${f(y * 0.45)} ${f(w)},${f(y)}Z`;
     const crease = (x1, y1) => `<path d="M${f(x1)},${f(y1)} L0,0" stroke="${edge(wrap)}" stroke-width=".8" opacity=".5" fill="none"/>`;
-    ensureRelief();
-    return `<defs>${paperDefs(wrap, id)}</defs><g filter="url(#fl-relief)">` +
+    return `<defs>${paperDefs(wrap, id)}</defs>` + paint(
       `<path d="${body}" ${paperFill(wrap, id, 0.02)} stroke="${edge(wrap)}" stroke-width=".9" stroke-linejoin="round"/>` +
       crease(-w * 0.45, y + sag * 0.7) +
       `<path d="${flap}" ${paperFill(wrap, id, 0)} stroke="${edge(wrap)}" stroke-width=".9" stroke-linejoin="round"/>` +
       `<path d="M${f(w)},${f(y)} C${f(w * 0.3)},${f(y + sag * 0.8)} ${f(-w * 0.2)},${f(y * 0.5)} -2,2" stroke="${wrap.style === 'sheer' ? '#ffffff' : light(wrap.hex, 0.35)}" stroke-width="1.4" fill="none" opacity=".7"/>` +
-      crease(w * 0.5, y + 6) + '</g>';
+      crease(w * 0.5, y + 6));
   }
 
   /* ---------- ribbon at the binding point ---------- */
   function ribbonSVG(ribbon, wrapped) {
     const out = ribbonBody(ribbon, wrapped);
     if (!out) return '';
-    ensureRelief();
-    return `<g filter="url(#fl-relief)">${out}</g>`;
+    return paint(out);
   }
   function ribbonBody(ribbon, wrapped) {
     if (!ribbon) {
