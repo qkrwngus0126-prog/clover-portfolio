@@ -111,15 +111,15 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 @keyframes drift-left { from { transform: translateX(0); } to { transform: translateX(-38%); } }
 
 /* a door leaf: the warm shop light behind it, and the leaf itself (cut from the drawing) swinging in on its hinge.
-   The paper sign's words are real text laid over a blank sign in the drawing; they stay put while the leaf turns */
+   The paper sign's words are real text laid over a blank sign in the drawing; they sit on the leaf, so they turn with the sign and never slide across it */
 .door {
-  position: absolute; top: 55.05%; height: 22.53%; perspective: 260px; container-type: size;
+  position: absolute; top: 55.05%; height: 22.53%; perspective: 260px;
   background: radial-gradient(120% 70% at 50% 35%, #FFF3D6, #F0D9A8 60%, #D9BB82); border-radius: 1px;
 }
 .door-l { left: 45.33%; width: 5.38%; }
 .door-r { left: 50.78%; width: 5.5%; }
 .leaf {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; container-type: size; transform-style: preserve-3d;
   background: url(../images/intro.webp) no-repeat;
   transition: transform .8s var(--ease), filter .8s var(--ease);
 }
