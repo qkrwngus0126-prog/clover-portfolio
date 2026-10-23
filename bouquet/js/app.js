@@ -588,7 +588,6 @@
   }
 
   /* ---------- intro: a slow ring of flower cards around the name ---------- */
-  const CARD_TINTS = ['#DCE7F6', '#F6E3A6', '#F3D3DC', '#CFE6DC', '#E4DAF4', '#F7D9C6', '#C9E0E6', '#EDEFE0', '#F0C9C2', '#D7DCF2'];
   function buildRing() {
     const picks = [];
     const pool = D.flowers.filter(fl => fl.group !== 'leaf');
@@ -598,7 +597,7 @@
     }
     $('.ring-spin').innerHTML = picks.map((p, i) => {
       const a = (360 / picks.length) * i;
-      return `<button type="button" class="ring-card" tabindex="-1" data-f="${p.fl.id}" data-c="${p.c}" style="--a:${a}deg;--i:${i};--tint:${CARD_TINTS[i % CARD_TINTS.length]}" aria-label="${esc(p.fl.name)}, 꽃말 ${esc(meaningOf(p.fl.id, p.c))}. 이 꽃으로 시작하기">` +
+      return `<button type="button" class="ring-card" tabindex="-1" data-f="${p.fl.id}" data-c="${p.c}" style="--a:${a}deg;--i:${i}" aria-label="${esc(p.fl.name)}, 꽃말 ${esc(meaningOf(p.fl.id, p.c))}. 이 꽃으로 시작하기">` +
         `<span class="ring-pop"><span class="ring-flip">` +
           `<span class="ring-front">${artHTML(p.fl, p.c)}</span>` +
           `<span class="ring-back"><span class="mono">No.${pad(D.flowers.indexOf(p.fl) + 1)}<i style="--dot:${colorHex(p.c)}"></i></span>` +

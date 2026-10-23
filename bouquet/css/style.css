@@ -114,7 +114,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   -webkit-backface-visibility: hidden; backface-visibility: hidden;
   box-shadow: 0 1px 1px rgba(30, 30, 60, .08), 0 6px 14px -6px rgba(30, 30, 60, .28);
 }
-.ring-front { padding: 14% 10%; background: var(--tint); }
+.ring-front { padding: 14% 10%; background: #fff; }
 .ring-front .art { filter: drop-shadow(0 2px 2px rgba(40, 30, 30, .18)); }
 .ring-back {
   display: flex; flex-direction: column; justify-content: space-between;
@@ -131,25 +131,18 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 .intro-title { margin: 6px 0 4px; font-size: clamp(76px, 13vmin, 156px); line-height: .95; animation: rise .9s var(--ease) both .15s; }
 .intro-sub { font-size: 15px; color: var(--ink-2); margin-bottom: 28px; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-.intro-paths { display: grid; grid-template-columns: repeat(2, 220px); gap: 10px; animation: rise .9s var(--ease) both .3s; }
+.intro-paths { display: flex; gap: 8px; animation: rise .9s var(--ease) both .3s; }
 .path {
-  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  padding: 16px 18px 18px; border-radius: 14px; text-align: left;
-  border: 1px solid rgba(17, 17, 17, .18); background: rgba(255, 255, 255, .62);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 10px 28px -14px rgba(30, 40, 70, .35);
-  transition: transform .25s var(--ease), background-color .2s var(--ease), border-color .2s var(--ease);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px 0 18px;
+  border-radius: 999px; border: 1px solid rgba(17, 17, 17, .22); background: rgba(255, 255, 255, .6);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  font-size: 14px; font-weight: 500; white-space: nowrap;
+  transition: background-color .2s var(--ease), border-color .2s var(--ease), transform .15s var(--ease);
 }
-.path:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .9); border-color: var(--ink); }
-.path:active { transform: scale(.98); }
-.path-no { font-size: 10px; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 6px; }
-.path-name { font-size: 19px; font-weight: 700; letter-spacing: -0.03em; }
-.path-desc { font-size: 13px; line-height: 1.45; color: var(--muted); padding-right: 22px; }
-.path-arrow { position: absolute; right: 18px; bottom: 20px; width: 8px; height: 8px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); transition: transform .25s var(--ease); }
-.path:hover .path-arrow { transform: translateX(3px) rotate(45deg); }
-.path-dark { background: rgba(17, 17, 17, .92); border-color: var(--ink); color: #fff; }
-.path-dark:hover { background: var(--ink); }
-.path-dark .path-no, .path-dark .path-desc { color: rgba(255, 255, 255, .62); }
+.path .mono { font-size: 10.5px; color: var(--faint); letter-spacing: 0.06em; }
+.path::after { content: ""; width: 6px; height: 6px; margin-left: 2px; border: solid currentColor; border-width: 1.3px 1.3px 0 0; transform: rotate(45deg); }
+.path:hover { background: rgba(255, 255, 255, .92); border-color: var(--ink); }
+.path:active { transform: scale(.97); }
 .intro-foot { position: absolute; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 11px; letter-spacing: 0.16em; color: var(--muted); white-space: pre; }
 
 /* ---------- the app sheet ---------- */
@@ -560,11 +553,6 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   .intro-sub { font-size: 14px; margin-bottom: 22px; }
   .intro-kicker { font-size: 10px; }
   .intro-sub { margin-bottom: 18px; }
-  .intro-paths { grid-template-columns: minmax(0, 1fr); width: min(100%, 300px); gap: 8px; }
-  .path { padding: 12px 16px 13px; }
-  .path-no { margin-bottom: 2px; }
-  .path-name { font-size: 17px; }
-  .path-arrow { top: 50%; bottom: auto; margin-top: -4px; }
 
   .quiz { margin: 0; height: 100svh; height: 100dvh; border-radius: 0; box-shadow: none; animation: none; }
   .quiz-top { grid-template-columns: auto minmax(0, 1fr) auto; padding: 0 var(--gutter); height: 58px; }
