@@ -113,7 +113,7 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 /* a door leaf: the warm shop light behind it, and the leaf itself (cut from the drawing) swinging in on its hinge.
    The paper sign on each leaf is real text laid over a blank sign in the drawing, so it swings with the leaf */
 .door {
-  position: absolute; top: 56.43%; height: 21.15%; perspective: 260px;
+  position: absolute; top: 55.05%; height: 22.53%; perspective: 260px;
   background: radial-gradient(120% 70% at 50% 35%, #FFF3D6, #F0D9A8 60%, #D9BB82); border-radius: 1px;
 }
 .door-l { left: 45.33%; width: 5.38%; }
@@ -123,8 +123,8 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
   background: url(../images/intro.webp) no-repeat;
   transition: transform .8s var(--ease), filter .8s var(--ease);
 }
-.door-l .leaf { background-size: 1857.8% 472.9%; background-position: 47.91% 71.56%; transform-origin: 0 50%; }
-.door-r .leaf { background-size: 1817.4% 472.9%; background-position: 53.73% 71.56%; transform-origin: 100% 50%; }
+.door-l .leaf { background-size: 1857.8% 443.9%; background-position: 47.91% 71.06%; transform-origin: 0 50%; }
+.door-r .leaf { background-size: 1817.4% 443.9%; background-position: 53.73% 71.06%; transform-origin: 100% 50%; }
 .door-sign {
   position: absolute; left: var(--sx); top: var(--sy); width: var(--sw); height: var(--sh);
   transform: translate(-50%, -50%) rotate(var(--sr));
@@ -133,13 +133,13 @@ body:not([data-view="intro"]) .intro, body:not([data-view="app"]) .app, body:not
 }
 .door-sign .mono { font-size: 7cqw; letter-spacing: .12em; color: #666; }
 .door-sign b { font-size: 12.4cqw; font-weight: 600; letter-spacing: -.02em; }
-.door-l .door-sign { --sx: 51.6%; --sy: 28.3%; --sw: 80.4%; --sh: 16.6%; --sr: -6.1deg; }
-.door-r .door-sign { --sx: 51.6%; --sy: 31.5%; --sw: 74.8%; --sh: 16.1%; --sr: 8.8deg; }
+.door-l .door-sign { --sx: 51.6%; --sy: 32.7%; --sw: 80.4%; --sh: 15.6%; --sr: -6.1deg; }
+.door-r .door-sign { --sx: 51.6%; --sy: 35.7%; --sw: 74.8%; --sh: 15.1%; --sr: 8.8deg; }
 /* an opened leaf gets a firm outline so it reads as a door standing out of its frame */
 .door:hover .leaf, .door:focus-visible .leaf { box-shadow: inset 0 0 0 1.6px #2B2B2B; filter: drop-shadow(0 0 6px rgba(120, 80, 20, .25)); }
-/* the leaf swings well open, so the warm light of the shop shows through the doorway */
-.door-l:hover .leaf, .door-l:focus-visible .leaf { transform: rotateY(-68deg); }
-.door-r:hover .leaf, .door-r:focus-visible .leaf { transform: rotateY(68deg); }
+/* the leaf swings in a little, letting the warm light of the shop show at its edge */
+.door-l:hover .leaf, .door-l:focus-visible .leaf { transform: rotateY(-24deg); }
+.door-r:hover .leaf, .door-r:focus-visible .leaf { transform: rotateY(24deg); }
 .door:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .cloud { animation: none; } .leaf { transition: none; } }
 .intro-paths { display: none; }
