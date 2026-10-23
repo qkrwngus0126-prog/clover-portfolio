@@ -35,7 +35,7 @@
 | 꽃마다 분위기(`vibes`)·어울리는 마음(`moods`), 색마다 색감(`tones`) | `data.js`의 꽃 목록과 색 팔레트 |
 | 꽃 그림 | `images/flowers/` 폴더에 PNG 넣기 → 규칙은 [images/flowers/README.md](images/flowers/README.md) |
 | AI 실사 이미지 | `images/real/` 폴더에 JPG 넣기 → 규칙은 [images/real/README.md](images/real/README.md) |
-| 첫 화면 그림 | `images/intro.webp` (AI로 그린 꽃집 스케치에 꽃만 색을 입힌 그림, 1672×941). 세로로 긴 화면용은 `images/intro-tall.webp`(941×1672)예요. 흘러가는 구름은 그림마다 두 개씩 `images/intro-cloud-1·2.png`, `images/intro-tall-cloud-1·2.png`로 따로 떼어 두었어요. 그림을 바꾸면 `css/style.css`의 문·구름 위치(%)도 같이 맞춰야 해요 |
+| 첫 화면 그림 | `images/intro.webp` (AI로 그린 꽃집 스케치에 꽃만 색을 입힌 그림, 1672×941). 세로로 긴 화면용은 `images/intro-tall.webp`(941×1672)예요. 흘러가는 구름은 가로 그림에서 네 개(`images/intro-cloud-1~4.png`), 세로 그림에서 두 개(`images/intro-tall-cloud-1·2.png`)를 따로 떼어 두었어요. 그림을 바꾸면 `css/style.css`의 문·구름 위치(%)도 같이 맞춰야 해요 |
 | 색·글씨·여백 같은 디자인 | `css/style.css` 맨 위 `:root` 부분 |
 | 꽃다발 위 큰 영문 제목 (ONE STEM. AT A TIME. 등) | `js/app.js`의 `TITLES` |
 
