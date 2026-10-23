@@ -587,60 +587,8 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, action ? 6000 : 3200);
   }
 
-  /* ---------- intro: flower cards scattered at different depths, drifting slowly ----------
-     Cards sit on a jittered grid over the whole screen. Each gets a depth: near cards are big and
-     sharp, far ones small, soft and faint, and the ones behind the name are always far. Moving the
-     pointer shifts near cards more than far ones, so the field reads as layers of space. */
-  function seeded(seed) { let s = seed; return () => { s = (s * 1664525 + 1013904223) | 0; return ((s >>> 0) % 10000) / 10000; }; }
-  let fieldKey = '';
-  function buildField() {
-    const intro = $('.intro');
-    const W = intro.clientWidth, H = intro.clientHeight;
-    if (!W || !H || fieldKey === W + 'x' + H) return;
-    fieldKey = W + 'x' + H;
-    const r = seeded(11);
-    const ib = intro.getBoundingClientRect(), cb = $('.intro-center').getBoundingClientRect();
-    const fb = $('.intro-foot').getBoundingClientRect();
-    // areas a near card must not cover: the name and buttons, and the line at the bottom
-    const keep = [
-      { l: cb.left - ib.left - 12, r: cb.right - ib.left + 12, t: cb.top - ib.top - 12, b: cb.bottom - ib.top + 12 },
-      { l: fb.left - ib.left + W * 0.25, r: fb.right - ib.left - W * 0.25, t: fb.top - ib.top - 10, b: H }
-    ];
-    const cols = Math.max(3, Math.round(W / 230)), rows = Math.max(5, Math.round(H / 190));
-    const unit = Math.max(58, Math.min(104, Math.min(W, H) * 0.11));
-    let html = '', i = 0;
-    for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++, i++) {
-      if (r() < 0.22) continue;   // a few empty cells keep the field airy
-      const x = ((gx + 0.1 + r() * 0.8) / cols) * W, y = ((gy + 0.1 + r() * 0.8) / rows) * H;
-      let d = Math.pow(r(), 0.8);
-      let w = Math.round(unit * (0.5 + d * 0.9));
-      const hit = k => x + w * 0.7 > k.l && x - w * 0.7 < k.r && y + w * 0.9 > k.t && y - w * 0.9 < k.b;
-      if (keep.some(hit)) { d = r() * 0.16; w = Math.round(unit * (0.5 + d * 0.9)); }   // pushed far back, behind the words
-      const far = d < 0.26;
-      const fl = D.flowers[(i * 11) % D.flowers.length];
-      const c = fl.colors[(i * 3) % fl.colors.length].id;
-      const tilt = n => ((r() - 0.5) * n).toFixed(1) + 'deg';
-      html += `<button type="button" class="tile${far ? ' is-far' : ''}" tabindex="-1" data-f="${fl.id}" data-c="${c}" ` +
-        `style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;z-index:${Math.round(d * 100)};--w:${w}px;--d:${d.toFixed(2)};--blur:${far ? ((0.26 - d) * 18 + 2).toFixed(1) : 0}px;` +
-        `--rx:${tilt(64)};--ry:${tilt(64)};--rz:${tilt(80)};--dur:${(9 + r() * 8).toFixed(1)}s;--delay:${(-r() * 12).toFixed(1)}s;--i:${i}" ` +
-        `aria-label="${esc(fl.name)}, 꽃말 ${esc(meaningOf(fl.id, c))}. 이 꽃으로 시작하기">` +
-        `<span class="tile-float"><span class="tile-pop"><span class="tile-3d">` +
-          `<span class="tile-front">${artHTML(fl, c)}</span>` +
-          `<span class="tile-back"><span class="mono">No.${pad(D.flowers.indexOf(fl) + 1)}<i style="--dot:${colorHex(c)}"></i></span>` +
-          `<span><b>${esc(fl.name)}</b><em>${esc(meaningOf(fl.id, c))}</em></span><small>PICK →</small></span>` +
-        `</span></span></span></button>`;
-    }
-    $('.field').innerHTML = html;
-    $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
-  }
-  let fieldTimer = null;
-  window.addEventListener('resize', () => { clearTimeout(fieldTimer); fieldTimer = setTimeout(buildField, 200); });
-  $('.intro').addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse') return;
-    const f = $('.field');
-    f.style.setProperty('--px', ((e.clientX / innerWidth) * 2 - 1).toFixed(3));
-    f.style.setProperty('--py', ((e.clientY / innerHeight) * 2 - 1).toFixed(3));
-  });
+  /* ---------- intro ---------- */
+  $('.intro-foot').textContent = D.groups.map(g => `${pad(D.flowers.filter(fl => fl.group === g.id).length)} ${g.id === 'main' ? 'FLOWERS' : g.id === 'filler' ? 'FILLERS' : 'GREENS'}`).join('  ·  ');
 
   function setView(name) {
     document.body.dataset.view = name;
@@ -655,32 +603,9 @@
   function showIntro() {
     setView('intro');
     $('[data-start-label]').textContent = state.stems.length ? '이어서 고르기' : '직접 고르기';
-    buildField();
   }
   $('[data-start]').addEventListener('click', enterApp);
   $$('[data-home]').forEach(b => b.addEventListener('click', showIntro));
-  $('.intro').addEventListener('click', (e) => {
-    if (!e.target.closest('.tile')) $$('.tile.is-flipped').forEach(x => x.classList.remove('is-flipped'));
-  });
-  // a card starts the bouquet with that very flower
-  $('.field').addEventListener('click', (e) => {
-    const b = e.target.closest('.tile');
-    if (!b || b.classList.contains('is-far')) return;
-    // without hover, the first tap turns the card over to show its meaning; the second picks it
-    if (!hoverable && !b.classList.contains('is-flipped')) {
-      $$('.tile.is-flipped').forEach(x => x.classList.remove('is-flipped'));
-      b.classList.add('is-flipped');
-      return;
-    }
-    b.classList.remove('is-flipped');
-    enterApp();
-    go('flowers');
-    ui.group = flowersById[b.dataset.f].group;
-    ui.color[b.dataset.f] = b.dataset.c;
-    renderSegment();
-    setTimeout(() => addStem(b.dataset.f, b.dataset.c), 260);
-  });
-
   /* ---------- start ---------- */
   renderSegment();
   refresh();
